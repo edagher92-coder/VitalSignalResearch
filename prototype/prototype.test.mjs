@@ -75,7 +75,7 @@ test('human concern visibly overrides the simulated forecast', () => {
   assert.match(html, /id="concern" aria-pressed="false"/);
   assert.match(html, /id="global-concern-action">I feel concerned/);
   assert.match(html, /id="global-concern-hold" role="alert" aria-live="assertive" hidden/);
-  assert.match(html, /concernReported \? 'Withheld' : reveal \? '38% fixture probability' : 'Absent from locked view'/);
+  assert.match(html, /concernReported \? 'Withheld' : reveal \? '36% fixture probability' : 'Absent from locked view'/);
   assert.match(html, /Simulator concern hold active\. Nobody was notified; wearable forecast withheld/);
   assert.match(html, /Do not rely on the wearable score for reassurance/);
   assert.match(html, /let concernLatched = false/);
@@ -178,9 +178,10 @@ test('observer coverage count matches the fail-closed freshness matrix', () => {
 });
 
 test('explains the revealed fixture probability without implying cause', () => {
-  assert.match(html, /What 38% means—and how the fixture got there/);
-  assert.match(html, /38 out of 100 probability mass—not “38% less energy”/);
-  assert.match(html, /38% estimate · 33% fixture base rate/);
+  assert.match(html, /What 36% means—and how the fixture got there/);
+  assert.match(html, /36 out of 100 probability mass—not “36% less energy”/);
+  assert.match(html, /36% estimate · 33% fixture base rate/);
+  assert.match(html, /80% interval: 22–50%/);
   assert.match(html, /Forty resolved synthetic cases pass prospective, schema, quality, identity and receipt gates/);
   assert.match(html, /similarity × historical quality × current quality/);
   assert.match(html, /Similarity is not causality/);

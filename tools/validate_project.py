@@ -893,7 +893,8 @@ def validate_simulator_truthfulness() -> None:
         "Absent from locked view",
     ):
         require(phrase in prototype, f'prototype contains truthful state: "{phrase}"')
-    require("forecast-value" in prototype and "38%" in prototype, "prototype check-in reveals a simulated forecast")
+    require("forecast-value" in prototype and "36%" in prototype, "prototype check-in reveals the computed simulated forecast")
+    require("22–50%" in prototype, "prototype interval matches the rounded simulator engine output")
     for operator_surface in ("id=\"conflicts\"", "id=\"inspector\"", "QUALITY BLOCKED",
                              "AUTHORIZATION BLOCKED", "SESSION INACTIVE",
                              "CLOCK UNTRUSTED", "SEQUENCE INVALID",

@@ -984,8 +984,8 @@ private fun ForecastExplanation(explanation: ForecastExplanationUiModel) {
             .animateContentSize(animationSpec = spring(dampingRatio = 0.82f, stiffness = 240f)),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        ExplanationBlock("WHAT 38% MEANS", explanation.meaning, Blue)
-        ExplanationBlock("38% VS 33% FIXTURE BASE RATE", explanation.comparison, Violet)
+        ExplanationBlock("WHAT THIS PERCENTAGE MEANS", explanation.meaning, Blue)
+        ExplanationBlock("ESTIMATE VS FIXTURE BASE RATE", explanation.comparison, Violet)
         ExplanationList("WHY IT LANDED HERE", explanation.why, Amber)
         ExplanationList("HOW IT WAS CALCULATED", explanation.method, Mint)
         ExplanationList("WHAT COULD CHANGE A FUTURE ESTIMATE", explanation.couldChange, Blue)

@@ -489,19 +489,19 @@
 
         <article class="card pad forecast-explain" id="forecast-explain" aria-labelledby="forecast-explain-title" aria-live="polite">
           <div class="card-title">
-            <div><span class="eyebrow">Transparent estimate</span><h3 id="forecast-explain-title">What 38% means—and how the fixture got there</h3></div>
+            <div><span class="eyebrow">Transparent estimate</span><h3 id="forecast-explain-title">What 36% means—and how the fixture got there</h3></div>
             <span class="tag">SIMULATOR MATH · UNVALIDATED</span>
           </div>
           <div class="explain-lead">
             <div class="explain-panel accent">
               <span class="eyebrow">Meaning</span>
-              <h4>38 out of 100 probability mass—not “38% less energy”</h4>
-              <p>For this generated fixture, the model assigns 38% probability to a lower-than-personal-usual energy/function check-in during the single hour from +72h to +73h after the forecast cutoff. It is not a diagnosis and does not guarantee that outcome.</p>
+              <h4>36 out of 100 probability mass—not “36% less energy”</h4>
+              <p>For this generated fixture, the model assigns 36% probability to a lower-than-personal-usual energy/function check-in during the single hour from +72h to +73h after the forecast cutoff. It is not a diagnosis and does not guarantee that outcome.</p>
             </div>
             <div class="explain-panel">
               <span class="eyebrow">Comparison</span>
-              <h4>38% estimate · 33% fixture base rate</h4>
-              <p>Similarity and quality weighting move the generated estimate five percentage points above the unweighted fixture outcome rate. That difference is not proof that any signal caused the outcome.</p>
+              <h4>36% estimate · 33% fixture base rate</h4>
+              <p>Similarity and quality weighting move the generated estimate three percentage points above the unweighted fixture outcome rate. That difference is not proof that any signal caused the outcome.</p>
             </div>
           </div>
           <div class="explain-columns">
@@ -520,7 +520,7 @@
                 <li>Freeze two feature values, quality, cutoff and provenance before the target window.</li>
                 <li>Weight each eligible fixture by similarity × historical quality × current quality.</li>
                 <li>Combine weighted outcomes with a conservative beta prior.</li>
-                <li>Add posterior and quality uncertainty to form the simulated 80% interval: 24–53%.</li>
+                <li>Add posterior and quality uncertainty to form the simulated 80% interval: 22–50%.</li>
               </ol>
             </div>
             <div class="explain-panel">
@@ -892,8 +892,8 @@
       document.getElementById('forecast-title').textContent = concernReported ? 'Human concern takes priority' : reveal ? 'Lower-than-personal-usual energy/function at +72h to +73h' : 'Check-in incomplete';
       document.getElementById('forecast-tag').textContent = concernReported ? 'HUMAN PRIORITY' : reveal ? 'Unvalidated' : 'Locked';
       document.getElementById('forecast-note').textContent = concernReported ? 'Wearable forecast withheld' : reveal ? 'Frozen binary simulator target · not diagnosis or treatment guidance' : 'Unanswered values remain missing';
-      document.getElementById('forecast-value').textContent = concernReported ? 'Withheld' : reveal ? '38% fixture probability' : 'Absent from locked view';
-      document.getElementById('forecast-status').textContent = concernReported ? 'Use care plan or appropriate help' : reveal ? '80% interval · 24–53%' : 'Complete all five anchored responses';
+      document.getElementById('forecast-value').textContent = concernReported ? 'Withheld' : reveal ? '36% fixture probability' : 'Absent from locked view';
+      document.getElementById('forecast-status').textContent = concernReported ? 'Use care plan or appropriate help' : reveal ? '80% interval · 22–50%' : 'Complete all five anchored responses';
       document.getElementById('audit-state').textContent = concernReported ? 'Concern recorded · forecast withheld' : reveal ? 'Revealed · outcome pending' : 'Committed hidden · partial context';
       document.getElementById('forecast-explain').classList.toggle('revealed', reveal);
       if (concernReported) {
