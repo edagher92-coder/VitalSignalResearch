@@ -8,7 +8,7 @@ Checkpoint: 2026-08-23 (Australia/Sydney) · source version `0.5.0-research`
 |---|---|---|
 | Merged direct Kotlin/JVM suite | **582 passed, 0 failed** | 79 platform-neutral production sources and 69 test classes across core, phone and watch domains |
 | `python3 tools/validate_project.py` | Passed after this report was updated | Module/version/manifests, claims copy, quality/baseline/safety/governance/privacy/transport invariants, required tests/docs, endpoint/secret exclusions and prototype contract |
-| `node --test prototype/prototype.test.mjs` | **10 passed, 0 failed** | Navigation, top-down/bottom-up traceability, concern override, forecast reveal, activity states, observer states and simulator/medical boundaries |
+| `node --test prototype/prototype.test.mjs` | **11 passed, 0 failed** | Navigation, top-down/bottom-up traceability, concern override, forecast reveal, activity states, observer states and simulator/medical boundaries |
 | Prototype JavaScript syntax | Passed | Extracted inline program parsed by Node 24 |
 | JSON documents | Passed | Research hypothesis and repository JSON documents parsed without error |
 | OpenAPI contracts | Passed | Assistant-gateway and observer contracts parsed as OpenAPI 3.1 YAML |
