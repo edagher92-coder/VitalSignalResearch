@@ -162,6 +162,7 @@ test('executes reveal, concern, dialog, reduced-motion and mobile flows in Chrom
 
     await evaluate(`document.querySelector('[data-view="log"]').click()`);
     await evaluate(`document.getElementById('resolve-concern').click()`);
+    await waitFor(() => evaluate(`document.activeElement.id === 'keep-concern'`));
     const modal = await evaluate(`({
       open: !document.getElementById('resolve-dialog').hidden,
       inert: document.querySelector('.shell').inert,
@@ -175,7 +176,7 @@ test('executes reveal, concern, dialog, reduced-motion and mobile flows in Chrom
     assert.equal(await evaluate(`document.activeElement.id`), 'resolve-concern');
     await evaluate(`document.getElementById('resolve-concern').click()`);
     await evaluate(`document.getElementById('confirm-resolve').click()`);
-    await sleep(50);
+    await waitFor(() => evaluate(`document.activeElement.id === 'hero-title'`));
     const resolved = await evaluate(`({
       concernHidden: document.getElementById('global-concern-hold').hidden,
       locked: document.getElementById('forecast-value').textContent,
