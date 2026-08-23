@@ -128,6 +128,77 @@ def validate_modules() -> None:
     require("distributionSha256Sum=" in wrapper, "Gradle distribution checksum is pinned")
     require((ROOT / "gradle/wrapper/gradle-wrapper.jar").is_file(), "verified Gradle wrapper JAR exists")
 
+    model_build = read("core/model/build.gradle.kts")
+    require("testImplementation(libs.junit)" in model_build,
+            ":core:model declares JUnit for its unit-test source set")
+
+
+def validate_brand_and_experience() -> None:
+    brand = read("phone/src/main/kotlin/au/com/elied/vitalsignal/phone/presentation/brand/ProductBrand.kt")
+    phone_strings = read("phone/src/main/res/values/strings.xml")
+    wear_strings = read("wear/src/main/res/values/strings.xml")
+    dashboard = read("phone/src/main/kotlin/au/com/elied/vitalsignal/phone/presentation/dashboard/DashboardScreen.kt")
+    repository = read("phone/src/main/kotlin/au/com/elied/vitalsignal/phone/presentation/dashboard/DashboardRepository.kt")
+    prototype = read("prototype/index.html")
+    readme = read("README.md")
+    system = read("docs/BRAND_AND_EXPERIENCE_SYSTEM.md")
+
+    for value in (
+        'const val NAME = "Evidessa"',
+        'const val RESEARCH_NAME = "Evidessa Research"',
+        'const val DISPLAY_NAME = "EVIDESSA RESEARCH"',
+        'const val TAGLINE = "Your pattern, made clear."',
+        'const val SCIENTIST_TITLE = "Evidessa Scientist"',
+    ):
+        require(value in brand, f"working brand token is pinned: {value.split(' = ')[0]}")
+    require("Evidessa Research" in phone_strings and "Evidessa Research" in wear_strings,
+            "phone and watch launcher labels use the working Evidessa brand")
+    require("ProductBrand.DISPLAY_NAME" in dashboard and
+            "ProductBrand.TAGLINE" in dashboard and
+            "ProductBrand.SCIENTIST_TITLE" in repository,
+            "phone UI consumes centralized reversible brand copy")
+    require(readme.startswith("# Evidessa Research\n") and
+            "**Your pattern, made clear.**" in readme,
+            "README establishes the working product name and promise")
+    require("data-brand-system=\"evidence-weave-v1\"" in prototype and
+            "brand-weave-baseline" in prototype and
+            "brand-weave-observed" in prototype and
+            "brand-weave-proof" in prototype,
+            "prototype implements the original Evidence Weave identity")
+    require("NOT AFFILIATED WITH SAMSUNG OR APPLE" in prototype and
+            "no Samsung or Apple affiliation" in dashboard,
+            "working interfaces declare Samsung and Apple independence")
+
+    for public_surface in (phone_strings, wear_strings, dashboard, repository, prototype):
+        require("VitalSignal Research" not in public_surface and
+                "VitalSignal Scientist" not in public_surface,
+                "user-facing surfaces omit the former working product name")
+
+    require("working candidate" in system.lower() and
+            "trademark" in system.lower() and
+            "no samsung or apple affiliation" in system.lower(),
+            "brand system records clearance and independence boundaries")
+    require("Evidence Weave" in system and "living baseline ribbon" in system and
+            "Samsung-first" in system and "Apple Health" in system,
+            "brand system records the original cross-platform experience synthesis")
+    for copied_pattern in (
+        "apple-health-heart-icon",
+        "apple-activity-rings",
+        "samsung-health-logo",
+        "samsung-health-screen-clone",
+    ):
+        require(copied_pattern not in prototype.lower(),
+                f"prototype omits copied vendor pattern marker: {copied_pattern}")
+
+    phone_build = read("phone/build.gradle.kts")
+    theme = read("phone/src/main/res/values/themes.xml")
+    transport = read("wear/src/main/kotlin/au/com/elied/vitalsignal/wear/transport/CrashSafeWatchOutbox.kt")
+    backend_api = read("backend/openapi/vitalsignal-research-observer-v1.yaml")
+    require(EXPECTED_APP_ID in phone_build and "Theme.VitalSignal" in theme and
+            "isExactVitalSignalUri" in transport and
+            "VitalSignal-Alert-Action-Permit" in backend_api,
+            "rebrand preserves package, theme, transport and signed backend identifiers")
+
     phone_build = read("phone/build.gradle.kts")
     require('versionName = "0.5.0-research"' in phone_build, "phone source version is 0.5.0-research")
     require("libs.androidx.compose.animation" in phone_build, "phone declares Compose animation dependency")
@@ -790,7 +861,7 @@ def validate_simulator_truthfulness() -> None:
     ):
         require(phrase in prototype, f'prototype contains truthful state: "{phrase}"')
     require("forecast-value" in prototype and "38%" in prototype, "prototype check-in reveals a simulated forecast")
-    require("VitalSignal Scientist" in prototype and
+    require("Evidessa Scientist" in prototype and
             "Reviewed template · no model call · no cloud call" in prototype and
             "Release-policy gate" in prototype and
             "display eligibility—not medical truth" in prototype,
@@ -867,6 +938,7 @@ def validate_deliverables() -> None:
         "docs/FATIGUE_ADRENAL_CONTEXT_PROTOCOL.md",
         "docs/CLINICAL_PRIORITY_ROADMAP.md",
         "docs/COMPETITIVE_MOAT.md",
+        "docs/BRAND_AND_EXPERIENCE_SYSTEM.md",
         "docs/FUNCTION_RECOVERY_PROTOCOL.md",
         "docs/BACKEND_CLINICIAN_PLATFORM.md",
         "backend/README.md",
@@ -895,6 +967,7 @@ def main() -> int:
     try:
         validate_repository_hygiene()
         validate_modules()
+        validate_brand_and_experience()
         validate_ci_supply_chain()
         validate_android_targets()
         validate_traceability_and_quality()

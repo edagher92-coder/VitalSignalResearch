@@ -75,6 +75,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import au.com.elied.vitalsignal.phone.presentation.brand.ProductBrand
 import au.com.elied.vitalsignal.phone.ui.theme.Amber
 import au.com.elied.vitalsignal.phone.ui.theme.Blue
 import au.com.elied.vitalsignal.phone.ui.theme.Ice
@@ -328,10 +329,15 @@ private fun DashboardHeader(state: DashboardUiState) {
             Spacer(Modifier.width(12.dp))
             Column {
                 Text(
-                    text = "VITALSIGNAL",
+                    text = ProductBrand.DISPLAY_NAME,
                     style = MaterialTheme.typography.labelMedium,
                     color = Mint,
                     letterSpacing = 1.8.sp,
+                )
+                Text(
+                    text = ProductBrand.TAGLINE,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Quiet,
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
@@ -379,15 +385,43 @@ private fun BrandMark() {
         contentAlignment = Alignment.Center,
     ) {
         Canvas(Modifier.size(25.dp)) {
-            val path = Path().apply {
-                moveTo(0f, size.height * 0.58f)
-                lineTo(size.width * 0.20f, size.height * 0.58f)
-                lineTo(size.width * 0.35f, size.height * 0.25f)
-                lineTo(size.width * 0.53f, size.height * 0.78f)
-                lineTo(size.width * 0.68f, size.height * 0.45f)
-                lineTo(size.width, size.height * 0.45f)
+            val baselineRibbon = Path().apply {
+                moveTo(size.width * 0.06f, size.height * 0.35f)
+                cubicTo(
+                    size.width * 0.30f,
+                    size.height * 0.10f,
+                    size.width * 0.65f,
+                    size.height * 0.18f,
+                    size.width * 0.94f,
+                    size.height * 0.56f,
+                )
             }
-            drawPath(path, Mint, style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round))
+            val observedRibbon = Path().apply {
+                moveTo(size.width * 0.06f, size.height * 0.66f)
+                cubicTo(
+                    size.width * 0.34f,
+                    size.height * 0.90f,
+                    size.width * 0.63f,
+                    size.height * 0.78f,
+                    size.width * 0.94f,
+                    size.height * 0.42f,
+                )
+            }
+            drawPath(
+                baselineRibbon,
+                Mint,
+                style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round),
+            )
+            drawPath(
+                observedRibbon,
+                Blue,
+                style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round),
+            )
+            drawCircle(
+                color = Ice,
+                radius = 2.2.dp.toPx(),
+                center = Offset(size.width * 0.73f, size.height * 0.57f),
+            )
         }
     }
 }
@@ -415,7 +449,7 @@ private fun SimulationBanner(label: String) {
                     color = Amber,
                 )
                 Text(
-                    text = "Independent research prototype · no Samsung affiliation",
+                    text = "Independent research prototype · no Samsung or Apple affiliation",
                     modifier = Modifier.padding(top = 2.dp),
                     style = MaterialTheme.typography.labelMedium,
                     color = Amber.copy(alpha = 0.74f),
@@ -1682,7 +1716,7 @@ private fun SafetyNote() {
                 color = Ice,
             )
             Text(
-                text = "This app cannot diagnose or rule out a medical condition. No clinician or emergency service is automatically notified, and this app is not attended. How you feel matters more than the score. VitalSignal may miss important changes; if you feel seriously unwell, use local emergency services or contact a clinician and do not wait for the app.",
+                text = "This app cannot diagnose or rule out a medical condition. No clinician or emergency service is automatically notified, and this app is not attended. How you feel matters more than the score. ${ProductBrand.NAME} may miss important changes; if you feel seriously unwell, use local emergency services or contact a clinician and do not wait for the app.",
                 modifier = Modifier.padding(top = 4.dp),
                 style = MaterialTheme.typography.bodyMedium,
                 color = Quiet,

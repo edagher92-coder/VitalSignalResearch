@@ -14,6 +14,7 @@ import au.com.elied.vitalsignal.audit.HumanConcernQueryResult
 import au.com.elied.vitalsignal.audit.InMemoryHumanConcernJournal
 import au.com.elied.vitalsignal.model.BaselineDeviation
 import au.com.elied.vitalsignal.model.SensorMetric
+import au.com.elied.vitalsignal.phone.presentation.brand.ProductBrand
 import java.util.Locale
 import kotlin.math.abs
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -603,7 +604,7 @@ class DemoDashboardRepository(
         ),
         researchAssistant = ResearchAssistantUiModel(
             status = ResearchAssistantStatus.REVIEWED_SIMULATOR_EXPLANATION,
-            title = "VitalSignal Scientist",
+            title = ProductBrand.SCIENTIST_TITLE,
             providerLabel = "Reviewed template · no model or cloud call",
             narrative = "One simulated cardio-autonomic family differs from its matched fixture. A second independent domain and persistence are not present, so the verified interpretation remains: record context and remeasure.",
             evidenceLabels = listOf(

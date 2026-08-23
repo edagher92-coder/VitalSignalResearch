@@ -1,6 +1,10 @@
-# VitalSignal Research
+# Evidessa Research
 
-Version `0.5.0-research` is a fail-closed private N-of-1 health-intelligence foundation for a Galaxy Watch Ultra2 and Android phone. It combines a truthful simulator with platform-neutral collection, transport, history, analysis, validation and governance components. Real personal-data surfaces remain locked until the exact phone, watch, firmware and reference-device tests produce matching evidence receipts.
+**Your pattern, made clear.**
+
+Evidessa Research is the working user-facing brand for version `0.5.0-research`, a fail-closed private N-of-1 health-intelligence foundation for a Galaxy Watch Ultra2 and Android phone. It combines a truthful simulator with platform-neutral collection, transport, history, analysis, validation and governance components. Real personal-data surfaces remain locked until the exact phone, watch, firmware and reference-device tests produce matching evidence receipts.
+
+The repository, Android package/namespace, cryptographic aliases, protocol routes, signed schemas and versioned audit identifiers intentionally retain their existing `VitalSignal` internal names. That separation makes the brand reversible without an unsafe protocol migration or a break in validation traceability.
 
 This is a wellness/research system under development. It is not a diagnosis, medical clearance, emergency monitor or validated health prediction. Symptoms and professional medical advice override the application.
 
@@ -25,7 +29,7 @@ The [interactive simulator prototype](prototype/index.html) is the functional UI
 
 ## The central product idea
 
-VitalSignal does not treat one reading as a conclusion. It learns the person's expected pattern for the same time, activity, sleep state, environment, protocol, device and firmware. It then asks:
+Evidessa does not treat one reading as a conclusion. It learns the person's expected pattern for the same time, activity, sleep state, environment, protocol, device and firmware. It then asks:
 
 1. Is the measurement trustworthy?
 2. What changed relative to this person's matched reference?
@@ -96,8 +100,8 @@ python3 tools/validate_project.py
 6. Run shadow forecasts first; commit every prediction before its outcome and measure calibration, lead time and false alerts.
 7. Promote only a frozen feature whose exact version and environment has the required signed evidence.
 
-See [implementation status](docs/STATUS_MATRIX.md), [build evidence](docs/BUILD_REPORT.md), [validation protocol](docs/VALIDATION_PROTOCOL.md), [competitive moat](docs/COMPETITIVE_MOAT.md), [clinical priority roadmap](docs/CLINICAL_PRIORITY_ROADMAP.md), [fatigue/adrenal-context protocol](docs/FATIGUE_ADRENAL_CONTEXT_PROTOCOL.md), [backend/clinician contract](docs/BACKEND_CLINICIAN_PLATFORM.md), [discovery blueprint](docs/DISCOVERY_BLUEPRINT.md), [sensor-to-output audit](docs/SENSOR_TO_OUTPUT_AUDIT.md), [sensor map](docs/SENSOR_SIGNAL_MATRIX.md), [local-AI boundary](docs/LOCAL_AI_OLLAMA.md), [cloud-AI provider boundary](docs/CLOUD_AI_PROVIDER_BOUNDARY.md) and [pilot evidence plan](docs/PILOT_EVIDENCE_PLAN.md).
+See [brand and experience system](docs/BRAND_AND_EXPERIENCE_SYSTEM.md), [implementation status](docs/STATUS_MATRIX.md), [build evidence](docs/BUILD_REPORT.md), [validation protocol](docs/VALIDATION_PROTOCOL.md), [competitive moat](docs/COMPETITIVE_MOAT.md), [clinical priority roadmap](docs/CLINICAL_PRIORITY_ROADMAP.md), [fatigue/adrenal-context protocol](docs/FATIGUE_ADRENAL_CONTEXT_PROTOCOL.md), [backend/clinician contract](docs/BACKEND_CLINICIAN_PLATFORM.md), [discovery blueprint](docs/DISCOVERY_BLUEPRINT.md), [sensor-to-output audit](docs/SENSOR_TO_OUTPUT_AUDIT.md), [sensor map](docs/SENSOR_SIGNAL_MATRIX.md), [local-AI boundary](docs/LOCAL_AI_OLLAMA.md), [cloud-AI provider boundary](docs/CLOUD_AI_PROVIDER_BOUNDARY.md) and [pilot evidence plan](docs/PILOT_EVIDENCE_PLAN.md).
 
 For continued development, read [the session handoff](docs/SESSION_HANDOFF.md), [threat model](docs/THREAT_MODEL.md), [contribution gates](CONTRIBUTING.md) and [security policy](SECURITY.md) first.
 
-`VitalSignal Research` is a working private-pilot title, not a cleared commercial brand.
+`Evidessa Research` is a working brand candidate, not a cleared commercial name or trademark. Formal legal, trademark, domain and store-listing clearance is required before public use. Samsung and Apple are independent reference ecosystems; this project is not affiliated with, endorsed by or presented as a product of either company.

@@ -8,7 +8,19 @@ test('keeps simulator and medical safety boundaries visible', () => {
   assert.match(html, /SIMULATED DATA · NOT YOUR HEALTH DATA/);
   assert.match(html, /cannot diagnose or rule out a medical condition/i);
   assert.match(html, /cannot ingest personal data/i);
-  assert.match(html, /NOT AFFILIATED WITH SAMSUNG/);
+  assert.match(html, /NOT AFFILIATED WITH SAMSUNG OR APPLE/);
+});
+
+test('uses the reversible Evidessa working brand and original Evidence Weave', () => {
+  assert.match(html, /<title>Evidessa Research — Product prototype<\/title>/);
+  assert.match(html, /<strong>Evidessa Research<\/strong>/);
+  assert.match(html, /Your pattern, made clear\./);
+  assert.match(html, /data-brand-system="evidence-weave-v1"/);
+  assert.match(html, /brand-weave-baseline/);
+  assert.match(html, /brand-weave-observed/);
+  assert.match(html, /brand-weave-proof/);
+  assert.doesNotMatch(html, /VitalSignal Research/);
+  assert.doesNotMatch(html, /VitalSignal Scientist/);
 });
 
 test('observer preview covers freshness states without implying monitoring', () => {
@@ -29,7 +41,7 @@ test('supports top-down summary and bottom-up traceability', () => {
 });
 
 test('shows a governed replaceable assistant without pretending a model ran', () => {
-  assert.match(html, /VitalSignal Scientist/);
+  assert.match(html, /Evidessa Scientist/);
   assert.match(html, /Reviewed template · no model call · no cloud call/);
   assert.match(html, /Ollama on your server/);
   assert.match(html, /OpenAI Responses/);

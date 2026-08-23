@@ -16,3 +16,6 @@ android {
     }
 }
 
+dependencies {
+    testImplementation(libs.junit)
+}

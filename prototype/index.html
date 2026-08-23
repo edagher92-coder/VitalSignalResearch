@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#080b12" />
-  <title>VitalSignal Research — Product prototype</title>
+  <title>Evidessa Research — Product prototype</title>
   <style>
     :root {
       color-scheme: dark;
@@ -62,14 +62,20 @@
     }
     .brand { display: flex; align-items: center; gap: 12px; padding: 0 8px 24px; }
     .brand-mark {
-      width: 42px; height: 42px; border-radius: 15px; position: relative;
-      background: conic-gradient(from 160deg, var(--cyan), var(--blue), var(--violet), var(--cyan));
+      width: 42px; height: 42px; border-radius: 15px; position: relative; flex: 0 0 auto;
+      display: grid; place-items: center;
+      background: linear-gradient(145deg, rgba(114,232,200,.18), rgba(145,207,255,.10));
+      border: 1px solid rgba(114,232,200,.25);
       box-shadow: 0 0 32px rgba(100, 231, 213, .2);
     }
-    .brand-mark::after { content: ""; position: absolute; inset: 4px; background: #0e131c; border-radius: 12px; }
-    .brand-mark::before { content: ""; position: absolute; z-index: 1; width: 8px; height: 8px; background: var(--cyan); border-radius: 50%; left: 17px; top: 17px; box-shadow: 0 0 14px var(--cyan); }
+    .brand-mark svg { width: 29px; height: 29px; overflow: visible; }
+    .brand-weave-baseline, .brand-weave-observed { fill: none; stroke-width: 2.4; stroke-linecap: round; }
+    .brand-weave-baseline { stroke: var(--cyan); }
+    .brand-weave-observed { stroke: var(--blue); }
+    .brand-weave-proof { fill: var(--text); filter: drop-shadow(0 0 4px var(--cyan)); }
     .brand strong { display: block; font-size: 15px; letter-spacing: .01em; }
-    .brand small { color: var(--muted); font-size: 11px; }
+    .brand small { display: block; color: var(--muted); font-size: 11px; line-height: 1.45; }
+    .brand .tagline { color: var(--text); }
     nav { display: grid; gap: 7px; }
     .nav-button {
       appearance: none; border: 0; background: transparent; width: 100%; text-align: left;
@@ -304,9 +310,15 @@
 <body>
   <div class="shell">
     <aside class="side" aria-label="Primary navigation">
-      <div class="brand">
-        <div class="brand-mark" aria-hidden="true"></div>
-        <div><strong>VitalSignal</strong><small>Simulator · v0.5.0</small></div>
+      <div class="brand" data-brand-system="evidence-weave-v1">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" focusable="false">
+            <path class="brand-weave-baseline" d="M3 10 C10 3, 21 5, 29 18" />
+            <path class="brand-weave-observed" d="M3 22 C11 29, 20 26, 29 13" />
+            <circle class="brand-weave-proof" cx="23" cy="18" r="2" />
+          </svg>
+        </div>
+        <div><strong>Evidessa Research</strong><small class="tagline">Your pattern, made clear.</small><small>Simulator · v0.5.0</small></div>
       </div>
       <nav>
         <button type="button" class="nav-button active" data-view="today" aria-controls="today" aria-current="page"><span class="nav-icon">●</span><span>Today</span></button>
@@ -333,7 +345,7 @@
         </div>
       </header>
 
-      <div class="sim-banner" role="status">SIMULATED DATA · NOT YOUR HEALTH DATA · NO GALAXY WATCH IS CONNECTED · MEMORY-ONLY UI · INDEPENDENT RESEARCH PROTOTYPE · NOT AFFILIATED WITH SAMSUNG</div>
+      <div class="sim-banner" role="status">SIMULATED DATA · NOT YOUR HEALTH DATA · NO GALAXY WATCH IS CONNECTED · MEMORY-ONLY UI · INDEPENDENT RESEARCH PROTOTYPE · NOT AFFILIATED WITH SAMSUNG OR APPLE</div>
       <div class="global-concern" id="global-concern-hold" role="alert" aria-live="assertive" hidden>
         <strong>Your concern takes priority; sensor and AI interpretations are withheld.</strong>
         No clinician or emergency service was notified. Follow your own care plan or contact appropriate help yourself; seek urgent help if you believe this is an emergency. This prototype cannot provide medical clearance.
@@ -445,7 +457,7 @@
       <section class="view" id="scientist">
         <div class="grid two">
           <article class="card pad">
-            <div class="card-title"><div><span class="eyebrow">Governed assistant</span><h3>VitalSignal Scientist</h3></div><span class="tag">REVIEWED SIMULATOR EXPLANATION</span></div>
+            <div class="card-title"><div><span class="eyebrow">Governed assistant</span><h3>Evidessa Scientist</h3></div><span class="tag">REVIEWED SIMULATOR EXPLANATION</span></div>
             <div class="card pad explain" style="margin-top:0">
               <span class="eyebrow">What the evidence supports</span>
               <p>One simulated cardio-autonomic family differs from its matched fixture. A second independent domain and persistence are not present, so the reviewed simulator explanation remains: record context and remeasure.</p>
@@ -576,7 +588,7 @@
           <div class="field" style="margin-top:14px"><label>User-reported concern hold</label><button type="button" class="button" id="concern" aria-pressed="false">Report concern now — withhold wearable score</button><button type="button" class="button" id="resolve-concern" hidden>Resolve simulator hold by explicit human action</button><p class="sub">This immediately withholds wearable reassurance for this simulator session. Reloading the page clears simulator memory. No clinician or emergency service is notified; this prototype is not attended, emergency triage, or medical clearance.</p></div>
           <div class="field" style="margin-top:14px"><label for="notes">Optional note</label><textarea id="notes" placeholder="Anything the sensors cannot know…"></textarea></div>
           <div style="display:flex;justify-content:flex-end;margin-top:16px"><button class="button primary" id="save">Capture context in memory</button></div>
-          <div class="notice">This pre-reveal entry is context, not the forecast outcome. The target-window outcome can be recorded only after the 72-hour window. Medication, infusion and symptom entries remain context only; VitalSignal will not diagnose adrenal function, inflammation or infection, or recommend a dose or treatment change.</div>
+          <div class="notice">This pre-reveal entry is context, not the forecast outcome. The target-window outcome can be recorded only after the 72-hour window. Medication, infusion and symptom entries remain context only; Evidessa will not diagnose adrenal function, inflammation or infection, or recommend a dose or treatment change.</div>
         </div>
       </section>
     </main>
@@ -586,7 +598,7 @@
   <script>
     const meta = {
       today: ["Good morning, Elz", "Simulator walkthrough · no personal health data"],
-      scientist: ["VitalSignal Scientist", "A governed explanation layer over verified simulated evidence"],
+      scientist: ["Evidessa Scientist", "A governed explanation layer over verified simulated evidence"],
       evidence: ["Evidence, not a black box", "Follow the fixture message down to generated source data"],
       timeline: ["Simulator timeline", "Generated sensor, model and context events"],
       observer: ["Observer concept", "Non-operational simulated freshness, quality and provenance states"],
