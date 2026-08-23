@@ -86,7 +86,7 @@ class ProspectiveForecastLedgerTest {
 
         val resolved = ledger.recordOutcome(outcome("outcome-1", TARGET_END, 1.0))
         assertEquals(ProspectiveForecastState.RESOLVED, resolved.view.state)
-        assertEquals(1.0, (resolved.view as RevealedForecastView).observedOutcome!!)
+        assertEquals(1.0, (resolved.view as RevealedForecastView).observedOutcome!!, 0.0)
     }
 
     @Test

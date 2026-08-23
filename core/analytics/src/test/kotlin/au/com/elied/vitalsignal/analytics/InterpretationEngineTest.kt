@@ -210,7 +210,7 @@ class InterpretationEngineTest {
             it.family == IndependentEvidenceFamily.CARDIO_AUTONOMIC
         }
         assertEquals(FamilyEvidenceDirection.CONFLICTING, cardio.direction)
-        assertEquals(0.0, cardio.representativeContribution)
+        assertEquals(0.0, cardio.representativeContribution, 0.0)
 
         val safety = SafetyPolicyEngine().evaluate(
             SafetyGateInput(

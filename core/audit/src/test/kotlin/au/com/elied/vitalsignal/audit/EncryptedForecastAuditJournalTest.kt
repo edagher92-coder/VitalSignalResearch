@@ -59,8 +59,8 @@ class EncryptedForecastAuditJournalTest {
 
         assertEquals(ForecastLedgerAvailability.AVAILABLE, reopenedLedger.status().availability)
         assertEquals(ProspectiveForecastState.RESOLVED, view.state)
-        assertEquals(UNIQUE_PROBABILITY, view.probability)
-        assertEquals(1.0, view.observedOutcome)
+        assertEquals(UNIQUE_PROBABILITY, view.probability, 0.0)
+        assertEquals(1.0, requireNotNull(view.observedOutcome), 0.0)
         assertEquals(
             4,
             (reopenedJournal.recover() as ForecastJournalRecoveryResult.Recovered).records.size,
