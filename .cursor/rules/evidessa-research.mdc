@@ -1,0 +1,16 @@
+---
+description: Evidessa Research safety, evidence and development rules
+alwaysApply: true
+---
+
+# Evidessa Research Cursor rules
+
+- Read `docs/CURSOR_HANDOFF.md`, `docs/SESSION_HANDOFF.md`, `docs/STATUS_MATRIX.md`, `docs/BUILD_REPORT.md` and `CONTRIBUTING.md` before changing behaviour.
+- Treat the repository as simulator-only research software. Do not enable personal collection, visible forecasts, clinician monitoring, public release or medical claims without the exact signed evidence gates already defined in the project.
+- Preserve fail-closed behaviour: missing, stale, conflicting, implausible, low-quality or unauthorised data must abstain or become an explicit gap; it must never appear normal.
+- A person's concern and clinician-authored instructions outrank wearable data and model output.
+- Keep signal computation deterministic, versioned and provenance-bound. A language model may select reviewed explanation structures only; it may not calculate physiology, invent facts, diagnose, prescribe, alert or change treatment.
+- Keep proprietary Samsung AARs, secrets, private endpoints, signing material, health records, device identifiers, APKs, logs and databases out of Git.
+- Add failure-path tests with every behavioural change. Run `python3 tools/validate_project.py`, `node --test prototype/prototype.test.mjs` and `./gradlew test lint :phone:assembleDebug :wear:assembleDebug` before claiming completion.
+- Report executed checks separately from unverified Android, Samsung SDK, reference-device, battery, privacy, prospective or clinical evidence.
+- Make the smallest reviewable change on a feature branch. Do not weaken a release gate to make a demo, build or test pass.
