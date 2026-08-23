@@ -48,7 +48,7 @@ yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
 yes | "$SDKMANAGER" "${SDK_PACKAGES[@]}" >/dev/null 2>&1 || true
 
 echo "==> Pointing Gradle at the SDK (local.properties)"
-printf 'sdk.dir=%s\n' "$ANDROID_HOME" > "$REPO_ROOT/local.properties"
+"$REPO_ROOT/.cursor/configure-gradle-sdk.sh"
 
 # Warm the Gradle wrapper, Android Gradle Plugin and dependency caches so the
 # first interactive build is fast. Best-effort: transient network hiccups while
