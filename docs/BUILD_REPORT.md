@@ -2,7 +2,7 @@
 
 Checkpoint: 2026-08-23 (Australia/Sydney) · source version `0.6.0-research`
 
-Local source candidate exercised: `88eda6c`. GitHub Actions evidence must bind
+Local source candidate exercised: `cf7408c`. GitHub Actions evidence must bind
 the final app-repository branch tip before merge.
 
 ## Reproduced in this workspace
