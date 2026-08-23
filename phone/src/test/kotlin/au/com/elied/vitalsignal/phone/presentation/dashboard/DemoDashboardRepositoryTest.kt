@@ -50,8 +50,9 @@ class DemoDashboardRepositoryTest {
             "Engineering uncertainty band · 22–51% (nominal 80% model range)",
             state.forecast.intervalLabel,
         )
-        assertTrue(explanation.meaning.contains("36 out of 100 probability mass"))
-        assertTrue(explanation.comparison.contains("33%"))
+        assertTrue(explanation.meaning.contains("36.4% probability mass"))
+        assertTrue(explanation.comparison.contains("13 of 40"))
+        assertTrue(explanation.comparison.contains("33.0%"))
         assertTrue(explanation.why.any { it.contains("40 resolved synthetic cases") })
         assertTrue(explanation.method.any { it.contains("similarity") })
         assertTrue(explanation.improvementPlan.any { it.contains("held-out") })

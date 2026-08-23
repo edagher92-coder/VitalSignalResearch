@@ -169,9 +169,12 @@ class DemoDashboardRepository(
                     else -> "Pre-reveal context captured in memory for this simulator session"
                 },
                 forecast = revealedForecast,
-                forecastAudit = revealedView
-                    ?.let { revealedAuditTrail(safetyAdjusted.forecastAudit, it) }
-                    ?: safetyAdjusted.forecastAudit,
+                forecastAudit = when {
+                    revealedView != null -> revealedAuditTrail(safetyAdjusted.forecastAudit, revealedView)
+                    safetyAdjusted.forecast.status == ForecastStatus.AVAILABLE &&
+                        current.forecastAudit.isNotEmpty() -> current.forecastAudit
+                    else -> safetyAdjusted.forecastAudit
+                },
                 timeline = listOf(
                     TimelineItemUiModel(
                         id = "quick-log-now",
