@@ -989,7 +989,7 @@ private fun ForecastCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 48.dp)
-                    .padding(top = 14.dp)
+                    .padding(top = 14.dp),
                 shape = RoundedCornerShape(18.dp),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = Ice),
                 border = androidx.compose.foundation.BorderStroke(1.dp, Blue.copy(alpha = 0.32f)),
