@@ -2,9 +2,9 @@
 
 ## Intended use
 
-VitalSignal Research is intended to become a private wellness/research tool for one adult. Version `0.5.0-research` remains personal-data locked despite adding tested platform-neutral watch/phone bridging, history, outbox, governance, response-research, clinician-observer and local-AI orchestration components. It is not a medical device, emergency monitor or validated predictor and is not intended to diagnose, treat, prevent, monitor or rule out disease.
+Evidessa Research is intended to become a private wellness/research tool for one adult. Version `0.6.0-research` remains personal-data locked while adding a simulator-only forecast explanation, safety-aware motion and contract-alignment tests on top of the tested platform-neutral watch/phone bridging, history, outbox, governance, response-research, clinician-observer and local-AI orchestration components. It is not a medical device, emergency monitor or validated predictor and is not intended to diagnose, treat, prevent, monitor or rule out disease.
 
-The current release decision is GO only for simulator engineering evaluation. It is NO-GO for personal-data capture, physical monitoring, visible health forecasts, Ollama output, clinician reliance, public release or clinical use.
+The current release decision is GO only for simulator engineering evaluation, including an explicitly generated and unvalidated fixture forecast after prospective check-in/reveal chronology. It is NO-GO for personal-data capture, personal-data forecasts, physical monitoring, model-generated output, clinician reliance, public release or clinical use.
 
 ## Core hazards and controls
 
@@ -21,6 +21,9 @@ The current release decision is GO only for simulator engineering evaluation. It
 | Missed emergency | Model severity excludes urgent; separate reviewed-symptom flag exists in policy | Boundary only; no reviewed/localized questionnaire or emergency UI exists |
 | Corrupt or missing storage treated as normal physiology | Authenticated storage quarantine, unavailable forecast/receipt state and no ACK on uncertainty | Implemented in pure core + fault tests; manifest adapters exist but Android app-startup composition and device execution are pending |
 | Hidden forecast leaks before context is captured | Locked forecast projection has no probability/bounds; context and later outcome are separate events | Implemented + domain-tested; instrumented accessibility/log leakage tests pending |
+| Withheld forecast leaks through an explanation surface | Explanation exists only with an available probability; concern, learning, abstention and failed reveal clear probability, interval and explanation together | Implemented + repository failure-path tests; device accessibility/log leakage tests pending |
+| Explanation asserts a reason not derived from the estimator | Typed diagnostics bind raw, weighted, prior and posterior rates; scenario-specific reasons derive from the sealed feature snapshot | Implemented for simulator; external human-factors review pending |
+| Motion implies a live connection or rewards a health result | No continuous score, pulse, heartbeat or observer-live animation; concern stops ornamental surfaces; system reduced-motion disables value transitions | Implemented in 0.6 phone/prototype source; device reduced-motion verification pending |
 | False phone receipt causes watch deletion | ACK requires authenticated bytes and durable commit; exact identity/digest plus durable replay claim gates deletion | Implemented in pure core; complete physical outbox crash recovery pending |
 | Stale clinician feed appears normal | Separate live/delayed/stale/no-data states; physiology cannot replace availability; observer coverage is explicit | Implemented + platform-neutral tested; no portal/backend exists |
 | Patient assumes a clinician is always watching | Research and regulated modes have different immutable labels; active observation requires both live data and active coverage | Implemented + platform-neutral tested; human-factors testing pending |

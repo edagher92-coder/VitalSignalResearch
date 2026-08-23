@@ -29,6 +29,14 @@ enum class ResearchAssistantStatus {
     BLOCKED,
 }
 
+enum class ResearchAssistantTemplateId {
+    DEVELOPING_REMEASURE,
+    WITHIN_PATTERN,
+    PATTERN_REVIEW,
+    EVIDENCE_ABSTAINED,
+    SAFETY_BLOCKED,
+}
+
 enum class ActivityResponseStatus {
     QUALIFIED_DESCRIPTIVE,
     LEARNING,
@@ -133,8 +141,7 @@ data class ResearchAssistantUiModel(
     val status: ResearchAssistantStatus,
     val title: String,
     val providerLabel: String,
-    val narrative: String,
-    val evidenceLabels: List<String>,
+    val templateId: ResearchAssistantTemplateId,
     val policyLabel: String,
 )
 
@@ -156,7 +163,16 @@ data class ForecastUiModel(
     val intervalLabel: String,
     val calibrationLabel: String,
     val explanation: ForecastExplanationUiModel? = null,
-)
+) {
+    init {
+        require(explanation == null || (status == ForecastStatus.AVAILABLE && probability != null)) {
+            "A forecast explanation can exist only beside an available probability"
+        }
+        require(status == ForecastStatus.AVAILABLE || probability == null) {
+            "A non-available forecast cannot retain a probability"
+        }
+    }
+}
 
 /**
  * Plain-language projection of the deterministic simulator estimator. It is

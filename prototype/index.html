@@ -274,11 +274,9 @@
     body::before, body::after {
       content: ""; position: fixed; z-index: -1; width: 44vw; aspect-ratio: 1;
       border-radius: 50%; filter: blur(32px); pointer-events: none; opacity: .42;
-      animation: ambient-float 14s ease-in-out infinite alternate;
     }
     body::before { left: -14vw; top: -18vw; background: radial-gradient(circle, rgba(114,232,200,.24), transparent 67%); }
-    body::after { right: -17vw; top: 26vh; background: radial-gradient(circle, rgba(185,176,255,.18), transparent 67%); animation-delay: -6s; }
-    @keyframes ambient-float { to { transform: translate3d(8vw, 7vh, 0) scale(1.13); opacity: .62; } }
+    body::after { right: -17vw; top: 26vh; background: radial-gradient(circle, rgba(185,176,255,.18), transparent 67%); }
     .side, .card {
       background: linear-gradient(155deg, rgba(18,48,50,.68), rgba(4,17,18,.46));
       border-color: rgba(222,255,249,.14);
@@ -301,12 +299,6 @@
     .hero { min-height: 430px; border-radius: 38px; }
     .hero-copy { padding: 36px 12px 34px 34px; }
     .hero h2 { font-size: clamp(38px, 5.2vw, 68px); max-width: 680px; }
-    .orb { animation: orb-float 4.6s ease-in-out infinite; }
-    .orb::before { animation: orb-breathe 3.2s ease-in-out infinite alternate; }
-    @keyframes orb-float { 50% { transform: translateY(-9px) scale(1.025); } }
-    @keyframes orb-breathe { to { filter: drop-shadow(0 0 24px rgba(114,232,200,.34)); transform: rotate(8deg); } }
-    .sync-dot { animation: sync-breathe 1.9s ease-in-out infinite; }
-    @keyframes sync-breathe { 50% { transform: scale(1.65); box-shadow: 0 0 20px var(--cyan); } }
     .button, .toggle, .nav-button {
       transition: transform .42s cubic-bezier(.2,.9,.2,1.45), background .25s ease, border-color .25s ease, color .25s ease;
     }
@@ -321,10 +313,6 @@
     @keyframes line-draw { to { stroke-dashoffset: 0; } }
     .trace-node { transition: .35s cubic-bezier(.2,.9,.2,1.2); }
     .trace-node:hover { transform: translateY(-4px); background: rgba(114,232,200,.07); border-color: rgba(114,232,200,.23); }
-    .rail i { animation: rail-pulse 2.4s ease-in-out infinite; }
-    @keyframes rail-pulse { 50% { transform: scale(1.4); box-shadow: 0 0 0 7px rgba(114,232,200,.08); } }
-    .freshness::before { animation: freshness-pulse 2.2s ease-in-out infinite; }
-    @keyframes freshness-pulse { 50% { transform: scale(1.55); opacity: .55; } }
     .forecast-explain { margin-top: 18px; display: none; overflow: hidden; }
     .forecast-explain.revealed { display: block; animation: explain-reveal .8s cubic-bezier(.2,.9,.2,1.08) both; }
     @keyframes explain-reveal { from { opacity: 0; transform: translateY(18px) scale(.98); } }
@@ -346,7 +334,10 @@
     .dialog-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 20px; }
     @keyframes fade-in { from { opacity: 0; } }
     @keyframes sheet-up { from { transform: translateY(70px) scale(.95); opacity: 0; } }
-    .motion-tour[aria-pressed="true"] { color: var(--cyan); border-color: rgba(114,232,200,.3); background: rgba(114,232,200,.08); }
+    body.concern-mode::before, body.concern-mode::after { opacity: .08; }
+    body.concern-mode #today > :not(.hero) { display: none !important; }
+    body.concern-mode .hero { background: rgba(45,18,24,.96); border-color: rgba(255,146,158,.55); }
+    body.concern-mode .orb::before { display: none; }
 
     /* Accessibility floor: no meaningful status, evidence, provenance or control copy below 12 px. */
     .brand small, .eyebrow, .five-second span, .orb-value span, .tag, .sub,
@@ -393,7 +384,11 @@
     }
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto; }
-      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
     }
   </style>
 </head>
@@ -433,7 +428,6 @@
         <div><h1 id="view-title" tabindex="-1">Good morning, Elz</h1><p id="view-subtitle" aria-live="polite">Simulator walkthrough · no personal health data</p></div>
         <div class="top-actions">
           <div class="sync"><span class="sync-dot"></span><span>Fixture loaded</span></div>
-          <button type="button" class="button motion-tour" id="motion-tour" aria-pressed="false">Play guided tour</button>
           <button type="button" class="button global-concern-action" id="global-concern-action">I feel concerned</button>
         </div>
       </header>
@@ -487,10 +481,10 @@
           </article>
         </div>
 
-        <article class="card pad forecast-explain" id="forecast-explain" aria-labelledby="forecast-explain-title" aria-live="polite">
+        <article class="card pad forecast-explain" id="forecast-explain" aria-labelledby="forecast-explain-title">
           <div class="card-title">
             <div><span class="eyebrow">Transparent estimate</span><h3 id="forecast-explain-title">What 36% means—and how the fixture got there</h3></div>
-            <span class="tag">SIMULATOR MATH · UNVALIDATED</span>
+            <span class="tag">BROWSER FIXTURE · NO LEDGER · UNVALIDATED</span>
           </div>
           <div class="explain-lead">
             <div class="explain-panel accent">
@@ -500,16 +494,16 @@
             </div>
             <div class="explain-panel">
               <span class="eyebrow">Comparison</span>
-              <h4>36% estimate · 33% fixture base rate</h4>
-              <p>Similarity and quality weighting move the generated estimate three percentage points above the unweighted fixture outcome rate. That difference is not proof that any signal caused the outcome.</p>
+              <h4>13 of 40 (32.5%) → 33.0% weighted → 36.4% posterior</h4>
+              <p>Similarity and quality weighting add 0.5 points. The Beta(2,2) regularizing prior then pulls toward 50%, adding 3.4 points. The displayed 36% is rounded; neither step proves that a signal caused the outcome.</p>
             </div>
           </div>
           <div class="explain-columns">
             <div class="explain-panel">
               <span class="eyebrow">Why it landed here</span>
               <ol class="explain-list">
-                <li>The current cardio-autonomic feature is nearer the generated higher-deviation neighborhood.</li>
-                <li>The sleep feature remains near its matched fixture pattern and adds little corroboration.</li>
+                <li>The cardio-autonomic feature is 7.5 and nearest the generated higher-deviation neighborhood (7.5).</li>
+                <li>The sleep feature is −0.7 relative to its generated matched reference; it changes similarity weights but is not a causal explanation.</li>
                 <li>Forty resolved synthetic cases pass prospective, schema, quality, identity and receipt gates.</li>
                 <li>The completed check-in unlocks reveal; it does not recalculate or alter the sealed probability.</li>
               </ol>
@@ -519,8 +513,8 @@
               <ol class="explain-list">
                 <li>Freeze two feature values, quality, cutoff and provenance before the target window.</li>
                 <li>Weight each eligible fixture by similarity × historical quality × current quality.</li>
-                <li>Combine weighted outcomes with a conservative beta prior.</li>
-                <li>Add posterior and quality uncertainty to form the simulated 80% interval: 22–50%.</li>
+                <li>Combine weighted outcomes with the named Beta(2,2) regularizing prior.</li>
+                <li>Use a normal posterior approximation plus a quality penalty, then round bounds outward to 22–51%. This is an engineering band, not validated coverage.</li>
               </ol>
             </div>
             <div class="explain-panel">
@@ -542,7 +536,7 @@
               </ol>
             </div>
           </div>
-          <div class="causality-warning"><strong>Similarity is not causality.</strong> These generated features cannot explain why a person feels a certain way, establish illness, or determine what will happen. The interval describes model uncertainty under fixture assumptions—not the full uncertainty of real life.</div>
+          <div class="causality-warning"><strong>Similarity is not causality.</strong> These generated features cannot explain why a person feels a certain way, establish illness, or determine what will happen. The engineering band covers only posterior and fixture-quality uncertainty; model design error and real-world uncertainty are unmeasured. How you feel matters more than this score. This app cannot diagnose or rule out a medical condition.</div>
         </article>
 
         <article class="card pad activity-response" aria-labelledby="activity-title">
@@ -640,7 +634,7 @@
           <div class="card-title"><div><span class="eyebrow">Clinician / research observer concept</span><h3>Coverage and freshness at a glance</h3></div><span class="tag" style="color:var(--rose)">DESIGN FIXTURE ONLY</span></div>
           <div class="coverage-grid" aria-label="Simulated observer coverage">
             <div class="coverage-cell"><span>Connected participants</span><strong>0</strong><small>No data source is attached</small></div>
-            <div class="coverage-cell"><span>UI states demonstrated</span><strong>9 / 9</strong><small>Live, delayed, stale, no-data and fail-closed fixtures</small></div>
+            <div class="coverage-cell"><span>UI states demonstrated</span><strong>10 / 10</strong><small>Live, delayed, stale, no-data and fail-closed fixtures</small></div>
             <div class="coverage-cell"><span>Qualified fixture windows</span><strong>3 / 4</strong><small>Display test only, not clinical coverage</small></div>
             <div class="coverage-cell"><span>Observer actions</span><strong>None</strong><small>No alert acknowledgement or escalation controls</small></div>
           </div>
@@ -655,6 +649,7 @@
               <div class="observer-row"><div><h4>Fixture VS-031</h4><p>Generated research participant</p></div><span class="freshness stale">STALE · SIMULATED</span><div class="provenance"><strong>46:09 display age · quality 79%</strong><br/>Expired fixture window · interpretation withheld</div></div>
               <div class="observer-row"><div><h4>Fixture VS-044</h4><p>Generated research participant</p></div><span class="freshness none">NO DATA · SIMULATED</span><div class="provenance"><strong>No measurement quality available</strong><br/>Missing-data fixture · never presented as typical</div></div>
               <div class="observer-row"><div><h4>Fixture VS-051</h4><p>Generated research participant</p></div><span class="freshness blocked">QUALITY BLOCKED</span><div class="provenance"><strong>Motion and contact failed the hard gate</strong><br/>Low-quality fixture · withheld rather than shown as typical</div></div>
+              <div class="observer-row"><div><h4>Fixture VS-054</h4><p>Generated research participant</p></div><span class="freshness blocked">VALIDATION BLOCKED</span><div class="provenance"><strong>Simulator source is not eligible for a live observer stream</strong><br/>Validation-policy fixture · no physiology displayed</div></div>
               <div class="observer-row"><div><h4>Fixture VS-058</h4><p>Generated research participant</p></div><span class="freshness blocked">AUTHORIZATION BLOCKED</span><div class="provenance"><strong>Named observer permit absent</strong><br/>No care-team authority · no live observation implied</div></div>
               <div class="observer-row"><div><h4>Fixture VS-063</h4><p>Generated research participant</p></div><span class="freshness session">SESSION INACTIVE</span><div class="provenance"><strong>Scheduled window closed</strong><br/>Not continuously observed · coverage label stays explicit</div></div>
               <div class="observer-row"><div><h4>Fixture VS-071</h4><p>Generated research participant</p></div><span class="freshness clock">CLOCK UNTRUSTED</span><div class="provenance"><strong>Device clock discontinuity</strong><br/>Timestamp rejected · sequence cannot be ordered</div></div>
@@ -820,7 +815,7 @@
       document.querySelectorAll('.view').forEach(v => {
         const active = v.id === id;
         v.classList.toggle('active', active);
-        if (active) {
+        if (active && !reducedMotion.matches) {
           v.getAnimations().forEach(animation => animation.cancel());
           v.animate(
             [
@@ -839,7 +834,7 @@
       });
       document.getElementById('view-title').textContent = meta[id][0];
       document.getElementById('view-subtitle').textContent = meta[id][1];
-      window.scrollTo({top: 0, behavior: 'smooth'});
+      window.scrollTo({top: 0, behavior: reducedMotion.matches ? 'auto' : 'smooth'});
       requestAnimationFrame(() => document.getElementById('view-title').focus());
     };
     document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => show(b.dataset.view)));
@@ -893,7 +888,7 @@
       document.getElementById('forecast-tag').textContent = concernReported ? 'HUMAN PRIORITY' : reveal ? 'Unvalidated' : 'Locked';
       document.getElementById('forecast-note').textContent = concernReported ? 'Wearable forecast withheld' : reveal ? 'Frozen binary simulator target · not diagnosis or treatment guidance' : 'Unanswered values remain missing';
       document.getElementById('forecast-value').textContent = concernReported ? 'Withheld' : reveal ? '36% fixture probability' : 'Absent from locked view';
-      document.getElementById('forecast-status').textContent = concernReported ? 'Use care plan or appropriate help' : reveal ? '80% interval · 22–50%' : 'Complete all five anchored responses';
+      document.getElementById('forecast-status').textContent = concernReported ? 'Use care plan or appropriate help' : reveal ? 'Engineering band · 22–51% · unvalidated' : 'Complete all five anchored responses';
       document.getElementById('audit-state').textContent = concernReported ? 'Concern recorded · forecast withheld' : reveal ? 'Revealed · outcome pending' : 'Committed hidden · partial context';
       document.getElementById('forecast-explain').classList.toggle('revealed', reveal);
       if (concernReported) {
@@ -962,16 +957,38 @@
     });
     const resolveDialog = document.getElementById('resolve-dialog');
     const resolveConcernButton = document.getElementById('resolve-concern');
+    const appShell = document.querySelector('.shell');
+    const closeResolveDialog = () => {
+      resolveDialog.hidden = true;
+      appShell.inert = false;
+      resolveConcernButton.focus();
+    };
     resolveConcernButton.addEventListener('click', () => {
+      appShell.inert = true;
       resolveDialog.hidden = false;
       requestAnimationFrame(() => document.getElementById('keep-concern').focus());
     });
-    document.getElementById('keep-concern').addEventListener('click', () => {
-      resolveDialog.hidden = true;
-      resolveConcernButton.focus();
+    document.getElementById('keep-concern').addEventListener('click', closeResolveDialog);
+    resolveDialog.addEventListener('keydown', event => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeResolveDialog();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const controls = [...resolveDialog.querySelectorAll('button:not([disabled])')];
+      const first = controls[0], last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     });
     document.getElementById('confirm-resolve').addEventListener('click', () => {
       resolveDialog.hidden = true;
+      appShell.inert = false;
       concernLatched = false;
       document.body.classList.remove('concern-mode');
       document.getElementById('global-concern-hold').hidden = true;
@@ -1018,35 +1035,6 @@
       });
     }, { threshold: .13 });
     document.querySelectorAll('.card').forEach(card => observedCards.observe(card));
-
-    const hero = document.querySelector('.hero');
-    hero.addEventListener('pointermove', event => {
-      if (reducedMotion.matches || event.pointerType === 'touch') return;
-      const bounds = hero.getBoundingClientRect();
-      const x = (event.clientX - bounds.left) / bounds.width - .5;
-      const y = (event.clientY - bounds.top) / bounds.height - .5;
-      hero.style.transform = `perspective(1000px) rotateX(${-y * 1.7}deg) rotateY(${x * 2.2}deg)`;
-    });
-    hero.addEventListener('pointerleave', () => { hero.style.transform = ''; });
-
-    const tourButton = document.getElementById('motion-tour');
-    let tourRun = 0;
-    tourButton.addEventListener('click', async () => {
-      tourRun += 1;
-      const run = tourRun;
-      const active = tourButton.getAttribute('aria-pressed') !== 'true';
-      tourButton.setAttribute('aria-pressed', String(active));
-      tourButton.textContent = active ? 'Stop guided tour' : 'Play guided tour';
-      if (!active) return;
-      const sequence = ['today', 'evidence', 'timeline', 'log', 'conflicts', 'inspector', 'observer', 'today'];
-      for (const view of sequence) {
-        if (run !== tourRun || tourButton.getAttribute('aria-pressed') !== 'true') return;
-        show(view);
-        await new Promise(resolve => setTimeout(resolve, reducedMotion.matches ? 900 : 2300));
-      }
-      tourButton.setAttribute('aria-pressed', 'false');
-      tourButton.textContent = 'Play guided tour';
-    });
   </script>
 </body>
 </html>

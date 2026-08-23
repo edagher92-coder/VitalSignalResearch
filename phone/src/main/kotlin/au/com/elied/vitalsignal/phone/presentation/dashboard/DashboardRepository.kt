@@ -1,6 +1,7 @@
 package au.com.elied.vitalsignal.phone.presentation.dashboard
 
 import au.com.elied.vitalsignal.analytics.ForecastModelState
+import au.com.elied.vitalsignal.analytics.ForecastDiagnostics
 import au.com.elied.vitalsignal.analytics.SafetyDisposition
 import au.com.elied.vitalsignal.analytics.canonicalSha256
 import au.com.elied.vitalsignal.audit.AppendOnlyHumanConcernJournal
@@ -22,6 +23,8 @@ import au.com.elied.vitalsignal.phone.presentation.brand.ProductBrand
 import java.security.MessageDigest
 import java.util.Locale
 import kotlin.math.abs
+import kotlin.math.ceil
+import kotlin.math.floor
 import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -122,6 +125,7 @@ class DemoDashboardRepository(
                 null
             }
             val revealedView = (revealOutcome as? ForecastRevealOutcome.Revealed)?.view
+            val diagnostics = evaluated.forecastEstimate.diagnostics
             val revealedForecast = when (revealOutcome) {
                 null -> safetyAdjusted.forecast
                 is ForecastRevealOutcome.Revealed -> safetyAdjusted.forecast.copy(
@@ -129,39 +133,16 @@ class DemoDashboardRepository(
                     headline = "Lower-than-personal-usual energy/function at +72h to +73h",
                     summary = "Unvalidated simulator estimate for the frozen binary target-window check-in. It is not a health prediction, diagnosis, or treatment recommendation.",
                     probability = (revealOutcome.view.probability * 100.0).roundToInt(),
-                    personalBaseRate = 33,
-                    intervalLabel = "Simulated 80% interval · " +
-                        "${(revealOutcome.view.lowerBound * 100.0).roundToInt()}–" +
-                        "${(revealOutcome.view.upperBound * 100.0).roundToInt()}%",
+                    personalBaseRate =
+                        diagnostics?.let { (it.unweightedOutcomeRate * 100.0).roundToInt() },
+                    intervalLabel = "Engineering uncertainty band · " +
+                        "${floor(revealOutcome.view.lowerBound * 100.0).toInt()}–" +
+                        "${ceil(revealOutcome.view.upperBound * 100.0).toInt()}% " +
+                        "(nominal 80% model range)",
                     calibrationLabel = "UNVALIDATED",
-                    explanation = ForecastExplanationUiModel(
-                        meaning = "In this generated fixture, the model assigns ${(revealOutcome.view.probability * 100.0).roundToInt()} out of 100 probability mass to a lower-than-personal-usual energy/function check-in during the one-hour window 72–73 hours after the forecast cutoff. It does not mean a ${(revealOutcome.view.probability * 100.0).roundToInt()}% loss of energy, a diagnosis, or that an event will occur.",
-                        comparison = "The deterministic fixture history has a 33% unweighted outcome rate. Similarity and quality weighting move this estimate to ${(revealOutcome.view.probability * 100.0).roundToInt()}%; that difference is a model comparison, not evidence that any input caused the outcome.",
-                        why = listOf(
-                            "The current cardio-autonomic feature is nearer the fixture's higher-deviation neighborhood than its steady neighborhood.",
-                            "The sleep feature is close to its generated matched pattern and adds little corroboration.",
-                            "${evaluated.forecastEstimate.validCaseCount} resolved synthetic cases pass the prospective, schema, quality, identity, and receipt gates.",
-                            "Your check-in controls reveal timing only. It does not retroactively change the already-committed probability.",
-                        ),
-                        method = listOf(
-                            "Freeze cardio-autonomic and sleep values, quality, cutoff, and provenance before the target window.",
-                            "Weight each eligible past fixture by feature similarity × historical quality × current quality.",
-                            "Combine weighted positive and negative outcomes with a conservative beta prior.",
-                            "Expand the 80% interval for posterior uncertainty and current-signal quality, then seal the result in the prospective ledger.",
-                        ),
-                        couldChange = listOf(
-                            "New qualified target features before a future forecast cutoff.",
-                            "More prospectively resolved outcomes from the same endpoint and schema.",
-                            "Different measurement quality, missingness, or feature similarity.",
-                            "A versioned model, endpoint, or policy change that passes offline review.",
-                        ),
-                        improvementPlan = listOf(
-                            "Replace generated cases with consented, independently verified prospective outcomes.",
-                            "Report calibration, discrimination, subgroup performance, and interval coverage on held-out data.",
-                            "Add ablation and sensitivity views so operators can see which assumptions move the estimate.",
-                            "Keep abstention, human-concern override, immutable cutoffs, and ledger auditing as release gates.",
-                        ),
-                    ),
+                    explanation = diagnostics?.let {
+                        forecastExplanation(evaluated, revealOutcome.view, it)
+                    },
                 )
 
                 is ForecastRevealOutcome.Refused -> safetyAdjusted.forecast.copy(
@@ -446,6 +427,70 @@ class DemoDashboardRepository(
         return "sim-$action-$occurredAtEpochMillis-$concernEventCounter"
     }
 
+    private fun forecastExplanation(
+        result: SimulatorPipelineResult,
+        revealed: RevealedForecastView,
+        diagnostics: ForecastDiagnostics,
+    ): ForecastExplanationUiModel {
+        val targetCardio = result.targetFeatures.featureValues
+            .getValue("cardio-autonomic")
+            .standardizedValue
+        val targetSleep = result.targetFeatures.featureValues
+            .getValue("sleep")
+            .standardizedValue
+        val nearerNeighborhood = if (abs(targetCardio - 7.5) < abs(targetCardio - 0.5)) {
+            "higher-deviation fixture neighborhood (7.5)"
+        } else {
+            "steady fixture neighborhood (0.5)"
+        }
+        val point = percentOneDecimal(diagnostics.posteriorOutcomeRate)
+        val raw = percentOneDecimal(diagnostics.unweightedOutcomeRate)
+        val weighted = percentOneDecimal(diagnostics.similarityWeightedOutcomeRate)
+        val weightingDelta = signedPoints(
+            diagnostics.similarityWeightedOutcomeRate - diagnostics.unweightedOutcomeRate,
+        )
+        val priorDelta = signedPoints(
+            diagnostics.posteriorOutcomeRate - diagnostics.similarityWeightedOutcomeRate,
+        )
+        val lower = floor(revealed.lowerBound * 100.0).toInt()
+        val upper = ceil(revealed.upperBound * 100.0).toInt()
+
+        return ForecastExplanationUiModel(
+            meaning = "This generated fixture assigns $point% probability mass to a lower-than-personal-usual energy/function check-in during the single hour 72–73 hours after the cutoff. It does not mean a $point% loss of energy, a diagnosis, or that an outcome will occur.",
+            comparison = "${diagnostics.resolvedPositiveCaseCount} of ${diagnostics.resolvedCaseCount} eligible fixture cases had the outcome ($raw%). Similarity and quality weighting move that rate to $weighted% ($weightingDelta points). The Beta(${diagnostics.priorAlpha.toInt()},${diagnostics.priorBeta.toInt()}) regularizing prior then pulls the estimate toward 50%, producing $point% ($priorDelta points).",
+            why = listOf(
+                "The cardio-autonomic feature is ${formatOneDecimal(targetCardio)} and is nearest the $nearerNeighborhood.",
+                "The sleep feature is ${formatOneDecimal(targetSleep)} relative to its generated matched reference; it changes similarity weights but is not a causal explanation.",
+                "${diagnostics.resolvedCaseCount} resolved synthetic cases pass prospective, schema, quality, identity, and receipt gates.",
+                "The check-in unlocks the ledger projection. It is context, not the later outcome, and does not enter the frozen feature weights.",
+            ),
+            method = listOf(
+                "Freeze cardio-autonomic and sleep values, quality, cutoff, and provenance before the target window.",
+                "Weight each eligible past fixture by feature similarity × historical quality × current quality.",
+                "Combine weighted outcomes with the named Beta(${diagnostics.priorAlpha.toInt()},${diagnostics.priorBeta.toInt()}) regularizing prior.",
+                "Show an outward-rounded $lower–$upper% engineering uncertainty band using a normal posterior approximation plus a quality penalty. It is not validated coverage and excludes real-world model error.",
+            ),
+            couldChange = listOf(
+                "New qualified target features before a future forecast cutoff.",
+                "More prospectively resolved outcomes using the same endpoint and schema.",
+                "Different quality, missingness, or similarity to eligible history.",
+                "A versioned model, endpoint, prior, or policy change that passes offline review.",
+            ),
+            improvementPlan = listOf(
+                "Replace generated cases with consented, independently verified prospective outcomes.",
+                "Report held-out calibration, discrimination, subgroup behavior, and interval coverage.",
+                "Add sensitivity and ablation views derived from typed diagnostics, never generated prose.",
+                "Keep abstention, human-concern override, immutable cutoffs, and ledger auditing as release gates.",
+            ),
+        )
+    }
+
+    private fun percentOneDecimal(rate: Double): String =
+        String.format(Locale.US, "%.1f", rate * 100.0)
+
+    private fun signedPoints(deltaRate: Double): String =
+        String.format(Locale.US, "%+.1f", deltaRate * 100.0)
+
     private fun DashboardUiState.withPipelineResult(
         result: SimulatorPipelineResult,
     ): DashboardUiState {
@@ -458,9 +503,9 @@ class DemoDashboardRepository(
             else -> forecast.status
         }
         val generatedInterval = generated?.let {
-            val lower = (it.lowerBound * 100.0).toInt()
-            val upper = (it.upperBound * 100.0).toInt()
-            "Simulated 80% interval · $lower–$upper%"
+            val lower = floor(it.lowerBound * 100.0).toInt()
+            val upper = ceil(it.upperBound * 100.0).toInt()
+            "Engineering uncertainty band · $lower–$upper% (nominal 80% model range)"
         } ?: forecast.intervalLabel
         val forecastIsRevealable = forecastStatus == ForecastStatus.AVAILABLE
         val generatedEvidence = result.deviations
@@ -481,8 +526,7 @@ class DemoDashboardRepository(
             -> researchAssistant.copy(
                 status = ResearchAssistantStatus.BLOCKED,
                 providerLabel = "Safety policy · no model call",
-                narrative = "A person-reported concern or reviewed symptom route takes priority. Wearable interpretation is withheld; no assistant response can provide reassurance or medical clearance.",
-                evidenceLabels = emptyList(),
+                templateId = ResearchAssistantTemplateId.SAFETY_BLOCKED,
             )
 
             SafetyDisposition.LEARNING,
@@ -491,18 +535,17 @@ class DemoDashboardRepository(
             -> researchAssistant.copy(
                 status = ResearchAssistantStatus.ABSTAINED,
                 providerLabel = "Evidence gate · no model call",
-                narrative = "The available fixture does not support a health interpretation. Missing, immature, or low-quality evidence remains unavailable rather than being filled in as normal.",
-                evidenceLabels = emptyList(),
+                templateId = ResearchAssistantTemplateId.EVIDENCE_ABSTAINED,
             )
 
             SafetyDisposition.TYPICAL -> researchAssistant.copy(
-                narrative = "Qualified simulated domains are close to their matched fixture ranges. This describes the available fixture only and cannot rule out a health condition or override how a person feels.",
+                templateId = ResearchAssistantTemplateId.WITHIN_PATTERN,
             )
 
             SafetyDisposition.SINGLE_SIGNAL_REMEASURE -> researchAssistant
 
             SafetyDisposition.PATTERN_ELIGIBLE -> researchAssistant.copy(
-                narrative = "More than one independent simulated family meets the research pattern gate. The evidence supports review and remeasurement, not a diagnosis, cause, or treatment decision.",
+                templateId = ResearchAssistantTemplateId.PATTERN_REVIEW,
             )
         }
 
@@ -584,21 +627,31 @@ class DemoDashboardRepository(
             forecast = forecast.copy(
                 status = forecastStatus,
                 probability = if (forecastIsRevealable) {
-                    generated?.let { (it.probability * 100.0).toInt() }
+                    generated?.let { (it.probability * 100.0).roundToInt() }
                 } else {
                     null
                 },
-                personalBaseRate = if (forecastIsRevealable && generated != null) 33 else null,
-                headline = if (concernOverridesSensors) "Forecast withheld" else forecast.headline,
-                summary = if (concernOverridesSensors) {
-                    "A reported human concern overrides the wearable forecast. No probability is displayed."
-                } else {
-                    forecast.summary
+                personalBaseRate = if (forecastIsRevealable) {
+                    result.forecastEstimate.diagnostics
+                        ?.let { (it.unweightedOutcomeRate * 100.0).roundToInt() }
+                } else null,
+                headline = when {
+                    concernOverridesSensors -> "Forecast withheld"
+                    forecastStatus == ForecastStatus.ABSTAINED -> "Forecast unavailable"
+                    else -> forecast.headline
+                },
+                summary = when {
+                    concernOverridesSensors ->
+                        "A reported human concern overrides the wearable forecast. No probability is displayed."
+                    forecastStatus == ForecastStatus.ABSTAINED ->
+                        "The forecast path abstained. No estimate or prior explanation is retained."
+                    else -> forecast.summary
                 },
                 intervalLabel = when {
                     concernOverridesSensors -> "Withheld because concern overrides wearable output"
                     forecastStatus == ForecastStatus.LOCKED ->
                         "Probability and interval are absent from the locked UI state"
+                    forecastStatus != ForecastStatus.AVAILABLE -> "No probability displayed"
                     else -> generatedInterval
                 },
                 calibrationLabel = if (concernOverridesSensors) {
@@ -613,6 +666,7 @@ class DemoDashboardRepository(
                         "LEARNING ${result.forecastEstimate.validCaseCount}/30"
                     ForecastModelState.ABSTAINED -> "ABSTAINED"
                 },
+                explanation = if (forecastIsRevealable) forecast.explanation else null,
             ),
         )
     }
@@ -680,12 +734,7 @@ class DemoDashboardRepository(
             status = ResearchAssistantStatus.REVIEWED_SIMULATOR_EXPLANATION,
             title = ProductBrand.SCIENTIST_TITLE,
             providerLabel = "Reviewed template · no model or cloud call",
-            narrative = "One simulated cardio-autonomic family differs from its matched fixture. A second independent domain and persistence are not present, so the verified interpretation remains: record context and remeasure.",
-            evidenceLabels = listOf(
-                "Cardio-autonomic family",
-                "Independent-domain gate",
-                "Measurement quality",
-            ),
+            templateId = ResearchAssistantTemplateId.DEVELOPING_REMEASURE,
             policyLabel = "Advisory only · cannot diagnose, recommend treatment, change medication, or clear an emergency",
         ),
         activityResponse = qualifiedActivityResponse(),

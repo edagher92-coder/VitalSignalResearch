@@ -108,6 +108,12 @@ class PersonalForecastEngineTest {
         assertEquals(schema, forecast.featureSchema)
         assertEquals(endpoint.targetStart(TARGET_CUTOFF), forecast.targetStartEpochMillis)
         assertEquals(endpoint.targetEnd(TARGET_CUTOFF), forecast.targetEndEpochMillis)
+        val diagnostics = requireNotNull(result.diagnostics)
+        assertEquals(40, diagnostics.resolvedCaseCount)
+        assertEquals(forecast.probability, diagnostics.posteriorOutcomeRate, 0.0)
+        assertEquals(2.0, diagnostics.priorAlpha, 0.0)
+        assertEquals(2.0, diagnostics.priorBeta, 0.0)
+        assertTrue(diagnostics.intervalMethod.contains("quality penalty"))
     }
 
     @Test

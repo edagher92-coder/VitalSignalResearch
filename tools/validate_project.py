@@ -8,6 +8,7 @@ unsafe UI phrases and critical architecture regressions fail loudly in any CI.
 from __future__ import annotations
 
 import re
+import subprocess
 import sys
 import tomllib
 import xml.etree.ElementTree as ET
@@ -35,7 +36,7 @@ def read(path: str) -> str:
 
 
 def validate_repository_hygiene() -> None:
-    ignored_roots = {".git", ".gradle", ".idea", "build", "__pycache__"}
+    ignored_roots = {".git", ".gradle", ".idea", ".kotlin", ".preview", "build", "__pycache__"}
     forbidden_names = {
         "local.properties",
         "secrets.properties",
@@ -60,9 +61,18 @@ def validate_repository_hygiene() -> None:
         "private MagicDNS endpoint": re.compile(rb"\b[a-z0-9-]+\.[a-z0-9-]+\.ts\.net\b", re.I),
     }
 
+    try:
+        tracked = subprocess.check_output(
+            ["git", "ls-files", "-z"],
+            cwd=ROOT,
+        ).decode("utf-8").split("\0")
+        candidates = [ROOT / path for path in tracked if path]
+    except (FileNotFoundError, subprocess.CalledProcessError, UnicodeDecodeError):
+        candidates = list(ROOT.rglob("*"))
+
     files: list[Path] = []
     forbidden: list[str] = []
-    for path in ROOT.rglob("*"):
+    for path in candidates:
         relative = path.relative_to(ROOT)
         if any(part in ignored_roots for part in relative.parts):
             continue
@@ -867,11 +877,13 @@ def validate_simulator_truthfulness() -> None:
             "Not answered" in dashboard_ui,
             "phone self-reports begin missing and partial context cannot reveal a forecast")
     require("ResearchAssistantStatus" in dashboard_models and
+            "ResearchAssistantTemplateId" in dashboard_models and
             "Governed assistant" in dashboard_ui and
             "no model or cloud call" in repository,
             "phone labels the assistant fixture without claiming that a model ran")
     require("ResearchAssistantStatus.BLOCKED" in repository and
-            "medical clearance" in repository and
+            "ResearchAssistantTemplateId.SAFETY_BLOCKED" in repository and
+            "medical clearance" in dashboard_ui and
             "ResearchAssistantStatus.ABSTAINED" in repository,
             "assistant follows concern and evidence abstention gates")
 
@@ -894,8 +906,9 @@ def validate_simulator_truthfulness() -> None:
     ):
         require(phrase in prototype, f'prototype contains truthful state: "{phrase}"')
     require("forecast-value" in prototype and "36%" in prototype, "prototype check-in reveals the computed simulated forecast")
-    require("22–50%" in prototype, "prototype interval matches the rounded simulator engine output")
+    require("22–51%" in prototype, "prototype interval conservatively rounds simulator bounds outward")
     for operator_surface in ("id=\"conflicts\"", "id=\"inspector\"", "QUALITY BLOCKED",
+                             "VALIDATION BLOCKED",
                              "AUTHORIZATION BLOCKED", "SESSION INACTIVE",
                              "CLOCK UNTRUSTED", "SEQUENCE INVALID",
                              "COMMITTED HIDDEN", "canonicalSha256"):
@@ -982,6 +995,7 @@ def validate_deliverables() -> None:
         "docs/BACKEND_CLINICIAN_PLATFORM.md",
         "backend/README.md",
         "backend/openapi/vitalsignal-research-observer-v1.yaml",
+        "backend/openapi/vitalsignal-assistant-gateway-v1.yaml",
         "research/signal_hypotheses.json",
         "prototype/index.html",
     ):
@@ -1001,6 +1015,18 @@ def validate_deliverables() -> None:
             "caseBindingSha256" in backend_api and
             "canonicalFeatureSnapshotSha256" in backend_api,
             "observer contract documents training-case receipt bindings")
+    assistant_api = read("backend/openapi/vitalsignal-assistant-gateway-v1.yaml")
+    require("openapi: 3.1.0" in assistant_api and
+            "https://assistant.invalid/v1" in assistant_api,
+            "assistant gateway is an OpenAPI 3.1 non-routable contract")
+    require("type: mutualTLS" in assistant_api and "Idempotency-Key" in assistant_api,
+            "assistant gateway requires mutual TLS and idempotency")
+    require("const: false" in assistant_api and
+            "storeResponse:" in assistant_api and
+            "providerBrowsingEnabled:" in assistant_api and
+            "providerToolsEnabled:" in assistant_api and
+            "credentialsIncluded:" in assistant_api,
+            "assistant gateway disables storage, tools, browsing and client credentials")
     report = read("docs/BUILD_REPORT.md")
     require("0.6.0-research" in report, "build report matches source version")
     require("not run" in report.lower(), "build report records unexecuted verification honestly")

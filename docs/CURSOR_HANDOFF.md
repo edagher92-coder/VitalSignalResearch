@@ -87,7 +87,9 @@ Open a pull request into `main`. Record what was tested, what was not tested, an
 
 ## 6. Current smallest useful implementation checkpoint
 
-The next engineering checkpoint is runtime composition for the **simulator/public-API path only**:
+After the bounded 0.6 simulator UI/explainability checkpoint in
+`docs/VERSION_0_6_0_PLAN.md`, the next engineering checkpoint is runtime
+composition for the **simulator/public-API path only**:
 
 1. Assemble and install both debug applications.
 2. Wire the existing consent-fenced public Health Services passive source to the existing encrypted watch outbox.
@@ -95,7 +97,10 @@ The next engineering checkpoint is runtime composition for the **simulator/publi
 4. Exercise process-kill, reboot, phone-offline, charging, depleted-battery, off-wrist, clock-change and duplicate-delivery cases on the exact devices.
 5. Keep raw Samsung SDK and real Samsung Health history adapters disabled until the licensed AARs, exact permission fences and device evidence receipts are present.
 
-Do not skip directly to prediction UI or a clinician alert. The collection, continuity, authority, privacy and data-quality gates must become real on-device evidence first.
+The 0.6 simulator explanation is an explicit fixture-only exception, not
+authorization for a personal forecast. Do not extend it to personal data or a
+clinician alert. Collection, continuity, authority, privacy and data-quality
+gates must become real on-device evidence first.
 
 ## 7. Files that must never be committed
 
@@ -111,7 +116,7 @@ The `.gitignore`, validator and CI scan for these categories, but the developer 
 
 Paste this into a new Cursor Agent conversation after opening the repository:
 
-> Continue Evidessa Research from `docs/CURSOR_HANDOFF.md` and `docs/SESSION_HANDOFF.md`. Inspect the existing source, `docs/STATUS_MATRIX.md`, `docs/BUILD_REPORT.md`, `CONTRIBUTING.md` and the relevant protocol before editing. Preserve simulator-only fail-closed release gates. State the next smallest testable checkpoint, implement it with failure-path tests, run the required checks and report exact evidence and remaining physical-device boundaries. Do not enable personal health-data collection, clinical monitoring, medical claims, cloud health-data transfer or model-authored medical advice without the signed governance and validation evidence required by the repository.
+> Continue Evidessa Research from `docs/CURSOR_HANDOFF.md`, `docs/SESSION_HANDOFF.md` and `docs/VERSION_0_6_0_PLAN.md`. Inspect the actual git status/diff plus `docs/STATUS_MATRIX.md`, `docs/SAFETY_CASE.md`, `docs/BUILD_REPORT.md`, `CONTRIBUTING.md` and the relevant protocol before editing. Preserve simulator-only fail-closed release gates and stable VitalSignal technical identities. Derive every displayed model number and explanation fact from typed estimator/ledger fields; never hand-write numeric model claims. State the next smallest testable checkpoint, implement it with failure-path tests, run every check available in the pinned environment, and report exact evidence separately from unverified physical-device, Samsung, backend, AI and clinical boundaries. Do not enable personal health-data collection or forecasts, clinical monitoring, medical claims, cloud health-data transfer or model-authored medical advice without the signed governance and validation evidence required by the repository.
 
 ## 9. Keeping two computers in sync
 

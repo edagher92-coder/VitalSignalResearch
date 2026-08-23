@@ -1,4 +1,4 @@
-# VitalSignal session handoff
+# Evidessa Research session handoff
 
 Use this file when the project is opened in another ChatGPT account, workspace or development environment. It preserves the product decisions without depending on access to the original chat.
 
@@ -62,8 +62,13 @@ Missing or externally gated: proprietary Samsung Sensor/Data SDK adapters and AA
 8. Implement the authenticated Ollama gateway transport/decoders and adversarially benchmark the pinned model only behind the signed packet, verifier, audit and promotion gates.
 9. Run hidden prospective forecasts and promote nothing until calibration, lead-time and false-alert evidence passes.
 
-## Continuation prompt
+## Canonical continuation prompt
 
-After attaching the project bundle in another session, use:
-
-> Continue building VitalSignal Research from `docs/SESSION_HANDOFF.md`. Inspect the existing source first, preserve the locked safety and validation decisions, report the next smallest testable checkpoint, then implement and verify it. Do not make diagnostic claims or add cloud health-data transfer without explicit approval.
+`docs/CURSOR_HANDOFF.md` owns the canonical continuation prompt. Use that prompt
+in every agent environment rather than maintaining competing copies here.
+Before changing behavior, the next agent must read this handoff,
+`docs/STATUS_MATRIX.md`, `docs/SAFETY_CASE.md`, `docs/BUILD_REPORT.md` and
+`docs/VERSION_0_6_0_PLAN.md`; inspect the actual dirty/committed tree; derive
+all displayed model facts from typed estimator/ledger fields; preserve stable
+VitalSignal technical identities; and report executed checks separately from
+unverified device, Samsung, backend, AI and clinical evidence.

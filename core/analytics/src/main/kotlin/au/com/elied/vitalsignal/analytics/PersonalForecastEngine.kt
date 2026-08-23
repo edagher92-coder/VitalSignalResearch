@@ -209,7 +209,38 @@ data class ForecastEstimate(
     val validCaseCount: Int,
     val effectiveCaseWeight: Double,
     val reason: String,
+    val diagnostics: ForecastDiagnostics? = null,
 )
+
+/** Typed estimator facts used for audits and explanations; never causal attribution. */
+data class ForecastDiagnostics(
+    val resolvedPositiveCaseCount: Int,
+    val resolvedCaseCount: Int,
+    val unweightedOutcomeRate: Double,
+    val similarityWeightedOutcomeRate: Double,
+    val posteriorOutcomeRate: Double,
+    val priorAlpha: Double,
+    val priorBeta: Double,
+    val positiveCaseWeight: Double,
+    val totalCaseWeight: Double,
+    val targetQuality: Double,
+    val qualityPenalty: Double,
+    val intervalMethod: String,
+) {
+    init {
+        require(resolvedPositiveCaseCount in 0..resolvedCaseCount)
+        require(resolvedCaseCount > 0)
+        require(unweightedOutcomeRate in 0.0..1.0)
+        require(similarityWeightedOutcomeRate in 0.0..1.0)
+        require(posteriorOutcomeRate in 0.0..1.0)
+        require(priorAlpha > 0.0 && priorBeta > 0.0)
+        require(positiveCaseWeight in 0.0..totalCaseWeight)
+        require(totalCaseWeight > 0.0)
+        require(targetQuality in 0.0..1.0)
+        require(qualityPenalty >= 0.0)
+        require(intervalMethod.isNotBlank())
+    }
+}
 
 /**
  * Transparent N-of-1 baseline forecast. Similar prior states are weighted,
@@ -375,6 +406,26 @@ class PersonalForecastEngine(
                 "Minimum prospective case support met"
             } else {
                 "Learning: ${eligible.size} of $minimumReadyCases resolved cases"
+            },
+            diagnostics = if (eligible.isNotEmpty() && totalWeight > 0.0) {
+                ForecastDiagnostics(
+                    resolvedPositiveCaseCount = eligible.count { it.observedOutcome == 1.0 },
+                    resolvedCaseCount = eligible.size,
+                    unweightedOutcomeRate =
+                        eligible.mapNotNull(ForecastTrainingCase::observedOutcome).average(),
+                    similarityWeightedOutcomeRate = positiveWeight / totalWeight,
+                    posteriorOutcomeRate = probability,
+                    priorAlpha = PRIOR_ALPHA,
+                    priorBeta = PRIOR_BETA,
+                    positiveCaseWeight = positiveWeight,
+                    totalCaseWeight = totalWeight,
+                    targetQuality = target.quality,
+                    qualityPenalty = qualityPenalty,
+                    intervalMethod =
+                        "Normal approximation to the beta posterior plus a target-quality penalty",
+                )
+            } else {
+                null
             },
         )
     }
