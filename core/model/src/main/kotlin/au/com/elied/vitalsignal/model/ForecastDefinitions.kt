@@ -106,30 +106,36 @@ data class ForecastEndpointDefinition(
 data class ForecastFeatureSchemaDefinition(
     val id: String,
     val version: String,
-    featureVersions: Map<String, String>,
+    val featureVersions: Map<String, String>,
     val standardizationProtocol: String,
     val definitionSha256: String,
 ) {
-    val featureVersions: Map<String, String> = java.util.Map.copyOf(featureVersions.toSortedMap())
     val featureKeys: Set<String>
-        get() = this.featureVersions.keys
+        get() = featureVersions.keys
 
     init {
         require(id.matches(SAFE_ID))
         require(version.matches(SAFE_VERSION))
-        require(this.featureVersions.isNotEmpty() && this.featureVersions.size <= 256)
-        require(this.featureVersions.keys.all { it.matches(SAFE_FEATURE_KEY) })
-        require(this.featureVersions.values.all { it.matches(SAFE_VERSION) })
+        require(featureVersions.isNotEmpty() && featureVersions.size <= 256)
+        require(featureVersions.keys.all { it.matches(SAFE_FEATURE_KEY) })
+        require(featureVersions.values.all { it.matches(SAFE_VERSION) })
         require(standardizationProtocol.isNotBlank() && standardizationProtocol.length <= 1_000)
         require(definitionSha256 == calculatedDefinitionSha256()) {
             "Feature schema SHA-256 does not match its canonical definition"
         }
     }
 
+    /**
+     * Re-snapshot the feature map so a caller-owned or `copy()`-supplied map
+     * cannot change the sealed key set after the digest has been checked.
+     */
+    fun sealedCopy(): ForecastFeatureSchemaDefinition =
+        copy(featureVersions = java.util.Map.copyOf(featureVersions.toSortedMap()))
+
     private fun calculatedDefinitionSha256(): String = forecastDefinitionSha256(
         id,
         version,
-        this.featureVersions.toSortedMap().entries.joinToString("\u001f") { (id, version) ->
+        featureVersions.toSortedMap().entries.joinToString("\u001f") { (id, version) ->
             "$id@$version"
         },
         standardizationProtocol,
@@ -142,7 +148,8 @@ data class ForecastFeatureSchemaDefinition(
             featureVersions: Map<String, String>,
             standardizationProtocol: String,
         ): ForecastFeatureSchemaDefinition {
-            val stableVersions = java.util.Map.copyOf(featureVersions.toSortedMap())
+            // Digest and validation must agree on order, so both sort before hashing.
+            val stableVersions = featureVersions.toSortedMap()
             val digest = forecastDefinitionSha256(
                 id,
                 version,
@@ -154,7 +161,7 @@ data class ForecastFeatureSchemaDefinition(
             return ForecastFeatureSchemaDefinition(
                 id = id,
                 version = version,
-                featureVersions = stableVersions,
+                featureVersions = java.util.Map.copyOf(stableVersions),
                 standardizationProtocol = standardizationProtocol,
                 definitionSha256 = digest,
             )

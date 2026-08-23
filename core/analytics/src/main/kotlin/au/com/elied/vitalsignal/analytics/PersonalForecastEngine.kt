@@ -18,20 +18,22 @@ data class ForecastFeatureValue(
     val standardizedValue: Double,
     val sourceWindowStartEpochMillis: Long,
     val sourceWindowEndEpochMillis: Long,
-    provenanceIds: List<String>,
+    val provenanceIds: List<String>,
 ) {
-    val provenanceIds: List<String> = java.util.List.copyOf(provenanceIds)
-
     init {
         require(featureId.matches(Regex("[A-Za-z0-9._-]{1,96}")))
         require(featureVersion.matches(Regex("[A-Za-z0-9._-]{1,64}")))
         require(standardizedValue.isFinite())
         require(sourceWindowStartEpochMillis >= 0L)
         require(sourceWindowEndEpochMillis >= sourceWindowStartEpochMillis)
-        require(this.provenanceIds.isNotEmpty() && this.provenanceIds.size <= 256)
-        require(this.provenanceIds.all { it.matches(Regex("[A-Za-z0-9._:-]{1,160}")) })
-        require(this.provenanceIds.distinct().size == this.provenanceIds.size)
+        require(provenanceIds.isNotEmpty() && provenanceIds.size <= 256)
+        require(provenanceIds.all { it.matches(Regex("[A-Za-z0-9._:-]{1,160}")) })
+        require(provenanceIds.distinct().size == provenanceIds.size)
     }
+
+    /** Provenance order is not meaningful, so the sealed form is sorted and immutable. */
+    internal fun sealedCopy(): ForecastFeatureValue =
+        copy(provenanceIds = java.util.List.copyOf(provenanceIds.sorted()))
 }
 
 /**
@@ -90,16 +92,14 @@ class ForecastFeatureSnapshot private constructor(
             quality: Double,
         ): ForecastFeatureSnapshot {
             val sealedValues = java.util.Map.copyOf(
-                featureValues.mapValues { (_, feature) ->
-                    feature.copy(
-                        provenanceIds = feature.provenanceIds.sorted(),
-                    )
-                }.toSortedMap(),
+                featureValues
+                    .mapValues { (_, feature) -> feature.sealedCopy() }
+                    .toSortedMap(),
             )
             return ForecastFeatureSnapshot(
                 id = id,
                 cutoffEpochMillis = cutoffEpochMillis,
-                featureSchema = featureSchema,
+                featureSchema = featureSchema.sealedCopy(),
                 featureValues = sealedValues,
                 quality = quality,
             )

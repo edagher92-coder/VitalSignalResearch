@@ -342,18 +342,46 @@ class PersonalForecastEngineTest {
     }
 
     @Test
-    fun featureValueProvenanceListIsCopiedAtConstruction() {
-        val provenance = mutableListOf("fixture:cardio-autonomic:$TARGET_CUTOFF")
-        val feature = ForecastFeatureValue(
-            featureId = "cardio-autonomic",
-            featureVersion = "sim-v1",
-            standardizedValue = 1.0,
-            sourceWindowStartEpochMillis = TARGET_CUTOFF - DAY,
-            sourceWindowEndEpochMillis = TARGET_CUTOFF,
-            provenanceIds = provenance,
+    fun sealedSnapshotProvenanceIsImmutableAndCanonicallyOrdered() {
+        val snapshot = ForecastFeatureSnapshot(
+            id = "sealed-provenance",
+            cutoffEpochMillis = TARGET_CUTOFF,
+            featureSchema = schema,
+            featureValues = exactValues(TARGET_CUTOFF, 1.0).mapValues { (_, feature) ->
+                feature.copy(
+                    provenanceIds = mutableListOf(
+                        "fixture:z:${feature.featureId}",
+                        "fixture:a:${feature.featureId}",
+                    ),
+                )
+            },
+            quality = 0.95,
         )
-        provenance.add("injected")
-        assertEquals(listOf("fixture:cardio-autonomic:$TARGET_CUTOFF"), feature.provenanceIds)
+        val sealedProvenance = snapshot.featureValues.getValue("sleep").provenanceIds
+
+        assertEquals(listOf("fixture:a:sleep", "fixture:z:sleep"), sealedProvenance)
+        assertThrows(UnsupportedOperationException::class.java) {
+            @Suppress("UNCHECKED_CAST")
+            (sealedProvenance as MutableList<String>).clear()
+        }
+    }
+
+    @Test
+    fun schemaSuppliedThroughCopyIsResealedBySnapshotConstruction() {
+        val mutableVersions = mutableMapOf("cardio-autonomic" to "sim-v1", "sleep" to "sim-v1")
+        val aliased = schema.copy(featureVersions = mutableVersions)
+        val snapshot = ForecastFeatureSnapshot(
+            id = "resealed-schema",
+            cutoffEpochMillis = TARGET_CUTOFF,
+            featureSchema = aliased,
+            featureValues = exactValues(TARGET_CUTOFF, 1.0),
+            quality = 0.95,
+        )
+
+        mutableVersions["thermal"] = "sim-v1"
+
+        assertEquals(setOf("cardio-autonomic", "sleep"), snapshot.featureSchema.featureKeys)
+        assertEquals(snapshot.featureValues.keys, snapshot.featureSchema.featureKeys)
     }
 
     private fun run(

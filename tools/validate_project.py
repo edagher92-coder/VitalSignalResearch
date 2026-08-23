@@ -576,8 +576,9 @@ def validate_traceability_and_quality() -> None:
             "features.quality.toRawBits().toString()" in forecast,
             "training-case bindings include snapshot quality and canonical contents")
     require("java.util.Map.copyOf(" in forecast and
-            "java.util.List.copyOf(provenanceIds)" in forecast,
-            "forecast snapshots copy caller-owned maps and provenance lists")
+            "java.util.List.copyOf(provenanceIds.sorted())" in forecast and
+            "featureSchema.sealedCopy()" in forecast,
+            "forecast snapshots reseal caller-owned schemas, maps and provenance lists")
     require("trainingSetDigest" in forecast and "sortedBy(ForecastTrainingCase::caseBindingSha256)" in forecast,
             "forecast identity binds a sorted training-set digest")
     require("Equal delete sequence has a different native source version" in history_merge,

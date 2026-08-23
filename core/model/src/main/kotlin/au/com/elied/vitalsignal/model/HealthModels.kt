@@ -449,7 +449,7 @@ data class HealthForecast(
     val upperBound: Double,
     val confidence: Double,
     val modelVersion: String,
-    featureSnapshotIds: List<String>,
+    val featureSnapshotIds: List<String>,
     val featureSchema: ForecastFeatureSchemaDefinition,
     val cutoffEpochMillis: Long = createdAtEpochMillis,
     val targetStartEpochMillis: Long = endpoint.targetStart(cutoffEpochMillis),
@@ -459,7 +459,6 @@ data class HealthForecast(
     val featureSnapshotHash: String,
     val maximumCommitLagMillis: Long = 15L * 60L * 1_000L,
 ) {
-    val featureSnapshotIds: List<String> = java.util.List.copyOf(featureSnapshotIds)
     val horizonHours: Int
         get() = (endpoint.targetStartOffsetMillis / (60L * 60L * 1_000L)).toInt()
 
@@ -491,7 +490,7 @@ data class HealthForecast(
         }
         require(policyVersion.isNotBlank())
         require(intervalCoverage in 0.0..1.0)
-        require(this.featureSnapshotIds.isNotEmpty())
+        require(featureSnapshotIds.isNotEmpty())
         require(featureSnapshotHash.matches(Regex("[a-f0-9]{64}"))) {
             "featureSnapshotHash must be a lowercase SHA-256 digest"
         }
