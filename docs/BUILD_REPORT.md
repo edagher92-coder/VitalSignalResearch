@@ -25,7 +25,7 @@ battery, privacy-command or reference-device behavior.
 
 ## Behaviours executed
 
-The 582-test merged run includes deterministic and adversarial cases for:
+The 610-test clean JDK 17 Gradle run includes deterministic and adversarial cases for:
 
 - complete qualified-or-explicit-gap daily activity trends and comparable exercise dose/response/recovery;
 - non-finite/overflow, future leakage, duplicate/replayed provenance, source/origin forgery, coverage and cross-stream consistency rejection;
@@ -54,7 +54,7 @@ These are environment boundaries, not passing Android, Samsung, hardware or mode
 ## Release-blocking items not verified
 
 - The exact Ultra2 tracker/capability inventory and proprietary Samsung Health Sensor/Data SDK adapter compatibility.
-- Pinned full Android Gradle compilation, lint, phone/watch APK installation and Compose/accessibility/device tests.
+- Phone/watch APK installation and Compose accessibility/device tests.
 - Authenticated physical watch/phone pairing, production key provisioning/rotation and real Data Layer service behaviour.
 - Exact Samsung-history query authorization plus current-consent atomic completion fencing.
 - Durable privacy export/deletion executors and a phone writer fence that closes the revocation race.

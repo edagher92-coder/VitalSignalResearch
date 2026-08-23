@@ -23,7 +23,7 @@ jobs:
         run: python3 tools/validate_project.py
 
       - name: Prototype interaction and safety checks
-        run: node --test prototype/prototype.test.mjs
+        run: node --test prototype/*.test.mjs
 
       - name: Prototype JavaScript syntax
         run: awk '/<script>/{inside=1;next} /<\/script>/{inside=0} inside' prototype/index.html | node --check

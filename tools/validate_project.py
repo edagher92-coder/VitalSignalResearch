@@ -998,6 +998,7 @@ def validate_deliverables() -> None:
         "backend/openapi/vitalsignal-assistant-gateway-v1.yaml",
         "research/signal_hypotheses.json",
         "prototype/index.html",
+        "prototype/prototype.browser.test.mjs",
     ):
         require((ROOT / relative).is_file(), f"deliverable exists: {relative}")
     StrictHtmlParser().feed(read("prototype/index.html"))

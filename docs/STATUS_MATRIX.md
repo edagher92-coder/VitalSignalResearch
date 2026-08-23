@@ -43,7 +43,7 @@ Release decision: **GO only for simulator engineering evaluation.** The generate
 | Phone/watch simulator | Implemented in source | Explicitly simulated and personal-data locked; forecast/demo state is memory-only, while injected test journals exercise restart behavior outside the visible demo |
 | Fatigue/adrenal-context lane | Typed outcomes/context + protocol documented and platform-neutral tested | Fatigue/function are prospective outcomes; no cortisol/adrenal diagnosis, symptom triage or medication advice is active |
 | Backend/clinician network | OpenAPI contract only | No HTTP service, database, IAM, portal, cloud deployment or attended clinical service exists |
-| Android/Compose Gradle build | Not verified here | AGP/Android dependencies unavailable in this workspace; Android Studio/CI is the next compilation gate |
+| Android/Compose Gradle build | Verified locally for 0.6 source | Clean JDK 17 Gradle tests, lint and phone/wear debug assemblies passed; physical installation, instrumentation/accessibility and exact-device behavior remain unverified |
 | Physical Galaxy Watch/phone tests | Not run | Pairing, signer, permission, Keystore, process-kill, battery, clock, radio and firmware tests required |
 | Reference and prospective validation | Not started | No reference-device agreement, calibration, false-alert, human-factors or clinical performance evidence |
 | Regulated clinical monitoring | Locked | Needs intended-use review, clinical service design, QMS, cybersecurity, performance/human-factors evidence and authorisation |

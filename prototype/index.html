@@ -384,7 +384,8 @@
       .activity-metrics, .activity-detail-grid { grid-template-columns: 1fr; }
       .explain-lead, .explain-columns { grid-template-columns: 1fr; }
       .sim-banner { letter-spacing: .015em; padding: 11px 13px; }
-      .sim-banner span { white-space: normal; }
+      .sim-banner { display: block; }
+      .sim-banner span { display: inline; white-space: normal; }
       .sim-banner span + span::before { margin-right: 5px; }
     }
     @media (prefers-reduced-motion: reduce) {
@@ -1029,6 +1030,7 @@
       toast.textContent = 'Simulator hold resolved by explicit person action. This is not medical clearance.';
       toast.classList.add('show');
       setTimeout(() => toast.classList.remove('show'), 2200);
+      requestAnimationFrame(() => document.getElementById('hero-title').focus());
     });
 
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');

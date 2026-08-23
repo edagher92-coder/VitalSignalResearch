@@ -29,8 +29,8 @@ Keep exact personal medical details outside source control and out of demo data.
 
 ## Current source status
 
-- Source version `0.5.0-research`; visible phone/watch and browser experiences remain explicitly simulated and personal-data locked.
-- Release decision is GO only for simulator engineering evaluation. Personal collection, visible forecasts, hardware-performance claims, Ollama output, clinician monitoring and public/clinical use remain NO-GO.
+- Source version `0.6.0-research`; visible phone/watch and browser experiences remain explicitly simulated and personal-data locked.
+- Release decision is GO only for simulator engineering evaluation, including the unvalidated fixture forecast after the prospective check-in/reveal sequence. Personal collection, personal-data forecasts, hardware-performance claims, model output, clinician monitoring and public/clinical use remain NO-GO.
 - Strict quality, 28-day matched personal baseline, correlation-aware interpretation, deterministic safety policy and prospective binary forecast controls.
 - Standardized-response engine matched by protocol/device/firmware/physical-configuration digest, requiring 12 qualified episodes across 28 days and change in two independent families; human concern holds before sensor scoring. A separate function-capture gate requires externally reviewed protocol/session receipts.
 - Battery-aware adaptive-sensing planner that can request, but never silently start, a short validated foreground remeasurement.
@@ -45,10 +45,10 @@ Keep exact personal medical details outside source control and out of demo data.
 - Authority-verified human-concern ledger and encrypted journal: a concern hold survives restart and can be cleared only by an authorised explicit resolution. The visible demo is not attended and notifies nobody.
 - Crash-safe phone receipt-delivery outbox: accepted receipts can be retried across a process-shaped gap; Android scheduling/startup composition is still absent.
 - Android Keystore provider boundary that never silently regenerates a missing expected key.
-- The exact final merged platform-neutral suite result is recorded in `docs/BUILD_REPORT.md`. This is not an Android/physical-device result.
+- The exact clean JDK 17 Gradle/source result is recorded in `docs/BUILD_REPORT.md`. It includes Android compilation, lint and debug APK assembly, but it is not a physical-device result.
 - Non-deployed backend OpenAPI and clinician-platform contract; no server, database, IAM, portal or attended service exists.
 
-Missing or externally gated: proprietary Samsung Sensor/Data SDK adapters and AARs; real Samsung Health/Health Connect reads; secure physical key provisioning/rotation; app-startup composition of manifest-declared Health Services/Data Layer adapters; Android scheduling for receipt redelivery; completed export/deletion executors; concrete authenticated Ollama HTTPS transport/decoders and real benchmark; backend implementation/IAM/portal; Android APK build in the current workspace; battery/clock/reboot/radio/device tests; ECG–PPG timestamp/reference verification; function-protocol external approval; reference-device agreement and prospective calibration.
+Missing or externally gated: proprietary Samsung Sensor/Data SDK adapters and AARs; real Samsung Health/Health Connect reads; secure physical key provisioning/rotation; app-startup composition of manifest-declared Health Services/Data Layer adapters; Android scheduling for receipt redelivery; completed export/deletion executors; concrete authenticated Ollama HTTPS transport/decoders and real benchmark; backend implementation/IAM/portal; physical APK installation; battery/clock/reboot/radio/device tests; ECG–PPG timestamp/reference verification; function-protocol external approval; reference-device agreement and prospective calibration.
 
 ## Next build checkpoint
 
