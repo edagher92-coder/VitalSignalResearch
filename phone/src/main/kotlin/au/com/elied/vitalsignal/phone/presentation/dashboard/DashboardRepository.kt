@@ -22,6 +22,7 @@ import au.com.elied.vitalsignal.phone.presentation.brand.ProductBrand
 import java.security.MessageDigest
 import java.util.Locale
 import kotlin.math.abs
+import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -127,15 +128,15 @@ class DemoDashboardRepository(
                     status = ForecastStatus.AVAILABLE,
                     headline = "Lower-than-personal-usual energy/function at +72h to +73h",
                     summary = "Unvalidated simulator estimate for the frozen binary target-window check-in. It is not a health prediction, diagnosis, or treatment recommendation.",
-                    probability = (revealOutcome.view.probability * 100.0).toInt(),
+                    probability = (revealOutcome.view.probability * 100.0).roundToInt(),
                     personalBaseRate = 33,
                     intervalLabel = "Simulated 80% interval · " +
-                        "${(revealOutcome.view.lowerBound * 100.0).toInt()}–" +
-                        "${(revealOutcome.view.upperBound * 100.0).toInt()}%",
+                        "${(revealOutcome.view.lowerBound * 100.0).roundToInt()}–" +
+                        "${(revealOutcome.view.upperBound * 100.0).roundToInt()}%",
                     calibrationLabel = "UNVALIDATED",
                     explanation = ForecastExplanationUiModel(
-                        meaning = "In this generated fixture, the model assigns ${(revealOutcome.view.probability * 100.0).toInt()} out of 100 probability mass to a lower-than-personal-usual energy/function check-in during the one-hour window 72–73 hours after the forecast cutoff. It does not mean a ${(revealOutcome.view.probability * 100.0).toInt()}% loss of energy, a diagnosis, or that an event will occur.",
-                        comparison = "The deterministic fixture history has a 33% unweighted outcome rate. Similarity and quality weighting move this estimate to ${(revealOutcome.view.probability * 100.0).toInt()}%; that difference is a model comparison, not evidence that any input caused the outcome.",
+                        meaning = "In this generated fixture, the model assigns ${(revealOutcome.view.probability * 100.0).roundToInt()} out of 100 probability mass to a lower-than-personal-usual energy/function check-in during the one-hour window 72–73 hours after the forecast cutoff. It does not mean a ${(revealOutcome.view.probability * 100.0).roundToInt()}% loss of energy, a diagnosis, or that an event will occur.",
+                        comparison = "The deterministic fixture history has a 33% unweighted outcome rate. Similarity and quality weighting move this estimate to ${(revealOutcome.view.probability * 100.0).roundToInt()}%; that difference is a model comparison, not evidence that any input caused the outcome.",
                         why = listOf(
                             "The current cardio-autonomic feature is nearer the fixture's higher-deviation neighborhood than its steady neighborhood.",
                             "The sleep feature is close to its generated matched pattern and adds little corroboration.",
