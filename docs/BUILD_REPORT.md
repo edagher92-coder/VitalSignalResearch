@@ -2,27 +2,26 @@
 
 Checkpoint: 2026-08-23 (Australia/Sydney) · source version `0.6.0-research`
 
-Version 0.6 verification is in progress on branch
-`cursor/one-ui-motion-upgrade-0aa0`. The table below is the inherited 0.5
-baseline and must not be represented as evidence for new 0.6 UI, explainability,
-backend, or release behavior until the branch checks are rerun and recorded.
-
 ## Reproduced in this workspace
 
 | Check | Result | Scope |
 |---|---|---|
-| Merged direct Kotlin/JVM suite | **582 passed, 0 failed** | 79 platform-neutral production sources and 69 test classes across core, phone and watch domains |
-| `python3 tools/validate_project.py` | Passed after this report was updated | Module/version/manifests, claims copy, quality/baseline/safety/governance/privacy/transport invariants, required tests/docs, endpoint/secret exclusions and prototype contract |
-| `node --test prototype/prototype.test.mjs` | **11 passed, 0 failed** | Navigation, top-down/bottom-up traceability, concern override, forecast reveal, activity states, observer states and simulator/medical boundaries |
+| Clean pinned Gradle suite under JDK 17 | **610 passed, 0 failed** | `./gradlew clean test lint :phone:assembleDebug :wear:assembleDebug --no-daemon --stacktrace`; 448 core, 91 phone and 71 wear tests |
+| Android lint | **Passed** | Phone, Wear and core lint tasks completed; HTML/SARIF reports produced |
+| Phone + Wear debug APK assembly | **Passed** | Both identify package `au.com.elied.vitalsignal`, version code 6, version `0.6.0-research`, target/compile SDK 37 |
+| APK signer continuity | **Passed** | Both APKs verify with Android Debug signer SHA-256 `06825f8547232d421162e4429502d8e188fd8d4a7f16938bf19748d7470f417f` |
+| `python3 tools/validate_project.py` | **Passed** | Tracked-file hygiene, module/version/manifests, claims copy, safety/governance/privacy/transport invariants, backend/assistant contract boundaries, required tests/docs and prototype contract |
+| `node --test prototype/prototype.test.mjs` | **16 passed, 0 failed** | Navigation, concern override, engine-aligned forecast explanation, observer states, reduced-motion source contract and simulator/medical boundaries |
 | Prototype JavaScript syntax | Passed | Extracted inline program parsed by Node 24 |
 | JSON documents | Passed | Research hypothesis and repository JSON documents parsed without error |
-| OpenAPI contracts | Passed | Assistant-gateway and observer contracts parsed as OpenAPI 3.1 YAML |
+| OpenAPI boundary checks | Passed | Observer and assistant gateway declare OpenAPI 3.1, non-routable placeholders, mTLS/idempotency and fail-closed provider controls |
 | HTML parse | Passed | Dependency-free strict parser accepted the interactive prototype |
 | Secret/private-endpoint scan | Passed | No private keys, provider/GitHub/Tailscale tokens, private tailnet endpoints, proprietary SDKs, personal data or packaged-app outputs were detected |
 
-The merged suite used the locally available Kotlin `2.3.20` compiler on JRE 17 with Kotlin standard library/reflect `2.3.20` and coroutines `1.10.2`. The project itself pins Kotlin `2.4.10`; the direct compiler run is therefore a strong platform-neutral source/test check, not a substitute for the pinned Gradle build.
-
-There are 93 production Kotlin files. Fourteen import Android, AndroidX or Google Play APIs and were excluded from the direct compiler. The runner supplied temporary test-boundary definitions matching the repository's `DataLayerBatchTransport` and `BoundedReceiptPublishEngine` platform-independent shells so the crash-safe outbox and bounded receipt tests could execute without compiling their Android/Google Play implementations. The actual Android Keystore, Compose, services, Health Services and Wearable Data Layer source was not compiled by this local run.
+The clean build used OpenJDK `17.0.19`, Gradle `9.5.1`, Android Gradle Plugin
+`9.3.1`, Kotlin `2.4.10` and API 37. Source compilation and local JVM tests do
+not establish physical Health Services, Data Layer, Keystore, Samsung SDK,
+battery, privacy-command or reference-device behavior.
 
 ## Behaviours executed
 
@@ -41,13 +40,12 @@ The 582-test merged run includes deterministic and adversarial cases for:
 
 See `docs/FAULT_INJECTION_MATRIX.md` for the complete covered/pending matrix.
 
-## Attempted but blocked locally
+## Not executable in this cloud workspace
 
 | Check | Result | Reason |
 |---|---|---|
-| Gradle 9.5.1 `test --offline --no-daemon` | Failed before source compilation | Android Gradle Plugin `9.3.1` is not present in the isolated cache and offline mode cannot resolve it |
-| Android lint and phone/wear debug APK assembly | Not run locally | Android SDK/Maven dependencies are unavailable in this container; the pinned GitHub Actions job is the next reproducible build surface |
-| Compose UI/instrumentation/accessibility tests | Not run | No Android emulator/toolchain is available in this container |
+| Compose instrumentation/accessibility tests | Not run | No committed `androidTest` suite or reliable managed-device configuration exists |
+| Physical phone/watch installation | Not run | The S25 Ultra and Watch Ultra2 are not connected to this cloud VM |
 | Proprietary Samsung SDK build | Not run | Licensed Sensor/Data SDK AARs are intentionally absent from the repository |
 | Ollama model benchmark | Not run | The configured remote endpoint returned HTTP 502 from this environment; no model inventory, prompt result or quality result was obtained |
 

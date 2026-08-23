@@ -82,9 +82,12 @@ Samsung documents that Sensor SDK and Samsung Health Data SDK developer modes ca
 
 The exact final merged platform-neutral result and its exclusions are recorded in `docs/BUILD_REPORT.md`. The suite covers the core analytics/data plane, signed reasoning authority, governance/monitoring, phone bridge, history reconciliation, watch outbox, Samsung contracts and simulator domain logic. A passing result supports only the simulator engineering checkpoint.
 
-This is not an Android build result. Android Gradle Plugin `9.3.1`, the Android SDK, proprietary Samsung AARs, Ollama and physical devices were unavailable here. No APK or real health-data ingestion is claimed. The dependency-free structural/safety validator is included, and CI/Android Studio remains the next Android compilation gate.
+Version 0.6 has a clean JDK 17 Gradle test/lint/debug-assembly result for both
+Android modules, recorded in `docs/BUILD_REPORT.md`. This is source/build
+evidence only: proprietary Samsung AARs, Ollama, physical devices and personal
+health-data ingestion remain unavailable and unverified.
 
-On every push, GitHub Actions runs the structural/safety checks, prototype tests, Gradle tests, lint and both debug assemblies. A successful Android job publishes a 14-day `vitalsignal-0.5.0-research-simulator-debug` artifact containing the phone and watch simulator APKs. That artifact is for hardware/UI smoke testing only; it does not unlock personal collection or establish Samsung SDK behavior.
+On every push, GitHub Actions runs the structural/safety checks, prototype tests, Gradle tests, lint and both debug assemblies. A successful Android job publishes a 14-day `vitalsignal-0.6.0-research-simulator-debug` artifact containing the phone and watch simulator APKs. That artifact is for hardware/UI smoke testing only; it does not unlock personal collection or establish Samsung SDK behavior.
 
 ```bash
 python3 tools/validate_project.py
