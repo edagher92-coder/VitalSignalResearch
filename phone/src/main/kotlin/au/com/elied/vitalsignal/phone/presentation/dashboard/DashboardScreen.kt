@@ -2,6 +2,13 @@ package au.com.elied.vitalsignal.phone.presentation.dashboard
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -56,6 +63,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -301,20 +309,39 @@ private fun ResearchAssistantCard(assistant: ResearchAssistantUiModel) {
 
 @Composable
 private fun DashboardAtmosphere() {
+    val atmosphere = rememberInfiniteTransition(label = "dashboard-atmosphere")
+    val drift by atmosphere.animateFloat(
+        initialValue = -0.04f,
+        targetValue = 0.05f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 7_000),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "ambient-drift",
+    )
+    val glow by atmosphere.animateFloat(
+        initialValue = 0.07f,
+        targetValue = 0.12f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 4_800),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "ambient-glow",
+    )
     Canvas(Modifier.fillMaxSize()) {
         drawCircle(
             brush = Brush.radialGradient(
-                colors = listOf(Mint.copy(alpha = 0.09f), Color.Transparent),
-                center = Offset(size.width * 0.12f, size.height * 0.08f),
+                colors = listOf(Mint.copy(alpha = glow), Color.Transparent),
+                center = Offset(size.width * (0.12f + drift), size.height * 0.08f),
                 radius = size.width * 0.85f,
             ),
             radius = size.width * 0.85f,
-            center = Offset(size.width * 0.12f, size.height * 0.08f),
+            center = Offset(size.width * (0.12f + drift), size.height * 0.08f),
         )
         drawCircle(
-            color = Blue.copy(alpha = 0.025f),
+            color = Blue.copy(alpha = glow * 0.42f),
             radius = size.width * 0.72f,
-            center = Offset(size.width * 1.04f, size.height * 0.34f),
+            center = Offset(size.width * (1.04f - drift), size.height * 0.34f),
         )
     }
 }
@@ -647,6 +674,11 @@ private fun PatternHeroCard(
 
 @Composable
 private fun ConfidenceBeacon(value: Int, label: String, color: Color) {
+    val animatedValue by animateFloatAsState(
+        targetValue = value.toFloat(),
+        animationSpec = spring(dampingRatio = 0.72f, stiffness = 180f),
+        label = "evidence-score",
+    )
     Box(
         modifier = Modifier
             .size(66.dp)
@@ -671,7 +703,7 @@ private fun ConfidenceBeacon(value: Int, label: String, color: Color) {
                 drawArc(
                     brush = Brush.sweepGradient(listOf(color.copy(alpha = 0.32f), color)),
                     startAngle = -90f,
-                    sweepAngle = value * 3.6f,
+                    sweepAngle = animatedValue * 3.6f,
                     useCenter = false,
                     topLeft = Offset(inset, inset),
                     size = Size(size.width - stroke, size.height - stroke),
@@ -854,6 +886,7 @@ private fun ForecastCard(
     forecast: ForecastUiModel,
     onOpenQuickLog: () -> Unit,
 ) {
+    var explanationExpanded by remember(forecast.status) { mutableStateOf(false) }
     DashboardCard {
         SectionLabel(forecast.horizonLabel)
         Spacer(Modifier.height(12.dp))
@@ -919,11 +952,98 @@ private fun ForecastCard(
                 color = Slate,
             )
         }
+        forecast.explanation?.let { explanation ->
+            OutlinedButton(
+                onClick = { explanationExpanded = !explanationExpanded },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 14.dp)
+                    .graphicsLayer {
+                        scaleX = if (explanationExpanded) 1.0f else 0.99f
+                        scaleY = if (explanationExpanded) 1.0f else 0.99f
+                    },
+                shape = RoundedCornerShape(18.dp),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Ice),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Blue.copy(alpha = 0.32f)),
+            ) {
+                Text(if (explanationExpanded) "Hide how this was calculated" else "Explain this estimate")
+            }
+            AnimatedVisibility(visible = explanationExpanded) {
+                ForecastExplanation(explanation)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ForecastExplanation(explanation: ForecastExplanationUiModel) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 14.dp)
+            .animateContentSize(animationSpec = spring(dampingRatio = 0.82f, stiffness = 240f)),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        ExplanationBlock("WHAT 38% MEANS", explanation.meaning, Blue)
+        ExplanationBlock("38% VS 33% FIXTURE BASE RATE", explanation.comparison, Violet)
+        ExplanationList("WHY IT LANDED HERE", explanation.why, Amber)
+        ExplanationList("HOW IT WAS CALCULATED", explanation.method, Mint)
+        ExplanationList("WHAT COULD CHANGE A FUTURE ESTIMATE", explanation.couldChange, Blue)
+        ExplanationList("HOW THIS MUST IMPROVE", explanation.improvementPlan, Violet)
+        Text(
+            text = "Similarity is not causality. These generated values cannot tell you why you feel a certain way or what will happen.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Rose,
+        )
+    }
+}
+
+@Composable
+private fun ExplanationBlock(label: String, body: String, accent: Color) {
+    Surface(
+        color = accent.copy(alpha = 0.075f),
+        shape = RoundedCornerShape(18.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, accent.copy(alpha = 0.2f)),
+    ) {
+        Column(Modifier.padding(15.dp)) {
+            Text(label, style = MaterialTheme.typography.labelMedium, color = accent)
+            Text(
+                text = body,
+                modifier = Modifier.padding(top = 7.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = Ice,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ExplanationList(label: String, items: List<String>, accent: Color) {
+    Surface(
+        color = Color.White.copy(alpha = 0.035f),
+        shape = RoundedCornerShape(18.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Ice.copy(alpha = 0.09f)),
+    ) {
+        Column(Modifier.padding(15.dp)) {
+            Text(label, style = MaterialTheme.typography.labelMedium, color = accent)
+            items.forEachIndexed { index, item ->
+                Row(Modifier.padding(top = 9.dp)) {
+                    Text("${index + 1}", style = MaterialTheme.typography.labelMedium, color = accent)
+                    Spacer(Modifier.width(10.dp))
+                    Text(item, style = MaterialTheme.typography.bodyMedium, color = Slate)
+                }
+            }
+        }
     }
 }
 
 @Composable
 private fun ProbabilityRing(probability: Int, outcomeLabel: String) {
+    val animatedProbability by animateFloatAsState(
+        targetValue = probability.toFloat(),
+        animationSpec = spring(dampingRatio = 0.7f, stiffness = 165f),
+        label = "forecast-probability",
+    )
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -943,7 +1063,7 @@ private fun ProbabilityRing(probability: Int, outcomeLabel: String) {
             drawArc(
                 color = Amber,
                 startAngle = -90f,
-                sweepAngle = probability * 3.6f,
+                sweepAngle = animatedProbability * 3.6f,
                 useCenter = false,
                 style = Stroke(width = 8.dp.toPx(), cap = StrokeCap.Round),
             )

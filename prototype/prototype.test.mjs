@@ -176,3 +176,23 @@ test('observer coverage count matches the fail-closed freshness matrix', () => {
   assert.match(html, /9 \/ 9/);
   assert.match(html, /Live, delayed, stale, no-data and fail-closed fixtures/);
 });
+
+test('explains the revealed fixture probability without implying cause', () => {
+  assert.match(html, /What 38% means—and how the fixture got there/);
+  assert.match(html, /38 out of 100 probability mass—not “38% less energy”/);
+  assert.match(html, /38% estimate · 33% fixture base rate/);
+  assert.match(html, /Forty resolved synthetic cases pass prospective, schema, quality, identity and receipt gates/);
+  assert.match(html, /similarity × historical quality × current quality/);
+  assert.match(html, /Similarity is not causality/);
+  assert.match(html, /completed check-in unlocks reveal; it does not recalculate or alter the sealed probability/);
+  assert.match(html, /forecast-explain'\)\.classList\.toggle\('revealed', reveal\)/);
+});
+
+test('adds purposeful motion with reduced-motion and explicit-dialog safeguards', () => {
+  assert.match(html, /id="motion-tour" aria-pressed="false"/);
+  assert.match(html, /@keyframes ambient-float/);
+  assert.match(html, /@keyframes card-arrive/);
+  assert.match(html, /prefers-reduced-motion: reduce/);
+  assert.match(html, /id="resolve-dialog" role="dialog" aria-modal="true"/);
+  assert.doesNotMatch(html, /window\.confirm/);
+});

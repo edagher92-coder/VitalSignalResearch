@@ -203,14 +203,14 @@ def validate_brand_and_experience() -> None:
             "rebrand preserves package, theme, transport and signed backend identifiers")
 
     phone_build = read("phone/build.gradle.kts")
-    require('versionName = "0.5.0-research"' in phone_build, "phone source version is 0.5.0-research")
+    require('versionName = "0.6.0-research"' in phone_build, "phone source version is 0.6.0-research")
     require("libs.androidx.compose.animation" in phone_build, "phone declares Compose animation dependency")
     require(
         "androidx-compose-animation" in read("gradle/libs.versions.toml"),
         "version catalog declares Compose animation",
     )
     wear_build = read("wear/build.gradle.kts")
-    require('versionName = "0.5.0-research"' in wear_build, "wear source version is 0.5.0-research")
+    require('versionName = "0.6.0-research"' in wear_build, "wear source version is 0.6.0-research")
     require("libs.androidx.fragment" in wear_build, "wear declares Fragment for Activity Result lint")
     require("androidx-fragment" in read("gradle/libs.versions.toml"),
             "version catalog declares AndroidX Fragment")
@@ -1001,7 +1001,7 @@ def validate_deliverables() -> None:
             "canonicalFeatureSnapshotSha256" in backend_api,
             "observer contract documents training-case receipt bindings")
     report = read("docs/BUILD_REPORT.md")
-    require("0.5.0-research" in report, "build report matches source version")
+    require("0.6.0-research" in report, "build report matches source version")
     require("not run" in report.lower(), "build report records unexecuted verification honestly")
 
 

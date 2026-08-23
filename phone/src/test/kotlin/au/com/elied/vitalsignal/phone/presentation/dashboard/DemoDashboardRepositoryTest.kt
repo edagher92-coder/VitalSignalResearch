@@ -20,6 +20,7 @@ class DemoDashboardRepositoryTest {
         assertEquals(ForecastStatus.LOCKED, repository.state.value.forecast.status)
         assertNull(repository.state.value.forecast.probability)
         assertNull(repository.state.value.forecast.personalBaseRate)
+        assertNull(repository.state.value.forecast.explanation)
 
         repository.setQuickLogOpen(true)
         repository.saveQuickLog(
@@ -43,6 +44,12 @@ class DemoDashboardRepositoryTest {
         assertTrue(state.timeline.first().detail.contains("Sleep 5/10"))
         assertEquals(ForecastStatus.AVAILABLE, state.forecast.status)
         assertNotNull(state.forecast.probability)
+        val explanation = requireNotNull(state.forecast.explanation)
+        assertTrue(explanation.meaning.contains("38 out of 100 probability mass"))
+        assertTrue(explanation.comparison.contains("33%"))
+        assertTrue(explanation.why.any { it.contains("40 resolved synthetic cases") })
+        assertTrue(explanation.method.any { it.contains("similarity") })
+        assertTrue(explanation.improvementPlan.any { it.contains("held-out") })
         assertEquals("UNVALIDATED", state.forecast.calibrationLabel)
         assertEquals(
             "Pre-reveal context captured in memory for this simulator session",
@@ -79,6 +86,7 @@ class DemoDashboardRepositoryTest {
         assertEquals(ForecastStatus.ABSTAINED, state.forecast.status)
         assertNull(state.forecast.probability)
         assertNull(state.forecast.personalBaseRate)
+        assertNull(state.forecast.explanation)
         assertEquals("CONCERN HOLD", state.forecast.calibrationLabel)
         assertTrue(state.conflictDesk.isEmpty())
         assertTrue(state.featureInspector.isEmpty())

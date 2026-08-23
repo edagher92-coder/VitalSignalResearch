@@ -155,7 +155,30 @@ data class ForecastUiModel(
     val personalBaseRate: Int?,
     val intervalLabel: String,
     val calibrationLabel: String,
+    val explanation: ForecastExplanationUiModel? = null,
 )
+
+/**
+ * Plain-language projection of the deterministic simulator estimator. It is
+ * intentionally descriptive: feature similarity is not causal attribution.
+ */
+data class ForecastExplanationUiModel(
+    val meaning: String,
+    val comparison: String,
+    val why: List<String>,
+    val method: List<String>,
+    val couldChange: List<String>,
+    val improvementPlan: List<String>,
+) {
+    init {
+        require(meaning.isNotBlank())
+        require(comparison.isNotBlank())
+        require(why.isNotEmpty() && why.all(String::isNotBlank))
+        require(method.isNotEmpty() && method.all(String::isNotBlank))
+        require(couldChange.isNotEmpty() && couldChange.all(String::isNotBlank))
+        require(improvementPlan.isNotEmpty() && improvementPlan.all(String::isNotBlank))
+    }
+}
 
 data class EvidenceUiModel(
     val id: String,

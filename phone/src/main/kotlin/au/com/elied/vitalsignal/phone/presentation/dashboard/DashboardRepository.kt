@@ -133,6 +133,34 @@ class DemoDashboardRepository(
                         "${(revealOutcome.view.lowerBound * 100.0).toInt()}–" +
                         "${(revealOutcome.view.upperBound * 100.0).toInt()}%",
                     calibrationLabel = "UNVALIDATED",
+                    explanation = ForecastExplanationUiModel(
+                        meaning = "In this generated fixture, the model assigns ${(revealOutcome.view.probability * 100.0).toInt()} out of 100 probability mass to a lower-than-personal-usual energy/function check-in during the one-hour window 72–73 hours after the forecast cutoff. It does not mean a ${(revealOutcome.view.probability * 100.0).toInt()}% loss of energy, a diagnosis, or that an event will occur.",
+                        comparison = "The deterministic fixture history has a 33% unweighted outcome rate. Similarity and quality weighting move this estimate to ${(revealOutcome.view.probability * 100.0).toInt()}%; that difference is a model comparison, not evidence that any input caused the outcome.",
+                        why = listOf(
+                            "The current cardio-autonomic feature is nearer the fixture's higher-deviation neighborhood than its steady neighborhood.",
+                            "The sleep feature is close to its generated matched pattern and adds little corroboration.",
+                            "${evaluated.forecastEstimate.validCaseCount} resolved synthetic cases pass the prospective, schema, quality, identity, and receipt gates.",
+                            "Your check-in controls reveal timing only. It does not retroactively change the already-committed probability.",
+                        ),
+                        method = listOf(
+                            "Freeze cardio-autonomic and sleep values, quality, cutoff, and provenance before the target window.",
+                            "Weight each eligible past fixture by feature similarity × historical quality × current quality.",
+                            "Combine weighted positive and negative outcomes with a conservative beta prior.",
+                            "Expand the 80% interval for posterior uncertainty and current-signal quality, then seal the result in the prospective ledger.",
+                        ),
+                        couldChange = listOf(
+                            "New qualified target features before a future forecast cutoff.",
+                            "More prospectively resolved outcomes from the same endpoint and schema.",
+                            "Different measurement quality, missingness, or feature similarity.",
+                            "A versioned model, endpoint, or policy change that passes offline review.",
+                        ),
+                        improvementPlan = listOf(
+                            "Replace generated cases with consented, independently verified prospective outcomes.",
+                            "Report calibration, discrimination, subgroup performance, and interval coverage on held-out data.",
+                            "Add ablation and sensitivity views so operators can see which assumptions move the estimate.",
+                            "Keep abstention, human-concern override, immutable cutoffs, and ledger auditing as release gates.",
+                        ),
+                    ),
                 )
 
                 is ForecastRevealOutcome.Refused -> safetyAdjusted.forecast.copy(
@@ -143,6 +171,7 @@ class DemoDashboardRepository(
                     personalBaseRate = null,
                     intervalLabel = "No probability displayed",
                     calibrationLabel = "ABSTAINED",
+                    explanation = null,
                 )
             }
             safetyAdjusted.copy(

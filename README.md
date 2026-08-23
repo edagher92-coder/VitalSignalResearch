@@ -2,7 +2,7 @@
 
 **Your pattern, made clear.**
 
-Evidessa Research is the working user-facing brand for version `0.5.0-research`, a fail-closed private N-of-1 health-intelligence foundation for a Galaxy Watch Ultra2 and Android phone. It combines a truthful simulator with platform-neutral collection, transport, history, analysis, validation and governance components. Real personal-data surfaces remain locked until the exact phone, watch, firmware and reference-device tests produce matching evidence receipts.
+Evidessa Research is the working user-facing brand for version `0.6.0-research`, a fail-closed private N-of-1 health-intelligence foundation for a Galaxy Watch Ultra2 and Android phone. Version 0.6 adds an explainable forecast surface, a motion/accessibility system and a whole-system verification pass; it does not unlock personal data or clinical claims. The project combines a truthful simulator with platform-neutral collection, transport, history, analysis, validation and governance components. Real personal-data surfaces remain locked until the exact phone, watch, firmware and reference-device tests produce matching evidence receipts.
 
 The repository, Android package/namespace, cryptographic aliases, protocol routes, signed schemas and versioned audit identifiers intentionally retain their existing `VitalSignal` internal names. That separation makes the brand reversible without an unsafe protocol migration or a break in validation traceability.
 
@@ -59,7 +59,7 @@ The strongest research output is a **physiological response and recovery signatu
 | Governed local explanation | Signed short-lived packet, reviewed template IDs, deterministic verifier and durable audit | Ollama cannot author free clinical prose, calculate physiology, alert, diagnose or change treatment |
 | Governed cloud research copilot | Credential-free phone/watch contract, minimized typed packet, signed purpose/consent/retention receipt, strict schema, deterministic verifier and human promotion/rollback | No API call is enabled; not a nurse/doctor, direct provider browsing, diagnosis, treatment, emergency clearance or live self-modification |
 
-The person's own concern is a first-class context signal. Normal or missing wearable data can never suppress “I feel unwell,” a clinician-authored plan or reviewed urgent-care instructions. Version 0.5 implements the audited simulator-session hold and explicit human resolution; it does not notify a clinician or emergency service and is not an attended channel.
+The person's own concern is a first-class context signal. Normal or missing wearable data can never suppress “I feel unwell,” a clinician-authored plan or reviewed urgent-care instructions. Version 0.6 retains the audited simulator-session hold and explicit human resolution; it does not notify a clinician or emergency service and is not an attended channel.
 
 ## Current installation truth
 

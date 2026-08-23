@@ -1,6 +1,11 @@
 # Build and verification report
 
-Checkpoint: 2026-08-23 (Australia/Sydney) · source version `0.5.0-research`
+Checkpoint: 2026-08-23 (Australia/Sydney) · source version `0.6.0-research`
+
+Version 0.6 verification is in progress on branch
+`cursor/one-ui-motion-upgrade-0aa0`. The table below is the inherited 0.5
+baseline and must not be represented as evidence for new 0.6 UI, explainability,
+backend, or release behavior until the branch checks are rerun and recorded.
 
 ## Reproduced in this workspace
 
