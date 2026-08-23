@@ -6,6 +6,7 @@ import au.com.elied.vitalsignal.analytics.canonicalSha256
 import au.com.elied.vitalsignal.audit.AppendOnlyHumanConcernJournal
 import au.com.elied.vitalsignal.audit.LockedForecastView
 import au.com.elied.vitalsignal.audit.ProspectiveForecastState
+import au.com.elied.vitalsignal.audit.RevealedForecastView
 import au.com.elied.vitalsignal.audit.HumanConcernAction
 import au.com.elied.vitalsignal.audit.HumanConcernActorRole
 import au.com.elied.vitalsignal.audit.HumanConcernAuditEvent
@@ -18,6 +19,7 @@ import au.com.elied.vitalsignal.audit.InMemoryHumanConcernJournal
 import au.com.elied.vitalsignal.model.BaselineDeviation
 import au.com.elied.vitalsignal.model.SensorMetric
 import au.com.elied.vitalsignal.phone.presentation.brand.ProductBrand
+import java.security.MessageDigest
 import java.util.Locale
 import kotlin.math.abs
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -106,37 +108,42 @@ class DemoDashboardRepository(
                 userConcernReported = concernActive,
             )
             val safetyAdjusted = current.withPipelineResult(evaluated)
-            val revealedForecast = if (
+            val revealOutcome = if (
                 safetyAdjusted.forecast.status == ForecastStatus.LOCKED &&
                 draft.hasCompleteForecastContext &&
                 !concernActive
             ) {
-                val committed = evaluated.forecastEstimate.forecast
-                if (committed == null) {
-                    safetyAdjusted.forecast.copy(
-                        status = ForecastStatus.ABSTAINED,
-                        headline = "Forecast withheld",
-                        summary = "The simulator could not recover the committed forecast payload.",
-                        probability = null,
-                        personalBaseRate = null,
-                        intervalLabel = "No probability displayed",
-                        calibrationLabel = "ABSTAINED",
-                    )
-                } else {
-                    safetyAdjusted.forecast.copy(
-                        status = ForecastStatus.AVAILABLE,
-                        headline = "Lower-than-personal-usual energy/function at +72h to +73h",
-                        summary = "Unvalidated simulator estimate for the frozen binary target-window check-in. It is not a health prediction, diagnosis, or treatment recommendation.",
-                        probability = (committed.probability * 100.0).toInt(),
-                        personalBaseRate = 33,
-                        intervalLabel = "Simulated 80% interval · " +
-                            "${(committed.lowerBound * 100.0).toInt()}–" +
-                            "${(committed.upperBound * 100.0).toInt()}%",
-                        calibrationLabel = "UNVALIDATED",
-                    )
-                }
+                simulatorPipeline.revealCommittedForecast(
+                    result = evaluated,
+                    contextSnapshotSha256 = contextSnapshotSha256(detail),
+                )
             } else {
-                safetyAdjusted.forecast
+                null
+            }
+            val revealedView = (revealOutcome as? ForecastRevealOutcome.Revealed)?.view
+            val revealedForecast = when (revealOutcome) {
+                null -> safetyAdjusted.forecast
+                is ForecastRevealOutcome.Revealed -> safetyAdjusted.forecast.copy(
+                    status = ForecastStatus.AVAILABLE,
+                    headline = "Lower-than-personal-usual energy/function at +72h to +73h",
+                    summary = "Unvalidated simulator estimate for the frozen binary target-window check-in. It is not a health prediction, diagnosis, or treatment recommendation.",
+                    probability = (revealOutcome.view.probability * 100.0).toInt(),
+                    personalBaseRate = 33,
+                    intervalLabel = "Simulated 80% interval · " +
+                        "${(revealOutcome.view.lowerBound * 100.0).toInt()}–" +
+                        "${(revealOutcome.view.upperBound * 100.0).toInt()}%",
+                    calibrationLabel = "UNVALIDATED",
+                )
+
+                is ForecastRevealOutcome.Refused -> safetyAdjusted.forecast.copy(
+                    status = ForecastStatus.ABSTAINED,
+                    headline = "Forecast withheld",
+                    summary = "The prospective ledger refused this reveal: ${revealOutcome.reason}",
+                    probability = null,
+                    personalBaseRate = null,
+                    intervalLabel = "No probability displayed",
+                    calibrationLabel = "ABSTAINED",
+                )
             }
             safetyAdjusted.copy(
                 quickLogOpen = false,
@@ -151,6 +158,9 @@ class DemoDashboardRepository(
                     else -> "Pre-reveal context captured in memory for this simulator session"
                 },
                 forecast = revealedForecast,
+                forecastAudit = revealedView
+                    ?.let { revealedAuditTrail(safetyAdjusted.forecastAudit, it) }
+                    ?: safetyAdjusted.forecastAudit,
                 timeline = listOf(
                     TimelineItemUiModel(
                         id = "quick-log-now",
@@ -837,6 +847,31 @@ class DemoDashboardRepository(
         reason = "How the person feels takes priority. Exercise data cannot reassure, provide medical clearance, or resolve this hold.",
     )
 
+
+    private fun contextSnapshotSha256(detail: String): String =
+        MessageDigest.getInstance("SHA-256")
+            .digest(detail.toByteArray(Charsets.UTF_8))
+            .joinToString("") { byte -> "%02x".format(byte) }
+
+    /** Rewrites only the rows the ledger actually advanced; later rows stay pending. */
+    private fun revealedAuditTrail(
+        base: List<ForecastAuditEventUiModel>,
+        view: RevealedForecastView,
+    ): List<ForecastAuditEventUiModel> = base.map { row ->
+        when (row.id) {
+            "audit-context" -> row.copy(
+                timeLabel = "Stored",
+                detail = "The complete pre-reveal check-in is durably appended against the sealed commitment.",
+            )
+
+            "audit-reveal" -> row.copy(
+                timeLabel = "Revealed",
+                detail = "Ledger state ${view.state.name.replace('_', ' ')} released the already-committed payload for ${view.forecastId}. The snapshot was not recomputed.",
+            )
+
+            else -> row
+        }
+    }
 
     private fun forecastAuditTrail(result: SimulatorPipelineResult): List<ForecastAuditEventUiModel> {
         val view = result.prospectiveView as? LockedForecastView ?: return emptyList()

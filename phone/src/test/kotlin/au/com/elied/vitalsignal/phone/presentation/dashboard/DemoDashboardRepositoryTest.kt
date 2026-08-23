@@ -294,4 +294,41 @@ class DemoDashboardRepositoryTest {
         assertTrue(held.reason.contains("cannot reassure"))
         assertTrue(held.reason.contains("medical clearance"))
     }
+
+    @Test
+    fun completeCheckInAdvancesTheLedgerAuditTrailAndRevealsTheCommittedPayload() {
+        val repository = DemoDashboardRepository()
+
+        repository.saveQuickLog(
+            QuickLogDraft(
+                energy = 4,
+                fatigue = 7,
+                stress = 5,
+                gastrointestinalSymptoms = 6,
+                sleepQuality = 5,
+            ),
+        )
+
+        val state = repository.state.value
+        assertEquals(ForecastStatus.AVAILABLE, state.forecast.status)
+        assertNotNull(state.forecast.probability)
+        assertEquals("UNVALIDATED", state.forecast.calibrationLabel)
+        val context = state.forecastAudit.single { it.id == "audit-context" }
+        val reveal = state.forecastAudit.single { it.id == "audit-reveal" }
+        assertEquals("Stored", context.timeLabel)
+        assertEquals("Revealed", reveal.timeLabel)
+        assertTrue(reveal.detail.contains("not recomputed"))
+    }
+
+    @Test
+    fun partialCheckInLeavesTheLedgerRevealBlocked() {
+        val repository = DemoDashboardRepository()
+
+        repository.saveQuickLog(QuickLogDraft(energy = 4))
+
+        val state = repository.state.value
+        assertEquals(ForecastStatus.LOCKED, state.forecast.status)
+        assertNull(state.forecast.probability)
+        assertEquals("Blocked", state.forecastAudit.single { it.id == "audit-reveal" }.timeLabel)
+    }
 }

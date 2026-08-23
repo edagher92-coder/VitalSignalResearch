@@ -23,8 +23,10 @@ import au.com.elied.vitalsignal.analytics.canonicalSha256
 import au.com.elied.vitalsignal.audit.ForecastLedgerMutationResult
 import au.com.elied.vitalsignal.audit.InMemoryForecastAuditJournal
 import au.com.elied.vitalsignal.audit.LockedForecastView
+import au.com.elied.vitalsignal.audit.PreRevealContextCheckIn
 import au.com.elied.vitalsignal.audit.ProspectiveForecastLedger
 import au.com.elied.vitalsignal.audit.ProspectiveForecastView
+import au.com.elied.vitalsignal.audit.RevealedForecastView
 import au.com.elied.vitalsignal.model.ActivityState
 import au.com.elied.vitalsignal.model.AcquisitionOrigin
 import au.com.elied.vitalsignal.model.conservativeAcquisitionProfile
@@ -55,6 +57,15 @@ data class SimulatorPipelineResult(
     val prospectiveView: ProspectiveForecastView? = null,
     val ledgerReason: String? = null,
 )
+
+/**
+ * A reveal can only ever return the payload the ledger already committed. It is
+ * refused rather than recomputed when the prospective chronology is not met.
+ */
+sealed interface ForecastRevealOutcome {
+    data class Revealed(val view: RevealedForecastView) : ForecastRevealOutcome
+    data class Refused(val reason: String) : ForecastRevealOutcome
+}
 
 /** Exact-value allowlist for deterministic simulator fixtures only; never a production verifier. */
 private class SimulatorFixturePersistenceVerifier(
@@ -194,6 +205,54 @@ class SimulatorHealthPipeline(
         )
     }
 
+
+    /**
+     * Stores the pre-reveal context check-in and then reveals, so the displayed
+     * probability comes from the committed record instead of a fresh estimate.
+     */
+    fun revealCommittedForecast(
+        result: SimulatorPipelineResult,
+        contextSnapshotSha256: String,
+    ): ForecastRevealOutcome {
+        result.prospectiveView as? LockedForecastView
+            ?: return ForecastRevealOutcome.Refused(
+                result.ledgerReason ?: "No committed forecast is available to reveal",
+            )
+        val forecast = result.forecastEstimate.forecast
+            ?: return ForecastRevealOutcome.Refused("No committed forecast payload is available")
+
+        val checkInAtEpochMillis = forecast.createdAtEpochMillis + 1L
+        val stored = forecastLedger.storePreRevealCheckIn(
+            PreRevealContextCheckIn(
+                eventId = "k-${forecast.id}-${contextSnapshotSha256.take(12)}",
+                forecastId = forecast.id,
+                recordedAtEpochMillis = checkInAtEpochMillis,
+                contextSnapshotSha256 = contextSnapshotSha256,
+            ),
+        )
+        mutationRefusal(stored)?.let { return ForecastRevealOutcome.Refused(it) }
+
+        val revealed = forecastLedger.reveal(
+            eventId = "r-${forecast.id}",
+            forecastId = forecast.id,
+            revealedAtEpochMillis = checkInAtEpochMillis + 1L,
+        )
+        mutationRefusal(revealed)?.let { return ForecastRevealOutcome.Refused(it) }
+
+        val view = revealed.view as? RevealedForecastView
+            ?: return ForecastRevealOutcome.Refused(
+                "The ledger did not return a revealed projection",
+            )
+        return ForecastRevealOutcome.Revealed(view)
+    }
+
+    private fun mutationRefusal(result: ForecastLedgerMutationResult): String? = when (result) {
+        is ForecastLedgerMutationResult.Applied,
+        is ForecastLedgerMutationResult.Idempotent,
+        -> null
+        is ForecastLedgerMutationResult.Rejected -> result.reason
+        is ForecastLedgerMutationResult.Unavailable -> result.reason
+    }
 
     private data class SealedForecast(
         val estimate: ForecastEstimate,

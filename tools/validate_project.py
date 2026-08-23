@@ -841,6 +841,11 @@ def validate_simulator_truthfulness() -> None:
             "phone simulator commits ready forecasts to the prospective ledger")
     require("LockedForecastView" in repository and "COMMITTED HIDDEN" in repository,
             "operator audit is projected from a locked ledger view")
+    require("storePreRevealCheckIn" in pipeline and "forecastLedger.reveal" in pipeline,
+            "reveal requires a durably stored pre-reveal check-in")
+    require("revealCommittedForecast" in repository and
+            "ForecastRevealOutcome.Refused" in repository,
+            "phone reveals the committed ledger payload and shows refusals honestly")
     dashboard_models = read(
         "phone/src/main/kotlin/au/com/elied/vitalsignal/phone/presentation/dashboard/DashboardModels.kt",
     )

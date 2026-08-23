@@ -121,4 +121,51 @@ class SimulatorHealthPipelineTest {
         assertEquals(ForecastModelState.ABSTAINED, result.forecastEstimate.state)
         assertNull(result.prospectiveView)
     }
+
+    @Test
+    fun revealReleasesTheCommittedPayloadRatherThanARecomputation() {
+        val result = pipeline.evaluate(SimulationScenario.DEVELOPING)
+        val committed = result.forecastEstimate.forecast!!
+
+        val outcome = pipeline.revealCommittedForecast(result, CONTEXT_DIGEST_A)
+
+        val view = (outcome as ForecastRevealOutcome.Revealed).view
+        assertEquals(committed.id, view.forecastId)
+        assertEquals(committed.probability, view.probability, 0.0)
+        assertEquals(committed.lowerBound, view.lowerBound, 0.0)
+        assertEquals(committed.upperBound, view.upperBound, 0.0)
+    }
+
+    @Test
+    fun aSecondDifferentCheckInCannotReopenASealedReveal() {
+        val result = pipeline.evaluate(SimulationScenario.DEVELOPING)
+        assertTrue(
+            pipeline.revealCommittedForecast(result, CONTEXT_DIGEST_A)
+                is ForecastRevealOutcome.Revealed,
+        )
+
+        val second = pipeline.revealCommittedForecast(result, CONTEXT_DIGEST_B)
+
+        assertTrue(second is ForecastRevealOutcome.Refused)
+    }
+
+    @Test
+    fun concernAndLowQualityScenariosHaveNothingToReveal() {
+        val concerned = pipeline.evaluate(SimulationScenario.DEVELOPING, userConcernReported = true)
+        val lowQuality = pipeline.evaluate(SimulationScenario.LOW_QUALITY)
+
+        assertTrue(
+            pipeline.revealCommittedForecast(concerned, CONTEXT_DIGEST_A)
+                is ForecastRevealOutcome.Refused,
+        )
+        assertTrue(
+            pipeline.revealCommittedForecast(lowQuality, CONTEXT_DIGEST_A)
+                is ForecastRevealOutcome.Refused,
+        )
+    }
+
+    private companion object {
+        const val CONTEXT_DIGEST_A = "aa11bb22cc33dd44ee55ff6600778899aabbccddeeff00112233445566778899"
+        const val CONTEXT_DIGEST_B = "99887766554433221100ffeeddccbbaa99887766554433221100ffeeddccbbaa"
+    }
 }
