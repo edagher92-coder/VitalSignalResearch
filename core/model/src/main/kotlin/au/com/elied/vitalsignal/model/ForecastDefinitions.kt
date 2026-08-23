@@ -106,19 +106,20 @@ data class ForecastEndpointDefinition(
 data class ForecastFeatureSchemaDefinition(
     val id: String,
     val version: String,
-    val featureVersions: Map<String, String>,
+    featureVersions: Map<String, String>,
     val standardizationProtocol: String,
     val definitionSha256: String,
 ) {
+    val featureVersions: Map<String, String> = java.util.Map.copyOf(featureVersions.toSortedMap())
     val featureKeys: Set<String>
-        get() = featureVersions.keys
+        get() = this.featureVersions.keys
 
     init {
         require(id.matches(SAFE_ID))
         require(version.matches(SAFE_VERSION))
-        require(featureVersions.isNotEmpty() && featureVersions.size <= 256)
-        require(featureVersions.keys.all { it.matches(SAFE_FEATURE_KEY) })
-        require(featureVersions.values.all { it.matches(SAFE_VERSION) })
+        require(this.featureVersions.isNotEmpty() && this.featureVersions.size <= 256)
+        require(this.featureVersions.keys.all { it.matches(SAFE_FEATURE_KEY) })
+        require(this.featureVersions.values.all { it.matches(SAFE_VERSION) })
         require(standardizationProtocol.isNotBlank() && standardizationProtocol.length <= 1_000)
         require(definitionSha256 == calculatedDefinitionSha256()) {
             "Feature schema SHA-256 does not match its canonical definition"
@@ -128,7 +129,7 @@ data class ForecastFeatureSchemaDefinition(
     private fun calculatedDefinitionSha256(): String = forecastDefinitionSha256(
         id,
         version,
-        featureVersions.toSortedMap().entries.joinToString("\u001f") { (id, version) ->
+        this.featureVersions.toSortedMap().entries.joinToString("\u001f") { (id, version) ->
             "$id@$version"
         },
         standardizationProtocol,

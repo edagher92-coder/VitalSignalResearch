@@ -518,6 +518,7 @@ private fun PatternHeroCard(
                     label = when {
                         state.confidence > 0 -> "evidence score"
                         state.status == PatternStatus.LEARNING -> "learning"
+                        state.status == PatternStatus.STEADY -> "no deviation"
                         else -> "withheld"
                     },
                     color = statusColor,
@@ -1300,7 +1301,7 @@ private fun TrendMetric(label: String, value: String, color: Color, modifier: Mo
                 text = label,
                 style = MaterialTheme.typography.labelMedium,
                 color = Quiet,
-                fontSize = 10.sp,
+                fontSize = 12.sp,
                 letterSpacing = 0.55.sp,
             )
             Text(
@@ -1626,7 +1627,6 @@ private fun QualityRow(signal: QualitySignalUiModel, color: Color) {
 }
 
 @Composable
-@Composable
 private fun FiveSecondSummaryRow(summary: FiveSecondSummaryUiModel) {
     Row(
         modifier = Modifier
@@ -1874,7 +1874,7 @@ private fun TimelineRow(item: TimelineItemUiModel, showLine: Boolean) {
                         .padding(horizontal = 7.dp, vertical = 3.dp),
                     style = MaterialTheme.typography.labelMedium,
                     color = color,
-                    fontSize = 10.sp,
+                    fontSize = 12.sp,
                 )
             }
             Text(

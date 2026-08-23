@@ -76,7 +76,13 @@ class HistoryReconcilerTest {
             listOf(
                 HistorySourceChange.Upsert(first),
                 delete(first.key, revision = 2L),
-                HistorySourceChange.Upsert(record(revision = 3L, digest = "d".repeat(64))),
+                HistorySourceChange.Upsert(
+                    record(
+                        revision = 3L,
+                        digest = "d".repeat(64),
+                        sourceUpdatedAtEpochMillis = 40_003L,
+                    ),
+                ),
             ),
         )
 
@@ -158,12 +164,91 @@ class HistoryReconcilerTest {
         assertEquals("delete-2", result.state.tombstones.getValue(first.key).revision.opaqueVersion)
     }
 
+    @Test
+    fun foreignParticipantCannotDeleteOrMisattributeABoundRecord() {
+        val first = record(revision = 1L)
+        val foreignDelete = delete(first.key, revision = 2L).copy(
+            participantPseudonym = "participant-2",
+        )
+
+        val result = HistoryReconciler.apply(
+            HistoryMergeState(),
+            listOf(HistorySourceChange.Upsert(first), foreignDelete),
+        )
+
+        assertEquals(HistoryMergeAction.CONFLICT_REJECTED, result.results.last().action)
+        assertTrue(first.key in result.state.records)
+        assertTrue(result.state.tombstones.isEmpty())
+    }
+
+    @Test
+    fun supersededConsentGenerationCannotResurrectATombstone() {
+        val first = record(revision = 1L, consentGeneration = 9L)
+        val tombstoned = HistoryReconciler.apply(
+            HistoryMergeState(),
+            listOf(
+                HistorySourceChange.Upsert(first),
+                delete(first.key, revision = 2L).copy(consentGeneration = 9L),
+            ),
+        )
+
+        val result = HistoryReconciler.apply(
+            tombstoned.state,
+            listOf(
+                HistorySourceChange.Upsert(
+                    record(
+                        revision = 3L,
+                        digest = "d".repeat(64),
+                        consentGeneration = 4L,
+                        sourceUpdatedAtEpochMillis = 40_003L,
+                    ),
+                ),
+            ),
+        )
+
+        assertEquals(HistoryMergeAction.CONFLICT_REJECTED, result.results.single().action)
+        assertFalse(first.key in result.state.records)
+        assertTrue(first.key in result.state.tombstones)
+    }
+
+    @Test
+    fun sameOpaqueVersionWithADifferentPayloadAcrossSequencesIsRejected() {
+        val first = record(revision = 5L, digest = "a".repeat(64), opaqueVersion = "native-shared")
+        val colliding = record(revision = 6L, digest = "f".repeat(64), opaqueVersion = "native-shared")
+
+        val result = HistoryReconciler.apply(
+            HistoryMergeState(),
+            listOf(HistorySourceChange.Upsert(first), HistorySourceChange.Upsert(colliding)),
+        )
+
+        assertEquals(HistoryMergeAction.CONFLICT_REJECTED, result.results.last().action)
+        assertEquals("a".repeat(64), result.state.records.getValue(first.key).provenance.payloadSha256)
+    }
+
+    @Test
+    fun equalSequenceDeleteOfTheLiveRevisionIsRejected() {
+        val first = record(revision = 1L)
+        val result = HistoryReconciler.apply(
+            HistoryMergeState(),
+            listOf(
+                HistorySourceChange.Upsert(first),
+                delete(first.key, revision = 1L, opaqueVersion = "native-1"),
+            ),
+        )
+
+        assertEquals(HistoryMergeAction.CONFLICT_REJECTED, result.results.last().action)
+        assertTrue(first.key in result.state.records)
+    }
+
     private fun record(
         revision: Long,
         digest: String = "a".repeat(64),
         opaqueVersion: String = "native-$revision",
+        sourceUpdatedAtEpochMillis: Long = 10_000L + revision,
+        participantPseudonym: String = "participant-1",
+        consentGeneration: Long = 4L,
     ) = CanonicalHistoryRecord(
-        participantPseudonym = "participant-1",
+        participantPseudonym = participantPseudonym,
         concept = CodedConcept("http://loinc.org", "8867-4", "Heart rate"),
         clinicalTime = ClinicalTimeRange(10_000L, 10_000L, 600),
         value = HistoryValue.Quantity(72.0, MeasurementUnit.ucum("/min")),
@@ -175,11 +260,11 @@ class HistoryReconcilerTest {
             ),
             revision = SourceRevision(revision, opaqueVersion),
             sourceCreatedAtEpochMillis = 9_000L,
-            sourceUpdatedAtEpochMillis = 10_000L + revision,
-            retrievedAtEpochMillis = 20_000L + revision,
+            sourceUpdatedAtEpochMillis = sourceUpdatedAtEpochMillis,
+            retrievedAtEpochMillis = maxOf(20_000L + revision, sourceUpdatedAtEpochMillis),
             adapterVersion = "history-adapter-v1",
             pilotCapability = PilotCapability.PHONE_HEALTH_CONNECT_HISTORY,
-            consentGeneration = 4L,
+            consentGeneration = consentGeneration,
             pilotProtocolId = "pilot-protocol-1",
             validationReceiptId = "validation-hc-1",
             sourceDevice = SourceDeviceDescriptor(

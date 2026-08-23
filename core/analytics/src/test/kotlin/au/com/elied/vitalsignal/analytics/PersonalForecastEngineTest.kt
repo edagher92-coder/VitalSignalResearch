@@ -312,6 +312,50 @@ class PersonalForecastEngineTest {
         assertTrue(result.reason.contains("verification receipt"))
     }
 
+    @Test
+    fun reorderedEligibleHistoryDoesNotChangeForecastIdentity() {
+        val cases = history(35)
+        val target = snapshot("target", TARGET_CUTOFF, 1.0)
+        val first = run(cases, target).forecast!!
+        val second = run(cases.reversed(), target).forecast!!
+
+        assertEquals(first.id, second.id)
+        assertEquals(first.probability, second.probability, 0.0)
+        assertEquals(first.featureSnapshotHash, second.featureSnapshotHash)
+    }
+
+    @Test
+    fun schemaMapMutationAfterFreezeCannotChangeSealedKeys() {
+        val mutableVersions = mutableMapOf("cardio-autonomic" to "sim-v1", "sleep" to "sim-v1")
+        val frozen = ForecastFeatureSchemaDefinition.freeze(
+            id = "mut-schema",
+            version = "1.0.0",
+            featureVersions = mutableVersions,
+            standardizationProtocol = schema.standardizationProtocol,
+        )
+        mutableVersions["thermal"] = "sim-v1"
+        assertEquals(setOf("cardio-autonomic", "sleep"), frozen.featureKeys)
+        assertThrows(UnsupportedOperationException::class.java) {
+            @Suppress("UNCHECKED_CAST")
+            (frozen.featureVersions as MutableMap<String, String>)["thermal"] = "sim-v1"
+        }
+    }
+
+    @Test
+    fun featureValueProvenanceListIsCopiedAtConstruction() {
+        val provenance = mutableListOf("fixture:cardio-autonomic:$TARGET_CUTOFF")
+        val feature = ForecastFeatureValue(
+            featureId = "cardio-autonomic",
+            featureVersion = "sim-v1",
+            standardizedValue = 1.0,
+            sourceWindowStartEpochMillis = TARGET_CUTOFF - DAY,
+            sourceWindowEndEpochMillis = TARGET_CUTOFF,
+            provenanceIds = provenance,
+        )
+        provenance.add("injected")
+        assertEquals(listOf("fixture:cardio-autonomic:$TARGET_CUTOFF"), feature.provenanceIds)
+    }
+
     private fun run(
         cases: List<ForecastTrainingCase>,
         target: ForecastFeatureSnapshot,

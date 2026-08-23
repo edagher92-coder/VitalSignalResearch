@@ -114,15 +114,43 @@ object HistoryReconciler {
         val records = initial.records.toMutableMap()
         val tombstones = initial.tombstones.toMutableMap()
         val results = changes.map { change ->
-            when (change) {
-                is HistorySourceChange.Upsert -> applyUpsert(change, records, tombstones)
-                is HistorySourceChange.Delete -> applyDelete(change, records, tombstones)
-            }
+            retainedGovernanceMismatch(change, records, tombstones)
+                ?: when (change) {
+                    is HistorySourceChange.Upsert -> applyUpsert(change, records, tombstones)
+                    is HistorySourceChange.Delete -> applyDelete(change, records, tombstones)
+                }
         }
         return HistoryMergeBatchResult(
             state = HistoryMergeState(records.toMap(), tombstones.toMap()),
             results = results,
         )
+    }
+
+    private fun retainedGovernanceMismatch(
+        change: HistorySourceChange,
+        records: Map<SourceRecordKey, CanonicalHistoryRecord>,
+        tombstones: Map<SourceRecordKey, HistoryTombstone>,
+    ): HistoryMergeResult? {
+        val key = change.key
+        val current = records[key]
+        val tombstone = tombstones[key]
+        val boundPseudonym = current?.participantPseudonym ?: tombstone?.participantPseudonym
+        val boundGeneration = current?.provenance?.consentGeneration ?: tombstone?.consentGeneration
+        if (boundPseudonym != null && boundPseudonym != change.participantPseudonym) {
+            return HistoryMergeResult(
+                key,
+                HistoryMergeAction.CONFLICT_REJECTED,
+                "Source key is already bound to a different participant pseudonym",
+            )
+        }
+        if (boundGeneration != null && change.consentGeneration < boundGeneration) {
+            return HistoryMergeResult(
+                key,
+                HistoryMergeAction.CONFLICT_REJECTED,
+                "Change arrives under a superseded consent generation",
+            )
+        }
+        return null
     }
 
     private fun applyUpsert(
@@ -142,11 +170,27 @@ object HistoryReconciler {
                 "Equal normalized sequence has a different native source version",
             )
         }
+        if (tombstone != null && incoming.provenance.revision == tombstone.revision) {
+            return HistoryMergeResult(
+                key,
+                HistoryMergeAction.CONFLICT_REJECTED,
+                "Upsert claims the exact revision of the source tombstone",
+            )
+        }
         if (tombstone != null && incoming.provenance.revision <= tombstone.revision) {
             return HistoryMergeResult(
                 key,
                 HistoryMergeAction.STALE_IGNORED,
                 "Upsert is not newer than the exact source tombstone",
+            )
+        }
+        if (tombstone != null &&
+            incoming.provenance.sourceUpdatedAtEpochMillis < tombstone.sourceDeletedAtEpochMillis
+        ) {
+            return HistoryMergeResult(
+                key,
+                HistoryMergeAction.CONFLICT_REJECTED,
+                "Resurrecting upsert predates the exact source deletion time",
             )
         }
 
@@ -183,8 +227,19 @@ object HistoryReconciler {
                 "Equal source revision has a different payload digest",
             )
             else -> {
-                records[key] = incoming
-                HistoryMergeResult(key, HistoryMergeAction.UPDATED, "Newer source revision retained")
+                if (incoming.provenance.revision.opaqueVersion ==
+                    current.provenance.revision.opaqueVersion &&
+                    incoming.provenance.payloadSha256 != current.provenance.payloadSha256
+                ) {
+                    HistoryMergeResult(
+                        key,
+                        HistoryMergeAction.CONFLICT_REJECTED,
+                        "Same native source version carries a different payload digest",
+                    )
+                } else {
+                    records[key] = incoming
+                    HistoryMergeResult(key, HistoryMergeAction.UPDATED, "Newer source revision retained")
+                }
             }
         }
     }
@@ -203,7 +258,7 @@ object HistoryReconciler {
         ).maxOrNull()
 
         if (current != null &&
-            current.provenance.revision.conflictsAtSameSequence(change.revision)
+            current.provenance.revision.sequence == change.revision.sequence
         ) {
             return HistoryMergeResult(
                 key,

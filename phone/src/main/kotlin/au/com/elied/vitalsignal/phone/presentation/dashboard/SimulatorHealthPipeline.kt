@@ -45,6 +45,7 @@ data class SimulatorPipelineResult(
     val insight: HealthInsight?,
     val forecastEstimate: ForecastEstimate,
     val effectiveDays: Int,
+    val targetFeatures: ForecastFeatureSnapshot,
 )
 
 /** Exact-value allowlist for deterministic simulator fixtures only; never a production verifier. */
@@ -68,7 +69,8 @@ class SimulatorHealthPipeline(
     private val safetyPolicy: SafetyPolicyEngine = SafetyPolicyEngine(),
     private val forecastEngine: PersonalForecastEngine = PersonalForecastEngine(
         trainingCaseReceiptVerifier = ForecastTrainingCaseReceiptVerifier { trainingCase ->
-            trainingCase.verificationReceiptId?.startsWith("sim-receipt:") == true
+            trainingCase.verificationReceiptId ==
+                simulatorBoundReceipt(trainingCase.caseBindingSha256)
         },
     ),
 ) {
@@ -145,12 +147,25 @@ class SimulatorHealthPipeline(
             ),
             quality = quality.score,
         )
-        val forecastEstimate = forecastEngine.forecast(
-            history = forecastHistory(now),
-            target = targetFeatures,
-            createdAtEpochMillis = now,
-            endpoint = PersonalForecastEngine.SIMULATOR_72_HOUR_POINT_ENDPOINT,
-        )
+        val forecastEstimate = if (userConcernReported) {
+            ForecastEstimate(
+                state = au.com.elied.vitalsignal.analytics.ForecastModelState.ABSTAINED,
+                forecast = null,
+                validCaseCount = 0,
+                effectiveCaseWeight = 0.0,
+                reason = "Human concern overrides wearable forecast",
+            )
+        } else {
+            forecastEngine.forecast(
+                history = forecastHistory(
+                    now = now,
+                    count = if (scenario == SimulationScenario.LEARNING) 12 else 40,
+                ),
+                target = targetFeatures,
+                createdAtEpochMillis = now,
+                endpoint = PersonalForecastEngine.SIMULATOR_72_HOUR_POINT_ENDPOINT,
+            )
+        }
 
         return SimulatorPipelineResult(
             safetyDecision = safetyDecision,
@@ -161,6 +176,7 @@ class SimulatorHealthPipeline(
             insight = insight,
             forecastEstimate = forecastEstimate,
             effectiveDays = effectiveDays,
+            targetFeatures = targetFeatures,
         )
     }
 
@@ -272,11 +288,12 @@ class SimulatorHealthPipeline(
         }
     }
 
-    private fun forecastHistory(now: Long): List<ForecastTrainingCase> = (1..40).map { index ->
+    private fun forecastHistory(now: Long, count: Int = 40): List<ForecastTrainingCase> =
+        (1..count).map { index ->
         // Six-hour spacing keeps all deterministic fixture windows non-negative,
         // unique and prospectively resolved even in the 13-day learning scenario.
         val cutoff = now - (index + 12L) * 6L * HOUR_MILLIS
-        ForecastTrainingCase(
+        val unsigned = ForecastTrainingCase(
             caseId = "sim-case-$index",
             endpoint = PersonalForecastEngine.SIMULATOR_72_HOUR_POINT_ENDPOINT,
             features = ForecastFeatureSnapshot(
@@ -305,8 +322,9 @@ class SimulatorHealthPipeline(
             resolvedAtEpochMillis = cutoff + 73L * HOUR_MILLIS,
             outcomeObservationId = "sim-outcome-$index",
             outcomeRecordSha256 = "%064x".format(index),
-            verificationReceiptId = "sim-receipt:$index",
+            verificationReceiptId = "sim-receipt:unsigned",
         )
+        unsigned.copy(verificationReceiptId = simulatorBoundReceipt(unsigned.caseBindingSha256))
     }
 
     private fun Double?.orZero(): Double = this ?: 0.0
@@ -410,3 +428,6 @@ class SimulatorHealthPipeline(
         )
     }
 }
+
+internal fun simulatorBoundReceipt(caseBindingSha256: String): String =
+    "sim-receipt:${caseBindingSha256.take(32)}"

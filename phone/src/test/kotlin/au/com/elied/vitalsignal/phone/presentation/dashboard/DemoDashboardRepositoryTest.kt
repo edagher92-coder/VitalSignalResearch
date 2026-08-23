@@ -188,6 +188,8 @@ class DemoDashboardRepositoryTest {
         assertEquals("One simulated sensor family moved", state.fiveSecondSummary.whatChanged)
         assertEquals("CONFLICT REJECTED · record retained", state.conflictDesk.single().action)
         assertTrue(state.featureInspector.any { it.featureId == "cardio-autonomic" })
+        assertTrue(state.featureInspector.all { it.snapshotSha256Prefix.matches(Regex("[a-f0-9]{12}")) })
+        assertFalse(state.featureInspector.any { it.snapshotSha256Prefix == "a1b2c3d4e5f6" })
         assertTrue(state.forecastAudit.any { it.state == "COMMITTED HIDDEN" })
         assertTrue(state.forecastAudit.any { it.state == "OUTCOME DUE" })
     }
@@ -216,6 +218,19 @@ class DemoDashboardRepositoryTest {
         assertEquals(ForecastStatus.ABSTAINED, unavailable.forecast.status)
         assertEquals(ResearchAssistantStatus.ABSTAINED, unavailable.researchAssistant.status)
         assertTrue(unavailable.evidence.isEmpty())
+    }
+
+    @Test
+    fun steadyScenarioKeepsHonestFiveSecondCopyAndAComputedSnapshotDigest() {
+        val repository = DemoDashboardRepository()
+        repository.setSimulationScenario(SimulationScenario.STEADY)
+        val steady = repository.state.value
+        assertEquals(PatternStatus.STEADY, steady.status)
+        assertTrue(steady.confidence > 0)
+        assertEquals("No qualified deviation from the simulated baseline", steady.fiveSecondSummary.whatChanged)
+        assertTrue(steady.conflictDesk.isEmpty())
+        assertTrue(steady.featureInspector.isNotEmpty())
+        assertFalse(steady.featureInspector.any { it.snapshotSha256Prefix == "a1b2c3d4e5f6" })
     }
 
     @Test

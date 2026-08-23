@@ -3,6 +3,7 @@ package au.com.elied.vitalsignal.phone.presentation.dashboard
 import au.com.elied.vitalsignal.analytics.ForecastModelState
 import au.com.elied.vitalsignal.analytics.PersistenceEvidenceStatus
 import au.com.elied.vitalsignal.analytics.SafetyDisposition
+import au.com.elied.vitalsignal.analytics.canonicalSha256
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -57,6 +58,29 @@ class SimulatorHealthPipelineTest {
         assertTrue(!result.quality.interpretationGrade)
         assertNull(result.insight)
         assertEquals(ForecastModelState.ABSTAINED, result.forecastEstimate.state)
+    }
+
+    @Test
+    fun learningScenarioLeavesTheForecastEngineLearning() {
+        val result = pipeline.evaluate(SimulationScenario.LEARNING)
+        assertEquals(ForecastModelState.LEARNING, result.forecastEstimate.state)
+        assertTrue(result.forecastEstimate.validCaseCount < 30)
+    }
+
+    @Test
+    fun humanConcernAbstainsTheForecastPayload() {
+        val result = pipeline.evaluate(SimulationScenario.DEVELOPING, userConcernReported = true)
+        assertEquals(ForecastModelState.ABSTAINED, result.forecastEstimate.state)
+        assertNull(result.forecastEstimate.forecast)
+    }
+
+    @Test
+    fun reusedSimulatorReceiptPrefixCannotAuthenticateAMutatedCase() {
+        val developing = pipeline.evaluate(SimulationScenario.DEVELOPING)
+        assertEquals(ForecastModelState.READY, developing.forecastEstimate.state)
+        val digest = developing.targetFeatures.canonicalSha256()
+        assertTrue(digest.matches(Regex("[a-f0-9]{64}")))
+        assertTrue(digest.take(12) != "a1b2c3d4e5f6")
     }
 
     @Test

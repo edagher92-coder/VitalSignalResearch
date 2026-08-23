@@ -88,6 +88,8 @@ test('human concern visibly overrides the simulated forecast', () => {
   assert.match(html, /body\.concern-mode #conflicts \.grid/);
   assert.match(html, /body\.concern-mode #inspector \.grid/);
   assert.match(html, /body\.concern-mode #timeline \.forecast-audit/);
+  assert.match(html, /body\.quality-withheld #conflicts \.grid/);
+  assert.match(html, /document\.body\.classList\.toggle\('quality-withheld'/);
   assert.match(html, /No clinician or emergency service was notified/);
 });
 
@@ -154,7 +156,8 @@ test('exposes operator conflict desk and feature inspector without medical claim
   assert.match(html, /id="conflicts"/);
   assert.match(html, /id="inspector"/);
   assert.match(html, /Equal sequence, different native version/);
-  assert.match(html, /includes values, windows, quality and provenance/);
+  assert.match(html, /Computed on-device from the sealed snapshot/);
+  assert.doesNotMatch(html, /a1b2c3d4e5f6/);
   assert.match(html, /conflicts: \["Conflict desk"/);
   assert.match(html, /inspector: \["Feature inspector"/);
   assert.doesNotMatch(html, /It is safe to exercise/);

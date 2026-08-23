@@ -2,6 +2,7 @@ package au.com.elied.vitalsignal.phone.presentation.dashboard
 
 import au.com.elied.vitalsignal.analytics.ForecastModelState
 import au.com.elied.vitalsignal.analytics.SafetyDisposition
+import au.com.elied.vitalsignal.analytics.canonicalSha256
 import au.com.elied.vitalsignal.audit.AppendOnlyHumanConcernJournal
 import au.com.elied.vitalsignal.audit.HumanConcernAction
 import au.com.elied.vitalsignal.audit.HumanConcernActorRole
@@ -255,6 +256,11 @@ class DemoDashboardRepository(
                 confidence = 81,
                 qualifiedSignalCount = 4,
                 recheckLabel = "Tomorrow",
+                fiveSecondSummary = FiveSecondSummaryUiModel(
+                    whatChanged = "No qualified deviation from the simulated baseline",
+                    evidence = "All qualified domains stayed within range",
+                    nextStep = "Repeat a measurement if symptoms or a new fixture state concern you",
+                ),
                 forecast = ForecastUiModel(
                     status = ForecastStatus.LOCKED,
                     horizonLabel = "72-hour point assessment · +72h to +73h",
@@ -487,10 +493,10 @@ class DemoDashboardRepository(
                 nextStep
             },
             recheckLabel = if (concernOverridesSensors) "User concern" else recheckLabel,
-            confidence = if (wearableEvidenceWithheld) {
-                0
-            } else {
-                ((result.insight?.confidence ?: 0.0) * 100.0).toInt()
+            confidence = when {
+                wearableEvidenceWithheld -> 0
+                result.insight != null -> ((result.insight.confidence) * 100.0).toInt()
+                else -> confidence
             },
             qualifiedSignalCount = if (wearableEvidenceWithheld) {
                 0
@@ -520,8 +526,18 @@ class DemoDashboardRepository(
                 )
                 else -> fiveSecondSummary
             },
-            conflictDesk = if (wearableEvidenceWithheld) emptyList() else conflictDesk,
-            featureInspector = if (wearableEvidenceWithheld) emptyList() else featureInspector,
+            conflictDesk = if (wearableEvidenceWithheld) {
+                emptyList()
+            } else if (result.safetyDecision.disposition == SafetyDisposition.SINGLE_SIGNAL_REMEASURE) {
+                conflictDesk
+            } else {
+                emptyList()
+            },
+            featureInspector = if (wearableEvidenceWithheld) {
+                emptyList()
+            } else {
+                inspectorRows(result)
+            },
             forecastAudit = if (wearableEvidenceWithheld) emptyList() else forecastAudit,
             forecast = forecast.copy(
                 status = forecastStatus,
@@ -597,7 +613,7 @@ class DemoDashboardRepository(
         activeSimulationScenario = SimulationScenario.DEVELOPING,
         status = PatternStatus.DEVELOPING,
         headline = "A simulated recovery shift is developing",
-        summary = "One cardio-autonomic fixture moved overnight, with a small thermal change as context. It needs persistence and a second independent domain before escalation.",
+        summary = "One cardio-autonomic fixture moved overnight, with a small thermal change as context. It needs persistence and a second independent domain before this is treated as a meaningful pattern change.",
         nextStep = "Record how you feel, then repeat a high-quality resting measurement tomorrow. Seek clinical advice if real symptoms concern you.",
         confidence = 72,
         qualifiedSignalCount = 3,
@@ -606,7 +622,7 @@ class DemoDashboardRepository(
         baselineTargetDays = 28,
         signalQuality = 91,
         coverageHours = 22.4,
-        connectedDevice = "Galaxy Watch simulator",
+        connectedDevice = "Wrist wearable simulator",
         lastSyncLabel = "Fixture loaded",
         forecast = ForecastUiModel(
             status = ForecastStatus.LOCKED,
@@ -733,24 +749,7 @@ class DemoDashboardRepository(
                 action = "CONFLICT REJECTED · record retained",
             ),
         ),
-        featureInspector = listOf(
-            FeatureInspectorRowUiModel(
-                featureId = "cardio-autonomic",
-                version = "sim-v1",
-                windowLabel = "Cutoff-anchored overnight window",
-                quality = 94,
-                snapshotSha256Prefix = "a1b2c3d4e5f6",
-                provenanceLabel = "Simulator IBI fixture · schema sim-recovery-features@1.0.0",
-            ),
-            FeatureInspectorRowUiModel(
-                featureId = "sleep",
-                version = "sim-v1",
-                windowLabel = "Cutoff-anchored overnight window",
-                quality = 89,
-                snapshotSha256Prefix = "a1b2c3d4e5f6",
-                provenanceLabel = "Simulator sleep fixture · same sealed snapshot digest",
-            ),
-        ),
+        featureInspector = emptyList(),
         forecastAudit = listOf(
             ForecastAuditEventUiModel(
                 id = "audit-committed",
@@ -835,6 +834,22 @@ class DemoDashboardRepository(
         comparisonLabel = "HUMAN CONCERN HOLD",
         reason = "How the person feels takes priority. Exercise data cannot reassure, provide medical clearance, or resolve this hold.",
     )
+
+    private fun inspectorRows(result: SimulatorPipelineResult): List<FeatureInspectorRowUiModel> {
+        val digestPrefix = result.targetFeatures.canonicalSha256().take(12)
+        val snapshotQuality = (result.targetFeatures.quality * 100.0).toInt().coerceIn(0, 100)
+        return result.targetFeatures.featureValues.toSortedMap().map { (featureId, feature) ->
+            FeatureInspectorRowUiModel(
+                featureId = featureId,
+                version = feature.featureVersion,
+                windowLabel = "Cutoff-anchored source window",
+                quality = snapshotQuality,
+                snapshotSha256Prefix = digestPrefix,
+                provenanceLabel = feature.provenanceIds.joinToString() +
+                    " · same sealed snapshot digest",
+            )
+        }
+    }
 
     private companion object {
         const val SIMULATOR_CONCERN_ID = "sim-concern-1"

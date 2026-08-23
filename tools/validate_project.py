@@ -573,13 +573,18 @@ def validate_traceability_and_quality() -> None:
     require("fun ForecastFeatureSnapshot.canonicalSha256()" in forecast,
             "forecast snapshots expose a public canonical SHA-256")
     require("features.canonicalSha256()" in forecast and
-            "features.quality.toString()" in forecast,
+            "features.quality.toRawBits().toString()" in forecast,
             "training-case bindings include snapshot quality and canonical contents")
     require("java.util.Map.copyOf(" in forecast and
-            "java.util.List.copyOf(feature.provenanceIds)" in forecast,
+            "java.util.List.copyOf(provenanceIds)" in forecast,
             "forecast snapshots copy caller-owned maps and provenance lists")
+    require("trainingSetDigest" in forecast and "sortedBy(ForecastTrainingCase::caseBindingSha256)" in forecast,
+            "forecast identity binds a sorted training-set digest")
     require("Equal delete sequence has a different native source version" in history_merge,
             "history delete rejects same-sequence native-version collisions")
+    require("Source key is already bound to a different participant pseudonym" in history_merge and
+            "Change arrives under a superseded consent generation" in history_merge,
+            "history merge rejects cross-participant and superseded-consent changes")
     require("fun conflictsAtSameSequence(" in history_records,
             "source revisions expose same-sequence native-version conflict detection")
     require(
