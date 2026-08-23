@@ -42,8 +42,8 @@ jobs:
 
       - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
 
-      - name: Install Android API 37
-        run: sdkmanager "platforms;android-37"
+      - name: Install Android API 37.0
+        run: sdkmanager "platforms;android-37.0"
 
       - uses: gradle/actions/wrapper-validation@0b6dd653ba04f4f93bf581ec31e66cbd7dcb644d # v4
 

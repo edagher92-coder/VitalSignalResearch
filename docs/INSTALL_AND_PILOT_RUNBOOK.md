@@ -54,7 +54,7 @@ Pass when unsupported capabilities, missing samples, pause/resume, sleep, falls,
 Install:
 
 - Android Studio capable of the versions pinned by the project;
-- Android SDK Platform 37 and current Platform Tools;
+- Android SDK Platform 37.0 (SDK Manager package `platforms;android-37.0`) and current Platform Tools;
 - JDK 17 selected as the Gradle JDK;
 - a USB data cable for the S25 Ultra;
 - the S25 Ultra and Ultra2 paired normally in the Galaxy Wearable app and signed into their normal services;

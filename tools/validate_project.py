@@ -151,6 +151,10 @@ def validate_ci_supply_chain() -> None:
             "CI uses an explicit read-only default token permission")
     require("pull_request_target" not in workflow,
             "CI does not execute untrusted pull-request code with target-repository authority")
+    require('sdkmanager "platforms;android-37.0"' in workflow,
+            "CI installs the published Android API 37.0 SDK package")
+    require('sdkmanager "platforms;android-37"' not in workflow,
+            "CI does not request the nonexistent unqualified API 37 SDK package")
     require((ROOT / ".github/dependabot.yml").is_file(),
             "dependency update proposals are enabled without auto-merge")
     require((ROOT / ".github/CODEOWNERS").is_file(),
