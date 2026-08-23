@@ -21,6 +21,8 @@ Open the repository root in Cursor. Do not open only `phone/` or `wear/`; Gradle
 - Node.js 24 for the browser prototype tests.
 - Git and GitHub authentication. Use the Git Credential Manager, GitHub CLI or Cursor's supported sign-in flow; never save a token in the repository.
 
+The Gradle wrapper uses Gradle's official `gradle/gradle-distributions` GitHub release for version 9.5.1 instead of `services.gradle.org`. The distribution remains pinned by the same SHA-256 checksum. This allows GitHub-connected development environments that block Gradle's distribution host to retrieve the verified wrapper distribution without vendoring a large executable archive in this repository.
+
 Let Android Studio create `local.properties` with the local SDK path. That file is intentionally ignored by Git.
 
 Confirm the terminal is using JDK 17 before Gradle runs:
