@@ -23,6 +23,12 @@ Open the repository root in Cursor. Do not open only `phone/` or `wear/`; Gradle
 
 Let Android Studio create `local.properties` with the local SDK path. That file is intentionally ignored by Git.
 
+Confirm the terminal is using JDK 17 before Gradle runs:
+
+```bash
+java -version
+```
+
 ## 3. Verify the clean baseline
 
 Run these from the repository root before changing code:
@@ -39,6 +45,17 @@ On Windows, use `gradlew.bat` for the Gradle command. If API 37 is not installed
 - `wear/build/outputs/apk/debug/`
 
 The simulator APKs do not enable Samsung raw sensors, Samsung Health history, personal collection, clinical monitoring or validated forecasts.
+
+PowerShell equivalents:
+
+```powershell
+java -version
+py -3 tools\validate_project.py
+node --test prototype\prototype.test.mjs
+.\gradlew.bat test lint :phone:assembleDebug :wear:assembleDebug --stacktrace
+```
+
+In Android Studio, set the Gradle JDK to 17. A newer system Java installation does not replace this project requirement.
 
 ## 4. Read the governing files before coding
 
@@ -108,3 +125,9 @@ git pull --ff-only
 ```
 
 Before changing computers, commit and push the narrow checkpoint, then verify the commit appears on GitHub. Do not use an uncommitted working directory as the handoff mechanism.
+
+### Debug signing across computers
+
+Android normally creates a different debug keystore on each computer. A build signed on computer B may therefore not update an app installed from computer A. For simulator-only testing, uninstall the old simulator app and accept that its local simulator state is reset. Before any authorised private pilot, create one dedicated pilot signing identity outside Git, store it in an approved password-managed encrypted location, configure each workstation locally, document rotation/recovery and verify the signing-certificate digest on both apps and devices. Never copy a keystore into the repository, chat, Cursor index or ordinary cloud-sync folder.
+
+Changing signing identity can make encrypted application state inaccessible and invalidate continuity assumptions. Do not begin personal-data collection until signing, Keystore lifecycle, export/delete and recovery tests have passed on the exact phone and watch.
