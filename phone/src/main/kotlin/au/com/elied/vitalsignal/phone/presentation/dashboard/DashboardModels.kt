@@ -119,6 +119,10 @@ data class DashboardUiState(
     val trend: List<TrendPointUiModel>,
     val qualitySignals: List<QualitySignalUiModel>,
     val timeline: List<TimelineItemUiModel>,
+    val fiveSecondSummary: FiveSecondSummaryUiModel = FiveSecondSummaryUiModel(),
+    val conflictDesk: List<ConflictDeskItemUiModel> = emptyList(),
+    val featureInspector: List<FeatureInspectorRowUiModel> = emptyList(),
+    val forecastAudit: List<ForecastAuditEventUiModel> = emptyList(),
     val explanationExpanded: Boolean = false,
     val quickLogOpen: Boolean = false,
     val activeHumanConcern: Boolean = false,
@@ -177,6 +181,64 @@ data class QualitySignalUiModel(
     val score: Int,
     val note: String,
 )
+
+data class FiveSecondSummaryUiModel(
+    val whatChanged: String = "No five-second summary is available",
+    val evidence: String = "Evidence withheld",
+    val nextStep: String = "Record how you feel if something concerns you",
+) {
+    init {
+        require(whatChanged.isNotBlank())
+        require(evidence.isNotBlank())
+        require(nextStep.isNotBlank())
+    }
+}
+
+data class ConflictDeskItemUiModel(
+    val id: String,
+    val title: String,
+    val detail: String,
+    val action: String,
+) {
+    init {
+        require(id.isNotBlank())
+        require(title.isNotBlank())
+        require(detail.isNotBlank())
+        require(action.isNotBlank())
+    }
+}
+
+data class FeatureInspectorRowUiModel(
+    val featureId: String,
+    val version: String,
+    val windowLabel: String,
+    val quality: Int,
+    val snapshotSha256Prefix: String,
+    val provenanceLabel: String,
+) {
+    init {
+        require(featureId.isNotBlank())
+        require(version.isNotBlank())
+        require(windowLabel.isNotBlank())
+        require(quality in 0..100)
+        require(snapshotSha256Prefix.matches(Regex("[a-f0-9]{12}")))
+        require(provenanceLabel.isNotBlank())
+    }
+}
+
+data class ForecastAuditEventUiModel(
+    val id: String,
+    val state: String,
+    val timeLabel: String,
+    val detail: String,
+) {
+    init {
+        require(id.isNotBlank())
+        require(state.isNotBlank())
+        require(timeLabel.isNotBlank())
+        require(detail.isNotBlank())
+    }
+}
 
 enum class TimelineKind { INSIGHT, MEASUREMENT, CONTEXT, SYSTEM }
 

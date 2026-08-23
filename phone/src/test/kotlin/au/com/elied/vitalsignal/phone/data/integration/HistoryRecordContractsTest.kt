@@ -41,6 +41,19 @@ class HistoryRecordContractsTest {
     }
 
     @Test
+    fun sameSequenceDifferentOpaqueVersionIsAConflictRatherThanAnOrderingTie() {
+        val first = SourceRevision(1L, "native-1")
+        val colliding = SourceRevision(1L, "delete-other")
+        val newer = SourceRevision(2L, "native-2")
+
+        assertTrue(first.conflictsAtSameSequence(colliding))
+        assertTrue(colliding.conflictsAtSameSequence(first))
+        assertEquals(0, first.compareTo(colliding))
+        assertTrue(first < newer)
+        assertTrue(!first.conflictsAtSameSequence(newer))
+    }
+
+    @Test
     fun malformedPayloadDigestIsRejected() {
         assertThrows(IllegalArgumentException::class.java) {
             provenance().copy(payloadSha256 = "not-a-sha256")

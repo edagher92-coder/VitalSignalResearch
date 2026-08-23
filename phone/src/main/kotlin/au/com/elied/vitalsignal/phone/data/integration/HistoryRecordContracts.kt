@@ -124,6 +124,10 @@ data class SourceRevision(
     }
 
     override fun compareTo(other: SourceRevision): Int = sequence.compareTo(other.sequence)
+
+    /** Ordering is sequence-only; native version ties must be rejected separately. */
+    fun conflictsAtSameSequence(other: SourceRevision): Boolean =
+        sequence == other.sequence && this != other
 }
 
 data class HistoryProvenance(

@@ -507,6 +507,22 @@ class DemoDashboardRepository(
             } else {
                 activityResponse
             },
+            fiveSecondSummary = when {
+                concernOverridesSensors -> FiveSecondSummaryUiModel(
+                    whatChanged = "Human concern takes priority",
+                    evidence = "Wearable analytics withheld",
+                    nextStep = "Follow your own care plan; this app did not notify anyone",
+                )
+                wearableEvidenceWithheld -> FiveSecondSummaryUiModel(
+                    whatChanged = "Wearable interpretation is withheld",
+                    evidence = "Missing, immature, or low-quality evidence stays unavailable",
+                    nextStep = "Record how you feel, then collect a qualified measurement",
+                )
+                else -> fiveSecondSummary
+            },
+            conflictDesk = if (wearableEvidenceWithheld) emptyList() else conflictDesk,
+            featureInspector = if (wearableEvidenceWithheld) emptyList() else featureInspector,
+            forecastAudit = if (wearableEvidenceWithheld) emptyList() else forecastAudit,
             forecast = forecast.copy(
                 status = forecastStatus,
                 probability = if (forecastIsRevealable) {
@@ -702,6 +718,63 @@ class DemoDashboardRepository(
                 title = "Simulator baseline fixture",
                 detail = "30 effective days · generated test history",
                 kind = TimelineKind.SYSTEM,
+            ),
+        ),
+        fiveSecondSummary = FiveSecondSummaryUiModel(
+            whatChanged = "One simulated sensor family moved",
+            evidence = "72 / 100 internal evidence score",
+            nextStep = "Record context, then remeasure",
+        ),
+        conflictDesk = listOf(
+            ConflictDeskItemUiModel(
+                id = "conflict-seq-1",
+                title = "Same-sequence native-version conflict",
+                detail = "Simulator Health Connect fixture rejected delete (sequence 1, opaque delete-other) against live record (sequence 1, opaque native-1). The live record was retained.",
+                action = "CONFLICT REJECTED · record retained",
+            ),
+        ),
+        featureInspector = listOf(
+            FeatureInspectorRowUiModel(
+                featureId = "cardio-autonomic",
+                version = "sim-v1",
+                windowLabel = "Cutoff-anchored overnight window",
+                quality = 94,
+                snapshotSha256Prefix = "a1b2c3d4e5f6",
+                provenanceLabel = "Simulator IBI fixture · schema sim-recovery-features@1.0.0",
+            ),
+            FeatureInspectorRowUiModel(
+                featureId = "sleep",
+                version = "sim-v1",
+                windowLabel = "Cutoff-anchored overnight window",
+                quality = 89,
+                snapshotSha256Prefix = "a1b2c3d4e5f6",
+                provenanceLabel = "Simulator sleep fixture · same sealed snapshot digest",
+            ),
+        ),
+        forecastAudit = listOf(
+            ForecastAuditEventUiModel(
+                id = "audit-committed",
+                state = "COMMITTED HIDDEN",
+                timeLabel = "Mon 21:00",
+                detail = "Time-stamped simulator forecast sealed before check-in. Probability is absent from the locked view.",
+            ),
+            ForecastAuditEventUiModel(
+                id = "audit-context",
+                state = "PRE-REVEAL CONTEXT",
+                timeLabel = "Now",
+                detail = "Complete check-in would store context against the sealed commitment. Partial answers stay missing.",
+            ),
+            ForecastAuditEventUiModel(
+                id = "audit-reveal",
+                state = "REVEAL",
+                timeLabel = "After check-in",
+                detail = "Reveal can show only the already-committed unvalidated fixture. It cannot rewrite the snapshot.",
+            ),
+            ForecastAuditEventUiModel(
+                id = "audit-outcome",
+                state = "OUTCOME DUE",
+                timeLabel = "+72h to +73h",
+                detail = "The binary target-window check-in is not yet knowable. Missing outcomes stay missing.",
             ),
         ),
     )

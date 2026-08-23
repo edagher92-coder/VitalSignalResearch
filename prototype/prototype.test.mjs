@@ -24,7 +24,17 @@ test('uses the reversible Evidessa working brand and original Evidence Weave', (
 });
 
 test('observer preview covers freshness states without implying monitoring', () => {
-  for (const state of ['SIMULATED LIVE-STATE · NO STREAM', 'DELAYED · SIMULATED', 'STALE · SIMULATED', 'NO DATA · SIMULATED']) {
+  for (const state of [
+    'SIMULATED LIVE-STATE · NO STREAM',
+    'DELAYED · SIMULATED',
+    'STALE · SIMULATED',
+    'NO DATA · SIMULATED',
+    'QUALITY BLOCKED',
+    'AUTHORIZATION BLOCKED',
+    'SESSION INACTIVE',
+    'CLOCK UNTRUSTED',
+    'SEQUENCE INVALID',
+  ]) {
     assert.ok(html.includes(state), `missing observer state: ${state}`);
   }
   assert.match(html, /NON-OPERATIONAL OBSERVER PREVIEW/);
@@ -75,6 +85,9 @@ test('human concern visibly overrides the simulated forecast', () => {
   assert.match(html, /document\.body\.classList\.add\('concern-mode'\)/);
   assert.match(html, /body\.concern-mode #scientist \.grid/);
   assert.match(html, /body\.concern-mode #evidence \.grid/);
+  assert.match(html, /body\.concern-mode #conflicts \.grid/);
+  assert.match(html, /body\.concern-mode #inspector \.grid/);
+  assert.match(html, /body\.concern-mode #timeline \.forecast-audit/);
   assert.match(html, /No clinician or emergency service was notified/);
 });
 
@@ -133,4 +146,30 @@ test('activity low-quality and concern states abstain without manufacturing norm
   assert.match(html, /body\.concern-mode \.activity-response \.activity-analytics/);
   assert.match(html, /HUMAN PRIORITY · ANALYTICS HIDDEN/);
   assert.match(html, /Exercise analytics are hidden because steps, heart rate or recovery cannot reassure/);
+});
+
+test('exposes operator conflict desk and feature inspector without medical claims', () => {
+  assert.match(html, /aria-controls="conflicts"/);
+  assert.match(html, /aria-controls="inspector"/);
+  assert.match(html, /id="conflicts"/);
+  assert.match(html, /id="inspector"/);
+  assert.match(html, /Equal sequence, different native version/);
+  assert.match(html, /includes values, windows, quality and provenance/);
+  assert.match(html, /conflicts: \["Conflict desk"/);
+  assert.match(html, /inspector: \["Feature inspector"/);
+  assert.doesNotMatch(html, /It is safe to exercise/);
+  assert.doesNotMatch(html, /CALIBRATED/);
+});
+
+test('forecast audit lane shows committed-hidden through outcome-due', () => {
+  assert.match(html, /Committed hidden → context → reveal → outcome/);
+  assert.match(html, /COMMITTED HIDDEN/);
+  assert.match(html, /PRE-REVEAL CONTEXT/);
+  assert.match(html, /OUTCOME DUE/);
+  assert.match(html, /Missing outcomes remain missing rather than negative/);
+});
+
+test('observer coverage count matches the fail-closed freshness matrix', () => {
+  assert.match(html, /9 \/ 9/);
+  assert.match(html, /Live, delayed, stale, no-data and fail-closed fixtures/);
 });

@@ -80,6 +80,10 @@ class DemoDashboardRepositoryTest {
         assertNull(state.forecast.probability)
         assertNull(state.forecast.personalBaseRate)
         assertEquals("CONCERN HOLD", state.forecast.calibrationLabel)
+        assertTrue(state.conflictDesk.isEmpty())
+        assertTrue(state.featureInspector.isEmpty())
+        assertTrue(state.forecastAudit.isEmpty())
+        assertEquals("Human concern takes priority", state.fiveSecondSummary.whatChanged)
         assertEquals(ResearchAssistantStatus.BLOCKED, state.researchAssistant.status)
         assertTrue(state.researchAssistant.narrative.contains("medical clearance"))
         assertTrue(state.savedMessage.orEmpty().contains("concern hold is active", ignoreCase = true))
@@ -181,6 +185,11 @@ class DemoDashboardRepositoryTest {
         )
         assertTrue(state.researchAssistant.providerLabel.contains("no model or cloud call"))
         assertTrue(state.researchAssistant.policyLabel.contains("cannot diagnose"))
+        assertEquals("One simulated sensor family moved", state.fiveSecondSummary.whatChanged)
+        assertEquals("CONFLICT REJECTED · record retained", state.conflictDesk.single().action)
+        assertTrue(state.featureInspector.any { it.featureId == "cardio-autonomic" })
+        assertTrue(state.forecastAudit.any { it.state == "COMMITTED HIDDEN" })
+        assertTrue(state.forecastAudit.any { it.state == "OUTCOME DUE" })
     }
 
     @Test
@@ -194,6 +203,10 @@ class DemoDashboardRepositoryTest {
         assertEquals(ForecastStatus.LEARNING, learning.forecast.status)
         assertEquals(ResearchAssistantStatus.ABSTAINED, learning.researchAssistant.status)
         assertTrue(learning.evidence.isEmpty())
+        assertTrue(learning.conflictDesk.isEmpty())
+        assertTrue(learning.featureInspector.isEmpty())
+        assertTrue(learning.forecastAudit.isEmpty())
+        assertTrue(learning.fiveSecondSummary.whatChanged.contains("withheld"))
         repository.saveQuickLog(QuickLogDraft())
         assertEquals(ForecastStatus.LEARNING, repository.state.value.forecast.status)
 

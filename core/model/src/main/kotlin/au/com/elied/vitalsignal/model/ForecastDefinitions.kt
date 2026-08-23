@@ -141,7 +141,7 @@ data class ForecastFeatureSchemaDefinition(
             featureVersions: Map<String, String>,
             standardizationProtocol: String,
         ): ForecastFeatureSchemaDefinition {
-            val stableVersions = featureVersions.toSortedMap().toMap()
+            val stableVersions = java.util.Map.copyOf(featureVersions.toSortedMap())
             val digest = forecastDefinitionSha256(
                 id,
                 version,

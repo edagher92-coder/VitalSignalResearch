@@ -133,6 +133,15 @@ object HistoryReconciler {
         val key = change.key
         val incoming = change.record
         val tombstone = tombstones[key]
+        if (tombstone != null &&
+            incoming.provenance.revision.conflictsAtSameSequence(tombstone.revision)
+        ) {
+            return HistoryMergeResult(
+                key,
+                HistoryMergeAction.CONFLICT_REJECTED,
+                "Equal normalized sequence has a different native source version",
+            )
+        }
         if (tombstone != null && incoming.provenance.revision <= tombstone.revision) {
             return HistoryMergeResult(
                 key,
@@ -155,7 +164,7 @@ object HistoryReconciler {
                 HistoryMergeAction.STALE_IGNORED,
                 "Source revision is older than the retained record",
             )
-            comparison == 0 && incoming.provenance.revision != current.provenance.revision ->
+            comparison == 0 && incoming.provenance.revision.conflictsAtSameSequence(current.provenance.revision) ->
                 HistoryMergeResult(
                     key,
                     HistoryMergeAction.CONFLICT_REJECTED,
@@ -193,6 +202,15 @@ object HistoryReconciler {
             existingTombstone?.revision,
         ).maxOrNull()
 
+        if (current != null &&
+            current.provenance.revision.conflictsAtSameSequence(change.revision)
+        ) {
+            return HistoryMergeResult(
+                key,
+                HistoryMergeAction.CONFLICT_REJECTED,
+                "Equal delete sequence has a different native source version",
+            )
+        }
         if (newestRevision != null && change.revision < newestRevision) {
             return HistoryMergeResult(
                 key,

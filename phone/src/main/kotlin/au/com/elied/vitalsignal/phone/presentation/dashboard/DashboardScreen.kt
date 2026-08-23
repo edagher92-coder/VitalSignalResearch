@@ -87,6 +87,7 @@ import au.com.elied.vitalsignal.phone.ui.theme.Rose
 import au.com.elied.vitalsignal.phone.ui.theme.Slate
 import au.com.elied.vitalsignal.phone.ui.theme.SurfaceDeep
 import au.com.elied.vitalsignal.phone.ui.theme.SurfaceLifted
+import au.com.elied.vitalsignal.phone.ui.theme.Violet
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -158,6 +159,11 @@ fun DashboardScreen(
                 InterpretationTraceCard(state)
                 DataPlaneCard(state.dataPlane)
                 TimelineCard(state.timeline)
+                if (!state.activeHumanConcern) {
+                    if (state.conflictDesk.isNotEmpty()) ConflictDeskCard(state.conflictDesk)
+                    if (state.featureInspector.isNotEmpty()) FeatureInspectorCard(state.featureInspector)
+                    if (state.forecastAudit.isNotEmpty()) ForecastAuditTimeline(state.forecastAudit)
+                }
                 if (state.isSimulated) {
                     SimulationLab(
                         selected = state.activeSimulationScenario,
@@ -530,6 +536,7 @@ private fun PatternHeroCard(
                 style = MaterialTheme.typography.bodyLarge,
                 color = Slate,
             )
+            FiveSecondSummaryRow(state.fiveSecondSummary)
             SignalTrace(accent = statusColor)
             Surface(
                 modifier = Modifier
@@ -681,7 +688,7 @@ private fun ConfidenceBeacon(value: Int, label: String, color: Color) {
                 text = label.uppercase(),
                 style = MaterialTheme.typography.labelMedium,
                 color = color,
-                fontSize = 10.sp,
+                fontSize = 12.sp,
                 letterSpacing = 0.5.sp,
             )
         }
@@ -1615,6 +1622,185 @@ private fun QualityRow(signal: QualitySignalUiModel, color: Color) {
             style = MaterialTheme.typography.labelLarge,
             color = color,
         )
+    }
+}
+
+@Composable
+@Composable
+private fun FiveSecondSummaryRow(summary: FiveSecondSummaryUiModel) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp)
+            .semantics { contentDescription = "Five-second summary" },
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        FiveSecondCell("What changed", summary.whatChanged, Modifier.weight(1f))
+        FiveSecondCell("Evidence", summary.evidence, Modifier.weight(1f))
+        FiveSecondCell("Next step", summary.nextStep, Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun FiveSecondCell(label: String, value: String, modifier: Modifier) {
+    Surface(
+        modifier = modifier,
+        color = Color(0xFF0C2023),
+        shape = RoundedCornerShape(14.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Violet.copy(alpha = 0.22f)),
+    ) {
+        Column(Modifier.padding(10.dp)) {
+            Text(
+                text = label.uppercase(),
+                style = MaterialTheme.typography.labelMedium,
+                color = Violet,
+            )
+            Text(
+                text = value,
+                modifier = Modifier.padding(top = 4.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = Ice,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ConflictDeskCard(items: List<ConflictDeskItemUiModel>) {
+    DashboardCard {
+        SectionLabel("Conflict desk")
+        Text(
+            text = "Rejected source revisions stay visible",
+            modifier = Modifier.padding(top = 6.dp, bottom = 10.dp),
+            style = MaterialTheme.typography.titleLarge,
+            color = Ice,
+        )
+        Text(
+            text = "Simulator-only. Equal sequence with a different native version fails closed instead of overwriting history.",
+            modifier = Modifier.padding(bottom = 12.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = Slate,
+        )
+        items.forEach { item ->
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 10.dp),
+                color = Color(0xFF0C2023),
+                shape = RoundedCornerShape(16.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Amber.copy(alpha = 0.28f)),
+            ) {
+                Column(Modifier.padding(14.dp)) {
+                    Text(item.title, style = MaterialTheme.typography.titleMedium, color = Ice)
+                    Text(
+                        item.detail,
+                        modifier = Modifier.padding(top = 5.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Slate,
+                    )
+                    Text(
+                        item.action,
+                        modifier = Modifier.padding(top = 8.dp),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Amber,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FeatureInspectorCard(rows: List<FeatureInspectorRowUiModel>) {
+    DashboardCard {
+        SectionLabel("Feature inspector")
+        Text(
+            text = "Cutoff-sealed snapshot contents",
+            modifier = Modifier.padding(top = 6.dp, bottom = 10.dp),
+            style = MaterialTheme.typography.titleLarge,
+            color = Ice,
+        )
+        Text(
+            text = "Values, windows, quality and provenance are bound into the training-case receipt. This is a simulator fixture, not personal health data.",
+            modifier = Modifier.padding(bottom = 12.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = Slate,
+        )
+        rows.forEach { row ->
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 10.dp),
+                color = Color(0xFF0C2023),
+                shape = RoundedCornerShape(16.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Violet.copy(alpha = 0.24f)),
+            ) {
+                Column(Modifier.padding(14.dp)) {
+                    Text(row.featureId, style = MaterialTheme.typography.titleMedium, color = Ice)
+                    Text(
+                        "${row.version} · ${row.windowLabel} · quality ${row.quality}/100",
+                        modifier = Modifier.padding(top = 4.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Slate,
+                    )
+                    Text(
+                        "canonicalSha256 ${row.snapshotSha256Prefix}…",
+                        modifier = Modifier.padding(top = 6.dp),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Violet,
+                    )
+                    Text(
+                        row.provenanceLabel,
+                        modifier = Modifier.padding(top = 4.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Quiet,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ForecastAuditTimeline(events: List<ForecastAuditEventUiModel>) {
+    DashboardCard {
+        SectionLabel("Forecast audit")
+        Text(
+            text = "Committed hidden → context → reveal → outcome",
+            modifier = Modifier.padding(top = 6.dp, bottom = 10.dp),
+            style = MaterialTheme.typography.titleLarge,
+            color = Ice,
+        )
+        events.forEachIndexed { index, event ->
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(
+                        modifier = Modifier
+                            .padding(top = 5.dp)
+                            .size(10.dp)
+                            .background(Violet, CircleShape),
+                    )
+                    if (index != events.lastIndex) {
+                        Box(
+                            modifier = Modifier
+                                .width(1.dp)
+                                .height(58.dp)
+                                .background(Color(0xFF284448)),
+                        )
+                    }
+                }
+                Spacer(Modifier.width(12.dp))
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(bottom = if (index != events.lastIndex) 12.dp else 0.dp),
+                ) {
+                    Text(event.timeLabel.uppercase(), style = MaterialTheme.typography.labelMedium, color = Violet)
+                    Text(event.state, modifier = Modifier.padding(top = 3.dp), style = MaterialTheme.typography.titleMedium, color = Ice)
+                    Text(event.detail, modifier = Modifier.padding(top = 3.dp), style = MaterialTheme.typography.bodyMedium, color = Slate)
+                }
+            }
+        }
     }
 }
 

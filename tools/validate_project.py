@@ -211,6 +211,9 @@ def validate_brand_and_experience() -> None:
     )
     wear_build = read("wear/build.gradle.kts")
     require('versionName = "0.5.0-research"' in wear_build, "wear source version is 0.5.0-research")
+    require("libs.androidx.fragment" in wear_build, "wear declares Fragment for Activity Result lint")
+    require("androidx-fragment" in read("gradle/libs.versions.toml"),
+            "version catalog declares AndroidX Fragment")
 
 
 def validate_ci_supply_chain() -> None:
@@ -567,6 +570,18 @@ def validate_traceability_and_quality() -> None:
     require("minimumReadyCases: Int = 30" in forecast, "forecast has a 30-case readiness gate")
     require("MessageDigest.getInstance(\"SHA-256\")" in forecast, "forecast snapshots are hashed")
     require("forecastId(" in forecast and "snapshotDigest" in forecast, "forecast IDs bind model and snapshot content")
+    require("fun ForecastFeatureSnapshot.canonicalSha256()" in forecast,
+            "forecast snapshots expose a public canonical SHA-256")
+    require("features.canonicalSha256()" in forecast and
+            "features.quality.toString()" in forecast,
+            "training-case bindings include snapshot quality and canonical contents")
+    require("java.util.Map.copyOf(" in forecast and
+            "java.util.List.copyOf(feature.provenanceIds)" in forecast,
+            "forecast snapshots copy caller-owned maps and provenance lists")
+    require("Equal delete sequence has a different native source version" in history_merge,
+            "history delete rejects same-sequence native-version collisions")
+    require("fun conflictsAtSameSequence(" in history_records,
+            "source revisions expose same-sequence native-version conflict detection")
     require(
         "featureSnapshotHash.matches(Regex(\"[a-f0-9]{64}\"))" in model,
         "forecast contracts require canonical SHA-256 snapshot hashes",
@@ -864,6 +879,11 @@ def validate_simulator_truthfulness() -> None:
     ):
         require(phrase in prototype, f'prototype contains truthful state: "{phrase}"')
     require("forecast-value" in prototype and "38%" in prototype, "prototype check-in reveals a simulated forecast")
+    for operator_surface in ("id=\"conflicts\"", "id=\"inspector\"", "QUALITY BLOCKED",
+                             "AUTHORIZATION BLOCKED", "SESSION INACTIVE",
+                             "CLOCK UNTRUSTED", "SEQUENCE INVALID",
+                             "COMMITTED HIDDEN", "canonicalSha256"):
+        require(operator_surface in prototype, f'prototype contains operator surface: "{operator_surface}"')
     require("Evidessa Scientist" in prototype and
             "Reviewed template · no model call · no cloud call" in prototype and
             "Release-policy gate" in prototype and
@@ -961,6 +981,10 @@ def validate_deliverables() -> None:
     require("VitalSignal-Alert-Action-Permit" in backend_api and
             "expectedVersion" in backend_api,
             "backend alert actions are permit- and version-bound")
+    require("TrainingCaseReceipt" in backend_api and
+            "caseBindingSha256" in backend_api and
+            "canonicalFeatureSnapshotSha256" in backend_api,
+            "observer contract documents training-case receipt bindings")
     report = read("docs/BUILD_REPORT.md")
     require("0.5.0-research" in report, "build report matches source version")
     require("not run" in report.lower(), "build report records unexecuted verification honestly")
