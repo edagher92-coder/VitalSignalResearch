@@ -65,7 +65,7 @@ test('shows a governed replaceable assistant without pretending a model ran', ()
 test('keeps navigation and forecast reveal accessible', () => {
   assert.match(html, /aria-controls="today" aria-current="page"/);
   assert.match(html, /id="forecast-title" tabindex="-1"/);
-  assert.match(html, /Unvalidated simulated fixture estimate revealed; this is not a health prediction/);
+  assert.match(html, /same unvalidated fixture commitment remains revealed; this is not a health prediction/);
   assert.match(html, /Lower-than-personal-usual energy\/function at \+72h to \+73h/);
   assert.match(html, /requestAnimationFrame\(\(\) => document\.getElementById\('forecast-title'\)\.focus\(\)\)/);
   assert.doesNotMatch(html, /\.evidence-item[^}]+cursor:\s*pointer/);
