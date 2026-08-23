@@ -1,0 +1,33 @@
+# Build and IDE state
+.gradle/
+.idea/
+**/build/
+local.properties
+*.iml
+
+# Proprietary SDKs and signing material
+*.aar
+*.jks
+*.keystore
+*.p12
+*.pem
+
+# Secrets and private endpoints
+.env
+.env.*
+secrets.properties
+tools/windows/VitalSignal-Ollama-Endpoint.txt
+
+# Personal or generated health material
+*.db
+*.sqlite
+*.sqlite3
+private-health-data/
+phone/src/debug/assets/private-health-data/
+wear/src/debug/assets/private-health-data/
+exports/
+logs/
+
+# Packaged applications
+*.apk
+*.aab
