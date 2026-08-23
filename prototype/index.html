@@ -102,7 +102,9 @@
       margin: 0 0 18px; padding: 12px 15px; border: 1px solid rgba(244,201,107,.24);
       border-radius: 16px; background: rgba(244,201,107,.075); color: #f4d995;
       font-size: 12px; font-weight: 750; letter-spacing: .04em;
+      display: flex; flex-wrap: wrap; gap: 5px 8px; line-height: 1.45;
     }
+    .sim-banner span + span::before { content: "·"; margin-right: 8px; opacity: .62; }
     .global-concern {
       margin: 0 0 18px; padding: 16px 18px; border: 2px solid rgba(255,146,158,.55);
       border-radius: 18px; background: rgba(255,146,158,.12); color: #ffd7dc;
@@ -381,6 +383,9 @@
       .observer-row { grid-template-columns: 1fr; }
       .activity-metrics, .activity-detail-grid { grid-template-columns: 1fr; }
       .explain-lead, .explain-columns { grid-template-columns: 1fr; }
+      .sim-banner { letter-spacing: .015em; padding: 11px 13px; }
+      .sim-banner span { white-space: normal; }
+      .sim-banner span + span::before { margin-right: 5px; }
     }
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto; }
@@ -432,7 +437,7 @@
         </div>
       </header>
 
-      <div class="sim-banner" role="status">SIMULATED DATA · NOT YOUR HEALTH DATA · NO GALAXY WATCH IS CONNECTED · MEMORY-ONLY UI · INDEPENDENT RESEARCH PROTOTYPE · NOT AFFILIATED WITH SAMSUNG OR APPLE</div>
+      <div class="sim-banner" role="status" aria-label="SIMULATED DATA · NOT YOUR HEALTH DATA · NO GALAXY WATCH IS CONNECTED · MEMORY-ONLY UI · INDEPENDENT RESEARCH PROTOTYPE · NOT AFFILIATED WITH SAMSUNG OR APPLE"><span>SIMULATED DATA</span><span>NOT YOUR HEALTH DATA</span><span>NO GALAXY WATCH IS CONNECTED</span><span>MEMORY-ONLY UI</span><span>INDEPENDENT RESEARCH PROTOTYPE</span><span>NOT AFFILIATED WITH SAMSUNG OR APPLE</span></div>
       <div class="global-concern" id="global-concern-hold" role="alert" aria-live="assertive" hidden>
         <strong>Your concern takes priority; sensor and AI interpretations are withheld.</strong>
         No clinician or emergency service was notified. Follow your own care plan or contact appropriate help yourself; seek urgent help if you believe this is an emergency. This prototype cannot provide medical clearance.
