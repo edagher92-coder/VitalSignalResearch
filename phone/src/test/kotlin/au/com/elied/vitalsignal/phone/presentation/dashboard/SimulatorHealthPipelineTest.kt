@@ -93,4 +93,32 @@ class SimulatorHealthPipelineTest {
             )
         }
     }
+
+    @Test
+    fun readyForecastIsCommittedHiddenAndReevaluateIsIdempotent() {
+        val first = pipeline.evaluate(SimulationScenario.DEVELOPING)
+        assertEquals(ForecastModelState.READY, first.forecastEstimate.state)
+        assertNotNull(first.forecastEstimate.forecast)
+        val view = first.prospectiveView as au.com.elied.vitalsignal.audit.LockedForecastView
+        assertEquals(
+            au.com.elied.vitalsignal.audit.ProspectiveForecastState.COMMITTED_HIDDEN,
+            view.state,
+        )
+        assertEquals(first.forecastEstimate.forecast!!.id, view.forecastId)
+        assertEquals(first.targetFeatures.canonicalSha256(), view.canonicalFeatureSnapshotSha256)
+
+        val second = pipeline.evaluate(SimulationScenario.DEVELOPING)
+        assertEquals(ForecastModelState.READY, second.forecastEstimate.state)
+        assertEquals(first.forecastEstimate.forecast!!.id, second.forecastEstimate.forecast!!.id)
+        val secondView = second.prospectiveView as au.com.elied.vitalsignal.audit.LockedForecastView
+        assertEquals(view.forecastId, secondView.forecastId)
+        assertEquals(view.canonicalFeatureSnapshotSha256, secondView.canonicalFeatureSnapshotSha256)
+    }
+
+    @Test
+    fun humanConcernDoesNotCommitAForecastToTheLedger() {
+        val result = pipeline.evaluate(SimulationScenario.DEVELOPING, userConcernReported = true)
+        assertEquals(ForecastModelState.ABSTAINED, result.forecastEstimate.state)
+        assertNull(result.prospectiveView)
+    }
 }

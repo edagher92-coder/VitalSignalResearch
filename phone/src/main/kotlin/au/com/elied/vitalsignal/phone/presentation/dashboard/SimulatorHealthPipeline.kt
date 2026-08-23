@@ -19,6 +19,12 @@ import au.com.elied.vitalsignal.analytics.SafetyDecision
 import au.com.elied.vitalsignal.analytics.SafetyGateInput
 import au.com.elied.vitalsignal.analytics.SafetyPolicyEngine
 import au.com.elied.vitalsignal.analytics.SignalQualityEngine
+import au.com.elied.vitalsignal.analytics.canonicalSha256
+import au.com.elied.vitalsignal.audit.ForecastLedgerMutationResult
+import au.com.elied.vitalsignal.audit.InMemoryForecastAuditJournal
+import au.com.elied.vitalsignal.audit.LockedForecastView
+import au.com.elied.vitalsignal.audit.ProspectiveForecastLedger
+import au.com.elied.vitalsignal.audit.ProspectiveForecastView
 import au.com.elied.vitalsignal.model.ActivityState
 import au.com.elied.vitalsignal.model.AcquisitionOrigin
 import au.com.elied.vitalsignal.model.conservativeAcquisitionProfile
@@ -46,6 +52,8 @@ data class SimulatorPipelineResult(
     val forecastEstimate: ForecastEstimate,
     val effectiveDays: Int,
     val targetFeatures: ForecastFeatureSnapshot,
+    val prospectiveView: ProspectiveForecastView? = null,
+    val ledgerReason: String? = null,
 )
 
 /** Exact-value allowlist for deterministic simulator fixtures only; never a production verifier. */
@@ -72,6 +80,9 @@ class SimulatorHealthPipeline(
             trainingCase.verificationReceiptId ==
                 simulatorBoundReceipt(trainingCase.caseBindingSha256)
         },
+    ),
+    private val forecastLedger: ProspectiveForecastLedger = ProspectiveForecastLedger(
+        InMemoryForecastAuditJournal(),
     ),
 ) {
     fun evaluate(
@@ -147,7 +158,7 @@ class SimulatorHealthPipeline(
             ),
             quality = quality.score,
         )
-        val forecastEstimate = if (userConcernReported) {
+        val rawEstimate = if (userConcernReported) {
             ForecastEstimate(
                 state = au.com.elied.vitalsignal.analytics.ForecastModelState.ABSTAINED,
                 forecast = null,
@@ -166,6 +177,7 @@ class SimulatorHealthPipeline(
                 endpoint = PersonalForecastEngine.SIMULATOR_72_HOUR_POINT_ENDPOINT,
             )
         }
+        val sealed = sealThroughLedger(rawEstimate, targetFeatures, now)
 
         return SimulatorPipelineResult(
             safetyDecision = safetyDecision,
@@ -174,10 +186,94 @@ class SimulatorHealthPipeline(
             deviations = deviations,
             interpretationAssessment = interpretationAssessment,
             insight = insight,
-            forecastEstimate = forecastEstimate,
+            forecastEstimate = sealed.estimate,
             effectiveDays = effectiveDays,
             targetFeatures = targetFeatures,
+            prospectiveView = sealed.view,
+            ledgerReason = sealed.reason,
         )
+    }
+
+
+    private data class SealedForecast(
+        val estimate: ForecastEstimate,
+        val view: ProspectiveForecastView?,
+        val reason: String?,
+    )
+
+    private fun sealThroughLedger(
+        estimate: ForecastEstimate,
+        targetFeatures: ForecastFeatureSnapshot,
+        nowEpochMillis: Long,
+    ): SealedForecast {
+        val forecast = estimate.forecast
+        if (forecast == null) {
+            return SealedForecast(estimate, view = null, reason = estimate.reason)
+        }
+        val digest = targetFeatures.canonicalSha256()
+        if (forecast.featureSnapshotHash != digest) {
+            return SealedForecast(
+                estimate = estimate.copy(
+                    state = au.com.elied.vitalsignal.analytics.ForecastModelState.ABSTAINED,
+                    forecast = null,
+                    validCaseCount = 0,
+                    effectiveCaseWeight = 0.0,
+                    reason = "Forecast feature digest did not match the committed snapshot",
+                ),
+                view = null,
+                reason = "Forecast feature digest did not match the committed snapshot",
+            )
+        }
+        val mutation = forecastLedger.commit(
+            eventId = "c-${forecast.id}",
+            forecast = forecast,
+            canonicalFeatureSnapshotSha256 = digest,
+            nowEpochMillis = nowEpochMillis,
+        )
+        return when (mutation) {
+            is ForecastLedgerMutationResult.Applied,
+            is ForecastLedgerMutationResult.Idempotent,
+            -> {
+                val view = mutation.view
+                if (view !is LockedForecastView) {
+                    SealedForecast(
+                        estimate = estimate.copy(
+                            state = au.com.elied.vitalsignal.analytics.ForecastModelState.ABSTAINED,
+                            forecast = null,
+                            validCaseCount = 0,
+                            effectiveCaseWeight = 0.0,
+                            reason = "Committed forecast must remain locked until check-in and reveal",
+                        ),
+                        view = view,
+                        reason = "Committed forecast must remain locked until check-in and reveal",
+                    )
+                } else {
+                    SealedForecast(estimate = estimate, view = view, reason = null)
+                }
+            }
+            is ForecastLedgerMutationResult.Rejected -> SealedForecast(
+                estimate = estimate.copy(
+                    state = au.com.elied.vitalsignal.analytics.ForecastModelState.ABSTAINED,
+                    forecast = null,
+                    validCaseCount = 0,
+                    effectiveCaseWeight = 0.0,
+                    reason = mutation.reason,
+                ),
+                view = mutation.view,
+                reason = mutation.reason,
+            )
+            is ForecastLedgerMutationResult.Unavailable -> SealedForecast(
+                estimate = estimate.copy(
+                    state = au.com.elied.vitalsignal.analytics.ForecastModelState.ABSTAINED,
+                    forecast = null,
+                    validCaseCount = 0,
+                    effectiveCaseWeight = 0.0,
+                    reason = mutation.reason,
+                ),
+                view = mutation.view,
+                reason = mutation.reason,
+            )
+        }
     }
 
     private fun qualityInputsFor(scenario: SimulationScenario): QualityInputs =

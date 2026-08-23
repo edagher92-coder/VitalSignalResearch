@@ -4,6 +4,8 @@ import au.com.elied.vitalsignal.analytics.ForecastModelState
 import au.com.elied.vitalsignal.analytics.SafetyDisposition
 import au.com.elied.vitalsignal.analytics.canonicalSha256
 import au.com.elied.vitalsignal.audit.AppendOnlyHumanConcernJournal
+import au.com.elied.vitalsignal.audit.LockedForecastView
+import au.com.elied.vitalsignal.audit.ProspectiveForecastState
 import au.com.elied.vitalsignal.audit.HumanConcernAction
 import au.com.elied.vitalsignal.audit.HumanConcernActorRole
 import au.com.elied.vitalsignal.audit.HumanConcernAuditEvent
@@ -538,7 +540,7 @@ class DemoDashboardRepository(
             } else {
                 inspectorRows(result)
             },
-            forecastAudit = if (wearableEvidenceWithheld) emptyList() else forecastAudit,
+            forecastAudit = if (wearableEvidenceWithheld) emptyList() else forecastAuditTrail(result),
             forecast = forecast.copy(
                 status = forecastStatus,
                 probability = if (forecastIsRevealable) {
@@ -834,6 +836,39 @@ class DemoDashboardRepository(
         comparisonLabel = "HUMAN CONCERN HOLD",
         reason = "How the person feels takes priority. Exercise data cannot reassure, provide medical clearance, or resolve this hold.",
     )
+
+
+    private fun forecastAuditTrail(result: SimulatorPipelineResult): List<ForecastAuditEventUiModel> {
+        val view = result.prospectiveView as? LockedForecastView ?: return emptyList()
+        require(view.state == ProspectiveForecastState.COMMITTED_HIDDEN ||
+            view.state == ProspectiveForecastState.PRE_REVEAL_CHECKIN_STORED)
+        return listOf(
+            ForecastAuditEventUiModel(
+                id = "audit-committed",
+                state = "COMMITTED HIDDEN",
+                timeLabel = "At commitment",
+                detail = "Simulator forecast ${view.forecastId} is sealed on the prospective ledger. Probability is absent from this locked view. Snapshot ${view.canonicalFeatureSnapshotSha256.take(12)}.",
+            ),
+            ForecastAuditEventUiModel(
+                id = "audit-context",
+                state = "PRE-REVEAL CONTEXT",
+                timeLabel = "Not stored",
+                detail = "A complete check-in has not been appended. Partial answers stay missing and cannot rewrite the sealed snapshot.",
+            ),
+            ForecastAuditEventUiModel(
+                id = "audit-reveal",
+                state = "REVEAL",
+                timeLabel = "Blocked",
+                detail = "Reveal is refused until a durable pre-reveal check-in exists. The operator desk cannot display an uncommitted recomputation.",
+            ),
+            ForecastAuditEventUiModel(
+                id = "audit-outcome",
+                state = "OUTCOME DUE",
+                timeLabel = "+72h to +73h",
+                detail = "The binary target-window check-in is not yet knowable. Missing outcomes stay missing.",
+            ),
+        )
+    }
 
     private fun inspectorRows(result: SimulatorPipelineResult): List<FeatureInspectorRowUiModel> {
         val digestPrefix = result.targetFeatures.canonicalSha256().take(12)

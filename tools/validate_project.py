@@ -837,6 +837,10 @@ def validate_simulator_truthfulness() -> None:
     require("SimulatorHealthPipeline" in repository and "SignalQualityEngine" in pipeline, "phone simulator runs through core quality analytics")
     require("RobustBaselineEngine" in pipeline and "SafetyPolicyEngine" in pipeline, "phone simulator runs through baseline and safety analytics")
     require("PersonalForecastEngine" in pipeline, "phone simulator runs through the forecast control model")
+    require("ProspectiveForecastLedger" in pipeline and "sealThroughLedger" in pipeline,
+            "phone simulator commits ready forecasts to the prospective ledger")
+    require("LockedForecastView" in repository and "COMMITTED HIDDEN" in repository,
+            "operator audit is projected from a locked ledger view")
     dashboard_models = read(
         "phone/src/main/kotlin/au/com/elied/vitalsignal/phone/presentation/dashboard/DashboardModels.kt",
     )
