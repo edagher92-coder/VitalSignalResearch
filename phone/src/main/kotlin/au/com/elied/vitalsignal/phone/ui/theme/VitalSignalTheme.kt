@@ -27,6 +27,7 @@ val Quiet = Color(0xFF839D9B)
 val Amber = Color(0xFFFFCB72)
 val Rose = Color(0xFFFF929E)
 val Blue = Color(0xFF91CFFF)
+val Violet = Color(0xFFB9B0FF)
 
 private val VitalDarkColors = darkColorScheme(
     primary = Mint,

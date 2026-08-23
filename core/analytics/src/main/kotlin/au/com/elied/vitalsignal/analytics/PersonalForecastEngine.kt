@@ -30,9 +30,18 @@ data class ForecastFeatureValue(
         require(provenanceIds.all { it.matches(Regex("[A-Za-z0-9._:-]{1,160}")) })
         require(provenanceIds.distinct().size == provenanceIds.size)
     }
+
+    /** Provenance order is not meaningful, so the sealed form is sorted and immutable. */
+    internal fun sealedCopy(): ForecastFeatureValue =
+        copy(provenanceIds = java.util.List.copyOf(provenanceIds.sorted()))
 }
 
-data class ForecastFeatureSnapshot(
+/**
+ * Immutable cutoff-anchored feature snapshot. Caller-owned maps and provenance
+ * lists are copied at construction so later mutation cannot introduce
+ * post-cutoff values into a supposedly prospective forecast.
+ */
+class ForecastFeatureSnapshot private constructor(
     val id: String,
     val cutoffEpochMillis: Long,
     val featureSchema: ForecastFeatureSchemaDefinition,
@@ -58,6 +67,81 @@ data class ForecastFeatureSnapshot(
         }
         require(quality in 0.0..1.0)
     }
+
+    override fun equals(other: Any?): Boolean {
+        val that = other as? ForecastFeatureSnapshot ?: return false
+        return id == that.id &&
+            cutoffEpochMillis == that.cutoffEpochMillis &&
+            featureSchema == that.featureSchema &&
+            featureValues == that.featureValues &&
+            quality == that.quality
+    }
+
+    override fun hashCode(): Int =
+        arrayOf(id, cutoffEpochMillis, featureSchema, featureValues, quality).contentHashCode()
+
+    override fun toString(): String =
+        "ForecastFeatureSnapshot(id=$id, cutoffEpochMillis=$cutoffEpochMillis, quality=$quality)"
+
+    companion object {
+        operator fun invoke(
+            id: String,
+            cutoffEpochMillis: Long,
+            featureSchema: ForecastFeatureSchemaDefinition,
+            featureValues: Map<String, ForecastFeatureValue>,
+            quality: Double,
+        ): ForecastFeatureSnapshot {
+            val sealedValues = java.util.Map.copyOf(
+                featureValues
+                    .mapValues { (_, feature) -> feature.sealedCopy() }
+                    .toSortedMap(),
+            )
+            return ForecastFeatureSnapshot(
+                id = id,
+                cutoffEpochMillis = cutoffEpochMillis,
+                featureSchema = featureSchema.sealedCopy(),
+                featureValues = sealedValues,
+                quality = quality,
+            )
+        }
+    }
+}
+
+/** Canonical digest of the complete snapshot, including values, windows and provenance. */
+fun ForecastFeatureSnapshot.canonicalSha256(): String {
+    val canonical = buildString {
+        append(id)
+        append('|')
+        append(cutoffEpochMillis)
+        append('|')
+        append(featureSchema.id)
+        append('|')
+        append(featureSchema.version)
+        append('|')
+        append(featureSchema.definitionSha256)
+        append('|')
+        append(canonicalFiniteDouble(quality))
+        append('|')
+        featureValues.toSortedMap().forEach { (key, feature) ->
+            append(key)
+            append('=')
+            append(feature.featureVersion)
+            append('@')
+            append(canonicalFiniteDouble(feature.standardizedValue))
+            append('@')
+            append(feature.sourceWindowStartEpochMillis)
+            append('-')
+            append(feature.sourceWindowEndEpochMillis)
+            append('@')
+            feature.provenanceIds.sorted().forEach { provenanceId ->
+                append(provenanceId.length)
+                append(':')
+                append(provenanceId)
+            }
+            append(';')
+        }
+    }
+    return sha256Utf8(canonical)
 }
 
 data class ForecastTrainingCase(
@@ -209,7 +293,7 @@ class PersonalForecastEngine(
                 case.endpoint == endpoint &&
                 case.features.featureSchema == target.featureSchema &&
                 case.features.featureValues.keys == target.featureValues.keys
-        }
+        }.sortedBy(ForecastTrainingCase::caseBindingSha256)
 
         var positiveWeight = 0.0
         var totalWeight = 0.0
@@ -251,6 +335,7 @@ class PersonalForecastEngine(
         }
 
         val snapshotDigest = snapshotHash(target)
+        val trainingSetDigest = trainingSetSha256(eligible)
         val forecast = HealthForecast(
             id = forecastId(
                 createdAtEpochMillis = createdAtEpochMillis,
@@ -261,6 +346,8 @@ class PersonalForecastEngine(
                 featureKeys = target.featureValues.keys,
                 modelVersion = modelVersion,
                 snapshotDigest = snapshotDigest,
+                trainingSetDigest = trainingSetDigest,
+                minimumReadyCases = minimumReadyCases,
             ),
             createdAtEpochMillis = createdAtEpochMillis,
             endpoint = endpoint,
@@ -300,42 +387,19 @@ class PersonalForecastEngine(
         reason = reason,
     )
 
-    private fun snapshotHash(snapshot: ForecastFeatureSnapshot): String {
+    private fun snapshotHash(snapshot: ForecastFeatureSnapshot): String = snapshot.canonicalSha256()
+
+    private fun trainingSetSha256(cases: List<ForecastTrainingCase>): String {
         val canonical = buildString {
-            append(snapshot.id)
+            append(cases.size)
             append('|')
-            append(snapshot.cutoffEpochMillis)
-            append('|')
-            append(snapshot.featureSchema.id)
-            append('|')
-            append(snapshot.featureSchema.version)
-            append('|')
-            append(snapshot.featureSchema.definitionSha256)
-            append('|')
-            append(snapshot.quality)
-            append('|')
-            snapshot.featureValues.toSortedMap().forEach { (key, feature) ->
-                append(key)
-                append('=')
-                append(feature.featureVersion)
-                append('@')
-                append(feature.standardizedValue)
-                append('@')
-                append(feature.sourceWindowStartEpochMillis)
-                append('-')
-                append(feature.sourceWindowEndEpochMillis)
-                append('@')
-                feature.provenanceIds.sorted().forEach { provenanceId ->
-                    append(provenanceId.length)
-                    append(':')
-                    append(provenanceId)
-                }
-                append(';')
+            cases.forEach { case ->
+                append(case.caseBindingSha256.length)
+                append(':')
+                append(case.caseBindingSha256)
             }
         }
-        return MessageDigest.getInstance("SHA-256")
-            .digest(canonical.toByteArray(Charsets.UTF_8))
-            .joinToString("") { byte -> "%02x".format(byte) }
+        return sha256Utf8(canonical)
     }
 
     private fun forecastId(
@@ -347,6 +411,8 @@ class PersonalForecastEngine(
         featureKeys: Set<String>,
         modelVersion: String,
         snapshotDigest: String,
+        trainingSetDigest: String,
+        minimumReadyCases: Int,
     ): String {
         val canonical = listOf(
             createdAtEpochMillis.toString(),
@@ -364,11 +430,10 @@ class PersonalForecastEngine(
             featureKeys.sorted().joinToString(","),
             modelVersion,
             snapshotDigest,
+            trainingSetDigest,
+            minimumReadyCases.toString(),
         ).joinToString("|")
-        val digest = MessageDigest.getInstance("SHA-256")
-            .digest(canonical.toByteArray(Charsets.UTF_8))
-            .joinToString("") { byte -> "%02x".format(byte) }
-        return "forecast-${digest.take(32)}"
+        return "forecast-${sha256Utf8(canonical).take(32)}"
     }
 
     companion object {
@@ -436,6 +501,8 @@ private fun trainingCaseBindingSha256(
         features.featureSchema.id,
         features.featureSchema.version,
         features.featureSchema.definitionSha256,
+        features.quality.toRawBits().toString(),
+        features.canonicalSha256(),
         observedOutcome?.toString() ?: "missing",
         resolvedAtEpochMillis?.toString() ?: "missing",
         outcomeObservationId ?: "missing",
@@ -448,7 +515,14 @@ private fun trainingCaseBindingSha256(
             append(value)
         }
     }
-    return MessageDigest.getInstance("SHA-256")
-        .digest(canonical.toByteArray(Charsets.UTF_8))
-        .joinToString("") { byte -> "%02x".format(byte) }
+    return sha256Utf8(canonical)
 }
+
+private fun canonicalFiniteDouble(value: Double): String {
+    require(value.isFinite())
+    return value.toRawBits().toString()
+}
+
+private fun sha256Utf8(canonical: String): String = MessageDigest.getInstance("SHA-256")
+    .digest(canonical.toByteArray(Charsets.UTF_8))
+    .joinToString("") { byte -> "%02x".format(byte) }

@@ -66,11 +66,14 @@ class EncryptedAcknowledgementReplayStore(
 
     private fun decode(bytes: ByteArray): Pair<String, String>? = try {
         val cursor = ReplayCursor(bytes)
-        if (cursor.readInt() != MAGIC || cursor.readInt() != VERSION) return null
-        val receiptId = cursor.readString()
-        val batchId = cursor.readString()
-        if (cursor.remaining != 0 || !receiptId.matches(SAFE_ID) || !batchId.matches(SAFE_ID)) null
-        else receiptId to batchId
+        if (cursor.readInt() != MAGIC || cursor.readInt() != VERSION) {
+            null
+        } else {
+            val receiptId = cursor.readString()
+            val batchId = cursor.readString()
+            if (cursor.remaining != 0 || !receiptId.matches(SAFE_ID) || !batchId.matches(SAFE_ID)) null
+            else receiptId to batchId
+        }
     } catch (_: Exception) {
         null
     }

@@ -125,6 +125,13 @@ data class ForecastFeatureSchemaDefinition(
         }
     }
 
+    /**
+     * Re-snapshot the feature map so a caller-owned or `copy()`-supplied map
+     * cannot change the sealed key set after the digest has been checked.
+     */
+    fun sealedCopy(): ForecastFeatureSchemaDefinition =
+        copy(featureVersions = java.util.Map.copyOf(featureVersions.toSortedMap()))
+
     private fun calculatedDefinitionSha256(): String = forecastDefinitionSha256(
         id,
         version,
@@ -141,7 +148,8 @@ data class ForecastFeatureSchemaDefinition(
             featureVersions: Map<String, String>,
             standardizationProtocol: String,
         ): ForecastFeatureSchemaDefinition {
-            val stableVersions = featureVersions.toSortedMap().toMap()
+            // Digest and validation must agree on order, so both sort before hashing.
+            val stableVersions = featureVersions.toSortedMap()
             val digest = forecastDefinitionSha256(
                 id,
                 version,
@@ -153,7 +161,7 @@ data class ForecastFeatureSchemaDefinition(
             return ForecastFeatureSchemaDefinition(
                 id = id,
                 version = version,
-                featureVersions = stableVersions,
+                featureVersions = java.util.Map.copyOf(stableVersions),
                 standardizationProtocol = standardizationProtocol,
                 definitionSha256 = digest,
             )

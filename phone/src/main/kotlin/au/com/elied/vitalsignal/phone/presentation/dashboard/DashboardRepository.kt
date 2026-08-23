@@ -2,7 +2,11 @@ package au.com.elied.vitalsignal.phone.presentation.dashboard
 
 import au.com.elied.vitalsignal.analytics.ForecastModelState
 import au.com.elied.vitalsignal.analytics.SafetyDisposition
+import au.com.elied.vitalsignal.analytics.canonicalSha256
 import au.com.elied.vitalsignal.audit.AppendOnlyHumanConcernJournal
+import au.com.elied.vitalsignal.audit.LockedForecastView
+import au.com.elied.vitalsignal.audit.ProspectiveForecastState
+import au.com.elied.vitalsignal.audit.RevealedForecastView
 import au.com.elied.vitalsignal.audit.HumanConcernAction
 import au.com.elied.vitalsignal.audit.HumanConcernActorRole
 import au.com.elied.vitalsignal.audit.HumanConcernAuditEvent
@@ -15,6 +19,7 @@ import au.com.elied.vitalsignal.audit.InMemoryHumanConcernJournal
 import au.com.elied.vitalsignal.model.BaselineDeviation
 import au.com.elied.vitalsignal.model.SensorMetric
 import au.com.elied.vitalsignal.phone.presentation.brand.ProductBrand
+import java.security.MessageDigest
 import java.util.Locale
 import kotlin.math.abs
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -103,37 +108,42 @@ class DemoDashboardRepository(
                 userConcernReported = concernActive,
             )
             val safetyAdjusted = current.withPipelineResult(evaluated)
-            val revealedForecast = if (
+            val revealOutcome = if (
                 safetyAdjusted.forecast.status == ForecastStatus.LOCKED &&
                 draft.hasCompleteForecastContext &&
                 !concernActive
             ) {
-                val committed = evaluated.forecastEstimate.forecast
-                if (committed == null) {
-                    safetyAdjusted.forecast.copy(
-                        status = ForecastStatus.ABSTAINED,
-                        headline = "Forecast withheld",
-                        summary = "The simulator could not recover the committed forecast payload.",
-                        probability = null,
-                        personalBaseRate = null,
-                        intervalLabel = "No probability displayed",
-                        calibrationLabel = "ABSTAINED",
-                    )
-                } else {
-                    safetyAdjusted.forecast.copy(
-                        status = ForecastStatus.AVAILABLE,
-                        headline = "Lower-than-personal-usual energy/function at +72h to +73h",
-                        summary = "Unvalidated simulator estimate for the frozen binary target-window check-in. It is not a health prediction, diagnosis, or treatment recommendation.",
-                        probability = (committed.probability * 100.0).toInt(),
-                        personalBaseRate = 33,
-                        intervalLabel = "Simulated 80% interval · " +
-                            "${(committed.lowerBound * 100.0).toInt()}–" +
-                            "${(committed.upperBound * 100.0).toInt()}%",
-                        calibrationLabel = "UNVALIDATED",
-                    )
-                }
+                simulatorPipeline.revealCommittedForecast(
+                    result = evaluated,
+                    contextSnapshotSha256 = contextSnapshotSha256(detail),
+                )
             } else {
-                safetyAdjusted.forecast
+                null
+            }
+            val revealedView = (revealOutcome as? ForecastRevealOutcome.Revealed)?.view
+            val revealedForecast = when (revealOutcome) {
+                null -> safetyAdjusted.forecast
+                is ForecastRevealOutcome.Revealed -> safetyAdjusted.forecast.copy(
+                    status = ForecastStatus.AVAILABLE,
+                    headline = "Lower-than-personal-usual energy/function at +72h to +73h",
+                    summary = "Unvalidated simulator estimate for the frozen binary target-window check-in. It is not a health prediction, diagnosis, or treatment recommendation.",
+                    probability = (revealOutcome.view.probability * 100.0).toInt(),
+                    personalBaseRate = 33,
+                    intervalLabel = "Simulated 80% interval · " +
+                        "${(revealOutcome.view.lowerBound * 100.0).toInt()}–" +
+                        "${(revealOutcome.view.upperBound * 100.0).toInt()}%",
+                    calibrationLabel = "UNVALIDATED",
+                )
+
+                is ForecastRevealOutcome.Refused -> safetyAdjusted.forecast.copy(
+                    status = ForecastStatus.ABSTAINED,
+                    headline = "Forecast withheld",
+                    summary = "The prospective ledger refused this reveal: ${revealOutcome.reason}",
+                    probability = null,
+                    personalBaseRate = null,
+                    intervalLabel = "No probability displayed",
+                    calibrationLabel = "ABSTAINED",
+                )
             }
             safetyAdjusted.copy(
                 quickLogOpen = false,
@@ -148,6 +158,9 @@ class DemoDashboardRepository(
                     else -> "Pre-reveal context captured in memory for this simulator session"
                 },
                 forecast = revealedForecast,
+                forecastAudit = revealedView
+                    ?.let { revealedAuditTrail(safetyAdjusted.forecastAudit, it) }
+                    ?: safetyAdjusted.forecastAudit,
                 timeline = listOf(
                     TimelineItemUiModel(
                         id = "quick-log-now",
@@ -255,6 +268,11 @@ class DemoDashboardRepository(
                 confidence = 81,
                 qualifiedSignalCount = 4,
                 recheckLabel = "Tomorrow",
+                fiveSecondSummary = FiveSecondSummaryUiModel(
+                    whatChanged = "No qualified deviation from the simulated baseline",
+                    evidence = "All qualified domains stayed within range",
+                    nextStep = "Repeat a measurement if symptoms or a new fixture state concern you",
+                ),
                 forecast = ForecastUiModel(
                     status = ForecastStatus.LOCKED,
                     horizonLabel = "72-hour point assessment · +72h to +73h",
@@ -487,10 +505,10 @@ class DemoDashboardRepository(
                 nextStep
             },
             recheckLabel = if (concernOverridesSensors) "User concern" else recheckLabel,
-            confidence = if (wearableEvidenceWithheld) {
-                0
-            } else {
-                ((result.insight?.confidence ?: 0.0) * 100.0).toInt()
+            confidence = when {
+                wearableEvidenceWithheld -> 0
+                result.insight != null -> ((result.insight.confidence) * 100.0).toInt()
+                else -> confidence
             },
             qualifiedSignalCount = if (wearableEvidenceWithheld) {
                 0
@@ -507,6 +525,32 @@ class DemoDashboardRepository(
             } else {
                 activityResponse
             },
+            fiveSecondSummary = when {
+                concernOverridesSensors -> FiveSecondSummaryUiModel(
+                    whatChanged = "Human concern takes priority",
+                    evidence = "Wearable analytics withheld",
+                    nextStep = "Follow your own care plan; this app did not notify anyone",
+                )
+                wearableEvidenceWithheld -> FiveSecondSummaryUiModel(
+                    whatChanged = "Wearable interpretation is withheld",
+                    evidence = "Missing, immature, or low-quality evidence stays unavailable",
+                    nextStep = "Record how you feel, then collect a qualified measurement",
+                )
+                else -> fiveSecondSummary
+            },
+            conflictDesk = if (wearableEvidenceWithheld) {
+                emptyList()
+            } else if (result.safetyDecision.disposition == SafetyDisposition.SINGLE_SIGNAL_REMEASURE) {
+                conflictDesk
+            } else {
+                emptyList()
+            },
+            featureInspector = if (wearableEvidenceWithheld) {
+                emptyList()
+            } else {
+                inspectorRows(result)
+            },
+            forecastAudit = if (wearableEvidenceWithheld) emptyList() else forecastAuditTrail(result),
             forecast = forecast.copy(
                 status = forecastStatus,
                 probability = if (forecastIsRevealable) {
@@ -581,7 +625,7 @@ class DemoDashboardRepository(
         activeSimulationScenario = SimulationScenario.DEVELOPING,
         status = PatternStatus.DEVELOPING,
         headline = "A simulated recovery shift is developing",
-        summary = "One cardio-autonomic fixture moved overnight, with a small thermal change as context. It needs persistence and a second independent domain before escalation.",
+        summary = "One cardio-autonomic fixture moved overnight, with a small thermal change as context. It needs persistence and a second independent domain before this is treated as a meaningful pattern change.",
         nextStep = "Record how you feel, then repeat a high-quality resting measurement tomorrow. Seek clinical advice if real symptoms concern you.",
         confidence = 72,
         qualifiedSignalCount = 3,
@@ -590,7 +634,7 @@ class DemoDashboardRepository(
         baselineTargetDays = 28,
         signalQuality = 91,
         coverageHours = 22.4,
-        connectedDevice = "Galaxy Watch simulator",
+        connectedDevice = "Wrist wearable simulator",
         lastSyncLabel = "Fixture loaded",
         forecast = ForecastUiModel(
             status = ForecastStatus.LOCKED,
@@ -704,6 +748,46 @@ class DemoDashboardRepository(
                 kind = TimelineKind.SYSTEM,
             ),
         ),
+        fiveSecondSummary = FiveSecondSummaryUiModel(
+            whatChanged = "One simulated sensor family moved",
+            evidence = "72 / 100 internal evidence score",
+            nextStep = "Record context, then remeasure",
+        ),
+        conflictDesk = listOf(
+            ConflictDeskItemUiModel(
+                id = "conflict-seq-1",
+                title = "Same-sequence native-version conflict",
+                detail = "Simulator Health Connect fixture rejected delete (sequence 1, opaque delete-other) against live record (sequence 1, opaque native-1). The live record was retained.",
+                action = "CONFLICT REJECTED · record retained",
+            ),
+        ),
+        featureInspector = emptyList(),
+        forecastAudit = listOf(
+            ForecastAuditEventUiModel(
+                id = "audit-committed",
+                state = "COMMITTED HIDDEN",
+                timeLabel = "Mon 21:00",
+                detail = "Time-stamped simulator forecast sealed before check-in. Probability is absent from the locked view.",
+            ),
+            ForecastAuditEventUiModel(
+                id = "audit-context",
+                state = "PRE-REVEAL CONTEXT",
+                timeLabel = "Now",
+                detail = "Complete check-in would store context against the sealed commitment. Partial answers stay missing.",
+            ),
+            ForecastAuditEventUiModel(
+                id = "audit-reveal",
+                state = "REVEAL",
+                timeLabel = "After check-in",
+                detail = "Reveal can show only the already-committed unvalidated fixture. It cannot rewrite the snapshot.",
+            ),
+            ForecastAuditEventUiModel(
+                id = "audit-outcome",
+                state = "OUTCOME DUE",
+                timeLabel = "+72h to +73h",
+                detail = "The binary target-window check-in is not yet knowable. Missing outcomes stay missing.",
+            ),
+        ),
     )
 
     private fun qualifiedActivityResponse() = ActivityResponseUiModel(
@@ -762,6 +846,80 @@ class DemoDashboardRepository(
         comparisonLabel = "HUMAN CONCERN HOLD",
         reason = "How the person feels takes priority. Exercise data cannot reassure, provide medical clearance, or resolve this hold.",
     )
+
+
+    private fun contextSnapshotSha256(detail: String): String =
+        MessageDigest.getInstance("SHA-256")
+            .digest(detail.toByteArray(Charsets.UTF_8))
+            .joinToString("") { byte -> "%02x".format(byte) }
+
+    /** Rewrites only the rows the ledger actually advanced; later rows stay pending. */
+    private fun revealedAuditTrail(
+        base: List<ForecastAuditEventUiModel>,
+        view: RevealedForecastView,
+    ): List<ForecastAuditEventUiModel> = base.map { row ->
+        when (row.id) {
+            "audit-context" -> row.copy(
+                timeLabel = "Stored",
+                detail = "The complete pre-reveal check-in is durably appended against the sealed commitment.",
+            )
+
+            "audit-reveal" -> row.copy(
+                timeLabel = "Revealed",
+                detail = "Ledger state ${view.state.name.replace('_', ' ')} released the already-committed payload for ${view.forecastId}. The snapshot was not recomputed.",
+            )
+
+            else -> row
+        }
+    }
+
+    private fun forecastAuditTrail(result: SimulatorPipelineResult): List<ForecastAuditEventUiModel> {
+        val view = result.prospectiveView as? LockedForecastView ?: return emptyList()
+        require(view.state == ProspectiveForecastState.COMMITTED_HIDDEN ||
+            view.state == ProspectiveForecastState.PRE_REVEAL_CHECKIN_STORED)
+        return listOf(
+            ForecastAuditEventUiModel(
+                id = "audit-committed",
+                state = "COMMITTED HIDDEN",
+                timeLabel = "At commitment",
+                detail = "Simulator forecast ${view.forecastId} is sealed on the prospective ledger. Probability is absent from this locked view. Snapshot ${view.canonicalFeatureSnapshotSha256.take(12)}.",
+            ),
+            ForecastAuditEventUiModel(
+                id = "audit-context",
+                state = "PRE-REVEAL CONTEXT",
+                timeLabel = "Not stored",
+                detail = "A complete check-in has not been appended. Partial answers stay missing and cannot rewrite the sealed snapshot.",
+            ),
+            ForecastAuditEventUiModel(
+                id = "audit-reveal",
+                state = "REVEAL",
+                timeLabel = "Blocked",
+                detail = "Reveal is refused until a durable pre-reveal check-in exists. The operator desk cannot display an uncommitted recomputation.",
+            ),
+            ForecastAuditEventUiModel(
+                id = "audit-outcome",
+                state = "OUTCOME DUE",
+                timeLabel = "+72h to +73h",
+                detail = "The binary target-window check-in is not yet knowable. Missing outcomes stay missing.",
+            ),
+        )
+    }
+
+    private fun inspectorRows(result: SimulatorPipelineResult): List<FeatureInspectorRowUiModel> {
+        val digestPrefix = result.targetFeatures.canonicalSha256().take(12)
+        val snapshotQuality = (result.targetFeatures.quality * 100.0).toInt().coerceIn(0, 100)
+        return result.targetFeatures.featureValues.toSortedMap().map { (featureId, feature) ->
+            FeatureInspectorRowUiModel(
+                featureId = featureId,
+                version = feature.featureVersion,
+                windowLabel = "Cutoff-anchored source window",
+                quality = snapshotQuality,
+                snapshotSha256Prefix = digestPrefix,
+                provenanceLabel = feature.provenanceIds.joinToString() +
+                    " · same sealed snapshot digest",
+            )
+        }
+    }
 
     private companion object {
         const val SIMULATOR_CONCERN_ID = "sim-concern-1"

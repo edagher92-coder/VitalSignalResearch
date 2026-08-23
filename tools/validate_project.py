@@ -211,6 +211,9 @@ def validate_brand_and_experience() -> None:
     )
     wear_build = read("wear/build.gradle.kts")
     require('versionName = "0.5.0-research"' in wear_build, "wear source version is 0.5.0-research")
+    require("libs.androidx.fragment" in wear_build, "wear declares Fragment for Activity Result lint")
+    require("androidx-fragment" in read("gradle/libs.versions.toml"),
+            "version catalog declares AndroidX Fragment")
 
 
 def validate_ci_supply_chain() -> None:
@@ -567,6 +570,24 @@ def validate_traceability_and_quality() -> None:
     require("minimumReadyCases: Int = 30" in forecast, "forecast has a 30-case readiness gate")
     require("MessageDigest.getInstance(\"SHA-256\")" in forecast, "forecast snapshots are hashed")
     require("forecastId(" in forecast and "snapshotDigest" in forecast, "forecast IDs bind model and snapshot content")
+    require("fun ForecastFeatureSnapshot.canonicalSha256()" in forecast,
+            "forecast snapshots expose a public canonical SHA-256")
+    require("features.canonicalSha256()" in forecast and
+            "features.quality.toRawBits().toString()" in forecast,
+            "training-case bindings include snapshot quality and canonical contents")
+    require("java.util.Map.copyOf(" in forecast and
+            "java.util.List.copyOf(provenanceIds.sorted())" in forecast and
+            "featureSchema.sealedCopy()" in forecast,
+            "forecast snapshots reseal caller-owned schemas, maps and provenance lists")
+    require("trainingSetDigest" in forecast and "sortedBy(ForecastTrainingCase::caseBindingSha256)" in forecast,
+            "forecast identity binds a sorted training-set digest")
+    require("Equal delete sequence has a different native source version" in history_merge,
+            "history delete rejects same-sequence native-version collisions")
+    require("Source key is already bound to a different participant pseudonym" in history_merge and
+            "Change arrives under a superseded consent generation" in history_merge,
+            "history merge rejects cross-participant and superseded-consent changes")
+    require("fun conflictsAtSameSequence(" in history_records,
+            "source revisions expose same-sequence native-version conflict detection")
     require(
         "featureSnapshotHash.matches(Regex(\"[a-f0-9]{64}\"))" in model,
         "forecast contracts require canonical SHA-256 snapshot hashes",
@@ -816,6 +837,15 @@ def validate_simulator_truthfulness() -> None:
     require("SimulatorHealthPipeline" in repository and "SignalQualityEngine" in pipeline, "phone simulator runs through core quality analytics")
     require("RobustBaselineEngine" in pipeline and "SafetyPolicyEngine" in pipeline, "phone simulator runs through baseline and safety analytics")
     require("PersonalForecastEngine" in pipeline, "phone simulator runs through the forecast control model")
+    require("ProspectiveForecastLedger" in pipeline and "sealThroughLedger" in pipeline,
+            "phone simulator commits ready forecasts to the prospective ledger")
+    require("LockedForecastView" in repository and "COMMITTED HIDDEN" in repository,
+            "operator audit is projected from a locked ledger view")
+    require("storePreRevealCheckIn" in pipeline and "forecastLedger.reveal" in pipeline,
+            "reveal requires a durably stored pre-reveal check-in")
+    require("revealCommittedForecast" in repository and
+            "ForecastRevealOutcome.Refused" in repository,
+            "phone reveals the committed ledger payload and shows refusals honestly")
     dashboard_models = read(
         "phone/src/main/kotlin/au/com/elied/vitalsignal/phone/presentation/dashboard/DashboardModels.kt",
     )
@@ -864,6 +894,11 @@ def validate_simulator_truthfulness() -> None:
     ):
         require(phrase in prototype, f'prototype contains truthful state: "{phrase}"')
     require("forecast-value" in prototype and "38%" in prototype, "prototype check-in reveals a simulated forecast")
+    for operator_surface in ("id=\"conflicts\"", "id=\"inspector\"", "QUALITY BLOCKED",
+                             "AUTHORIZATION BLOCKED", "SESSION INACTIVE",
+                             "CLOCK UNTRUSTED", "SEQUENCE INVALID",
+                             "COMMITTED HIDDEN", "canonicalSha256"):
+        require(operator_surface in prototype, f'prototype contains operator surface: "{operator_surface}"')
     require("Evidessa Scientist" in prototype and
             "Reviewed template · no model call · no cloud call" in prototype and
             "Release-policy gate" in prototype and
@@ -961,6 +996,10 @@ def validate_deliverables() -> None:
     require("VitalSignal-Alert-Action-Permit" in backend_api and
             "expectedVersion" in backend_api,
             "backend alert actions are permit- and version-bound")
+    require("TrainingCaseReceipt" in backend_api and
+            "caseBindingSha256" in backend_api and
+            "canonicalFeatureSnapshotSha256" in backend_api,
+            "observer contract documents training-case receipt bindings")
     report = read("docs/BUILD_REPORT.md")
     require("0.5.0-research" in report, "build report matches source version")
     require("not run" in report.lower(), "build report records unexecuted verification honestly")

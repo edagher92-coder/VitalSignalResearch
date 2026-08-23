@@ -235,6 +235,155 @@ class PersonalForecastEngineTest {
         }
     }
 
+    @Test
+    fun trainingCaseBindingChangesWhenFeatureValuesOrProvenanceChange() {
+        val cutoff = TARGET_CUTOFF - 10L * DAY
+        val resolvedAt = endpoint.targetEnd(cutoff)
+        fun boundCase(
+            value: Double,
+            provenancePrefix: String,
+        ) = ForecastTrainingCase(
+            caseId = "training-bind-stable",
+            endpoint = endpoint,
+            features = ForecastFeatureSnapshot(
+                id = "bind-stable",
+                cutoffEpochMillis = cutoff,
+                featureSchema = schema,
+                featureValues = exactValues(cutoff, value).mapValues { (_, feature) ->
+                    feature.copy(provenanceIds = listOf("$provenancePrefix:${feature.featureId}"))
+                },
+                quality = 0.95,
+            ),
+            observedOutcome = 1.0,
+            resolvedAtEpochMillis = resolvedAt,
+            outcomeObservationId = "outcome-bind-stable",
+            outcomeRecordSha256 = sha256("outcome-bind-stable"),
+            verificationReceiptId = "test-receipt:bind-stable",
+        )
+        val original = boundCase(1.0, "fixture")
+        val valueChanged = boundCase(2.0, "fixture")
+        val provenanceChanged = boundCase(1.0, "fixture-altered")
+
+        assertNotEquals(original.caseBindingSha256, valueChanged.caseBindingSha256)
+        assertNotEquals(original.caseBindingSha256, provenanceChanged.caseBindingSha256)
+        assertNotEquals(original.features.canonicalSha256(), valueChanged.features.canonicalSha256())
+        assertNotEquals(original.features.canonicalSha256(), provenanceChanged.features.canonicalSha256())
+    }
+
+    @Test
+    fun featureSnapshotRejectsPostConstructionCallerMutation() {
+        val values = exactValues(TARGET_CUTOFF, 1.0).toMutableMap()
+        val provenance = mutableListOf("fixture:cardio-autonomic:$TARGET_CUTOFF")
+        values["cardio-autonomic"] = values.getValue("cardio-autonomic").copy(
+            provenanceIds = provenance,
+        )
+        val snapshot = ForecastFeatureSnapshot(
+            id = "immutable-target",
+            cutoffEpochMillis = TARGET_CUTOFF,
+            featureSchema = schema,
+            featureValues = values,
+            quality = 0.95,
+        )
+        val sealedDigest = snapshot.canonicalSha256()
+
+        values["sleep"] = values.getValue("sleep").copy(standardizedValue = 9.0)
+        provenance.add("injected-after-cutoff")
+
+        assertEquals(sealedDigest, snapshot.canonicalSha256())
+        assertEquals(1, snapshot.featureValues.getValue("cardio-autonomic").provenanceIds.size)
+        assertEquals(0.2, snapshot.featureValues.getValue("sleep").standardizedValue, 0.0)
+        assertThrows(UnsupportedOperationException::class.java) {
+            @Suppress("UNCHECKED_CAST")
+            (snapshot.featureValues as MutableMap<String, ForecastFeatureValue>).clear()
+        }
+    }
+
+    @Test
+    fun defaultReceiptVerifierRejectsResolvedTrainingCases() {
+        val result = PersonalForecastEngine().forecast(
+            history = history(35),
+            target = snapshot("target", TARGET_CUTOFF, 1.0),
+            createdAtEpochMillis = TARGET_CUTOFF,
+            endpoint = endpoint,
+        )
+
+        assertEquals(ForecastModelState.ABSTAINED, result.state)
+        assertNull(result.forecast)
+        assertTrue(result.reason.contains("verification receipt"))
+    }
+
+    @Test
+    fun reorderedEligibleHistoryDoesNotChangeForecastIdentity() {
+        val cases = history(35)
+        val target = snapshot("target", TARGET_CUTOFF, 1.0)
+        val first = run(cases, target).forecast!!
+        val second = run(cases.reversed(), target).forecast!!
+
+        assertEquals(first.id, second.id)
+        assertEquals(first.probability, second.probability, 0.0)
+        assertEquals(first.featureSnapshotHash, second.featureSnapshotHash)
+    }
+
+    @Test
+    fun schemaMapMutationAfterFreezeCannotChangeSealedKeys() {
+        val mutableVersions = mutableMapOf("cardio-autonomic" to "sim-v1", "sleep" to "sim-v1")
+        val frozen = ForecastFeatureSchemaDefinition.freeze(
+            id = "mut-schema",
+            version = "1.0.0",
+            featureVersions = mutableVersions,
+            standardizationProtocol = schema.standardizationProtocol,
+        )
+        mutableVersions["thermal"] = "sim-v1"
+        assertEquals(setOf("cardio-autonomic", "sleep"), frozen.featureKeys)
+        assertThrows(UnsupportedOperationException::class.java) {
+            @Suppress("UNCHECKED_CAST")
+            (frozen.featureVersions as MutableMap<String, String>)["thermal"] = "sim-v1"
+        }
+    }
+
+    @Test
+    fun sealedSnapshotProvenanceIsImmutableAndCanonicallyOrdered() {
+        val snapshot = ForecastFeatureSnapshot(
+            id = "sealed-provenance",
+            cutoffEpochMillis = TARGET_CUTOFF,
+            featureSchema = schema,
+            featureValues = exactValues(TARGET_CUTOFF, 1.0).mapValues { (_, feature) ->
+                feature.copy(
+                    provenanceIds = mutableListOf(
+                        "fixture:z:${feature.featureId}",
+                        "fixture:a:${feature.featureId}",
+                    ),
+                )
+            },
+            quality = 0.95,
+        )
+        val sealedProvenance = snapshot.featureValues.getValue("sleep").provenanceIds
+
+        assertEquals(listOf("fixture:a:sleep", "fixture:z:sleep"), sealedProvenance)
+        assertThrows(UnsupportedOperationException::class.java) {
+            @Suppress("UNCHECKED_CAST")
+            (sealedProvenance as MutableList<String>).clear()
+        }
+    }
+
+    @Test
+    fun schemaSuppliedThroughCopyIsResealedBySnapshotConstruction() {
+        val mutableVersions = mutableMapOf("cardio-autonomic" to "sim-v1", "sleep" to "sim-v1")
+        val aliased = schema.copy(featureVersions = mutableVersions)
+        val snapshot = ForecastFeatureSnapshot(
+            id = "resealed-schema",
+            cutoffEpochMillis = TARGET_CUTOFF,
+            featureSchema = aliased,
+            featureValues = exactValues(TARGET_CUTOFF, 1.0),
+            quality = 0.95,
+        )
+
+        mutableVersions["thermal"] = "sim-v1"
+
+        assertEquals(setOf("cardio-autonomic", "sleep"), snapshot.featureSchema.featureKeys)
+        assertEquals(snapshot.featureValues.keys, snapshot.featureSchema.featureKeys)
+    }
+
     private fun run(
         cases: List<ForecastTrainingCase>,
         target: ForecastFeatureSnapshot,

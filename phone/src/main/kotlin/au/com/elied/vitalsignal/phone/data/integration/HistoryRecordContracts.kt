@@ -124,6 +124,10 @@ data class SourceRevision(
     }
 
     override fun compareTo(other: SourceRevision): Int = sequence.compareTo(other.sequence)
+
+    /** Ordering is sequence-only; native version ties must be rejected separately. */
+    fun conflictsAtSameSequence(other: SourceRevision): Boolean =
+        sequence == other.sequence && this != other
 }
 
 data class HistoryProvenance(
@@ -211,8 +215,8 @@ class CanonicalHistoryRecord(
 
     init {
         require(participantPseudonym.isNotBlank())
-        require(sourceMetadata.keys.none(String::isBlank))
-        require(sourceMetadata.values.none(String::isBlank))
+        require(this.sourceMetadata.keys.none(String::isBlank))
+        require(this.sourceMetadata.values.none(String::isBlank))
         val isFhir = provenance.sourceKey.source ==
             HistorySourceKind.HEALTH_CONNECT_MEDICAL_RECORDS_FHIR
         require(isFhir == (fhirLocator != null)) {

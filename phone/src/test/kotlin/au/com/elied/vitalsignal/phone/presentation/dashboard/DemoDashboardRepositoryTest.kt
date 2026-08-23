@@ -80,6 +80,10 @@ class DemoDashboardRepositoryTest {
         assertNull(state.forecast.probability)
         assertNull(state.forecast.personalBaseRate)
         assertEquals("CONCERN HOLD", state.forecast.calibrationLabel)
+        assertTrue(state.conflictDesk.isEmpty())
+        assertTrue(state.featureInspector.isEmpty())
+        assertTrue(state.forecastAudit.isEmpty())
+        assertEquals("Human concern takes priority", state.fiveSecondSummary.whatChanged)
         assertEquals(ResearchAssistantStatus.BLOCKED, state.researchAssistant.status)
         assertTrue(state.researchAssistant.narrative.contains("medical clearance"))
         assertTrue(state.savedMessage.orEmpty().contains("concern hold is active", ignoreCase = true))
@@ -181,6 +185,13 @@ class DemoDashboardRepositoryTest {
         )
         assertTrue(state.researchAssistant.providerLabel.contains("no model or cloud call"))
         assertTrue(state.researchAssistant.policyLabel.contains("cannot diagnose"))
+        assertEquals("One simulated sensor family moved", state.fiveSecondSummary.whatChanged)
+        assertEquals("CONFLICT REJECTED · record retained", state.conflictDesk.single().action)
+        assertTrue(state.featureInspector.any { it.featureId == "cardio-autonomic" })
+        assertTrue(state.featureInspector.all { it.snapshotSha256Prefix.matches(Regex("[a-f0-9]{12}")) })
+        assertFalse(state.featureInspector.any { it.snapshotSha256Prefix == "a1b2c3d4e5f6" })
+        assertTrue(state.forecastAudit.any { it.state == "COMMITTED HIDDEN" })
+        assertTrue(state.forecastAudit.any { it.state == "OUTCOME DUE" })
     }
 
     @Test
@@ -194,6 +205,10 @@ class DemoDashboardRepositoryTest {
         assertEquals(ForecastStatus.LEARNING, learning.forecast.status)
         assertEquals(ResearchAssistantStatus.ABSTAINED, learning.researchAssistant.status)
         assertTrue(learning.evidence.isEmpty())
+        assertTrue(learning.conflictDesk.isEmpty())
+        assertTrue(learning.featureInspector.isEmpty())
+        assertTrue(learning.forecastAudit.isEmpty())
+        assertTrue(learning.fiveSecondSummary.whatChanged.contains("withheld"))
         repository.saveQuickLog(QuickLogDraft())
         assertEquals(ForecastStatus.LEARNING, repository.state.value.forecast.status)
 
@@ -203,6 +218,19 @@ class DemoDashboardRepositoryTest {
         assertEquals(ForecastStatus.ABSTAINED, unavailable.forecast.status)
         assertEquals(ResearchAssistantStatus.ABSTAINED, unavailable.researchAssistant.status)
         assertTrue(unavailable.evidence.isEmpty())
+    }
+
+    @Test
+    fun steadyScenarioKeepsHonestFiveSecondCopyAndAComputedSnapshotDigest() {
+        val repository = DemoDashboardRepository()
+        repository.setSimulationScenario(SimulationScenario.STEADY)
+        val steady = repository.state.value
+        assertEquals(PatternStatus.STEADY, steady.status)
+        assertTrue(steady.confidence > 0)
+        assertEquals("No qualified deviation from the simulated baseline", steady.fiveSecondSummary.whatChanged)
+        assertTrue(steady.conflictDesk.isEmpty())
+        assertTrue(steady.featureInspector.isNotEmpty())
+        assertFalse(steady.featureInspector.any { it.snapshotSha256Prefix == "a1b2c3d4e5f6" })
     }
 
     @Test
@@ -265,5 +293,42 @@ class DemoDashboardRepositoryTest {
         assertEquals("HUMAN CONCERN HOLD", held.comparisonLabel)
         assertTrue(held.reason.contains("cannot reassure"))
         assertTrue(held.reason.contains("medical clearance"))
+    }
+
+    @Test
+    fun completeCheckInAdvancesTheLedgerAuditTrailAndRevealsTheCommittedPayload() {
+        val repository = DemoDashboardRepository()
+
+        repository.saveQuickLog(
+            QuickLogDraft(
+                energy = 4,
+                fatigue = 7,
+                stress = 5,
+                gastrointestinalSymptoms = 6,
+                sleepQuality = 5,
+            ),
+        )
+
+        val state = repository.state.value
+        assertEquals(ForecastStatus.AVAILABLE, state.forecast.status)
+        assertNotNull(state.forecast.probability)
+        assertEquals("UNVALIDATED", state.forecast.calibrationLabel)
+        val context = state.forecastAudit.single { it.id == "audit-context" }
+        val reveal = state.forecastAudit.single { it.id == "audit-reveal" }
+        assertEquals("Stored", context.timeLabel)
+        assertEquals("Revealed", reveal.timeLabel)
+        assertTrue(reveal.detail.contains("not recomputed"))
+    }
+
+    @Test
+    fun partialCheckInLeavesTheLedgerRevealBlocked() {
+        val repository = DemoDashboardRepository()
+
+        repository.saveQuickLog(QuickLogDraft(energy = 4))
+
+        val state = repository.state.value
+        assertEquals(ForecastStatus.LOCKED, state.forecast.status)
+        assertNull(state.forecast.probability)
+        assertEquals("Blocked", state.forecastAudit.single { it.id == "audit-reveal" }.timeLabel)
     }
 }

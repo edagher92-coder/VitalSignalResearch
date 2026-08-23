@@ -110,7 +110,15 @@
     }
     [hidden] { display: none !important; }
     body.concern-mode #scientist .grid,
-    body.concern-mode #evidence .grid { display: none; }
+    body.concern-mode #evidence .grid,
+    body.concern-mode #conflicts .grid,
+    body.concern-mode #inspector .grid,
+    body.concern-mode #timeline .forecast-audit,
+    body.quality-withheld #scientist .grid,
+    body.quality-withheld #evidence .grid,
+    body.quality-withheld #conflicts .grid,
+    body.quality-withheld #inspector .grid,
+    body.quality-withheld #timeline .forecast-audit { display: none; }
     .view { display: none; animation: rise .35s ease both; }
     .view.active { display: block; }
     @keyframes rise { from { opacity: 0; transform: translateY(6px); } }
@@ -217,6 +225,9 @@
     .freshness.delayed { color: var(--blue); }
     .freshness.stale { color: var(--amber); }
     .freshness.none { color: var(--rose); }
+    .freshness.blocked { color: var(--rose); }
+    .freshness.clock { color: var(--amber); }
+    .freshness.session { color: var(--violet); }
     .provenance { color: var(--muted); font-size: 9px; line-height: 1.5; }
     .provenance strong { color: var(--text); font-size: 10px; }
 
@@ -271,7 +282,7 @@
       .shell { width: min(680px, calc(100% - 22px)); grid-template-columns: 1fr; padding-top: 12px; }
       .side { min-height: auto; position: static; padding: 14px; border-radius: 22px; }
       .brand { padding-bottom: 12px; }
-      nav { display: grid; grid-template-columns: repeat(6, 1fr); }
+      nav { display: grid; grid-template-columns: repeat(4, 1fr); }
       .nav-button { justify-content: center; padding: 9px 5px; font-size: 10px; gap: 5px; flex-direction: column; }
       .nav-button { min-height: 56px; font-size: 12px; }
       .nav-icon { width: 20px; height: 20px; }
@@ -325,6 +336,8 @@
         <button type="button" class="nav-button" data-view="scientist" aria-controls="scientist"><span class="nav-icon">✦</span><span>Scientist</span></button>
         <button type="button" class="nav-button" data-view="evidence" aria-controls="evidence"><span class="nav-icon">↗</span><span>Evidence</span></button>
         <button type="button" class="nav-button" data-view="timeline" aria-controls="timeline"><span class="nav-icon">≋</span><span>Timeline</span></button>
+        <button type="button" class="nav-button" data-view="conflicts" aria-controls="conflicts"><span class="nav-icon">≠</span><span>Conflicts</span></button>
+        <button type="button" class="nav-button" data-view="inspector" aria-controls="inspector"><span class="nav-icon">▣</span><span>Inspector</span></button>
         <button type="button" class="nav-button" data-view="observer" aria-controls="observer"><span class="nav-icon">◎</span><span>Observer</span></button>
         <button type="button" class="nav-button" data-view="log" aria-controls="log"><span class="nav-icon">＋</span><span>Check-in</span></button>
       </nav>
@@ -489,7 +502,7 @@
           <div class="card-title"><div><span class="eyebrow">Clinician / research observer concept</span><h3>Coverage and freshness at a glance</h3></div><span class="tag" style="color:var(--rose)">DESIGN FIXTURE ONLY</span></div>
           <div class="coverage-grid" aria-label="Simulated observer coverage">
             <div class="coverage-cell"><span>Connected participants</span><strong>0</strong><small>No data source is attached</small></div>
-            <div class="coverage-cell"><span>UI states demonstrated</span><strong>4 / 4</strong><small>Live, delayed, stale and no-data fixtures</small></div>
+            <div class="coverage-cell"><span>UI states demonstrated</span><strong>9 / 9</strong><small>Live, delayed, stale, no-data and fail-closed fixtures</small></div>
             <div class="coverage-cell"><span>Qualified fixture windows</span><strong>3 / 4</strong><small>Display test only, not clinical coverage</small></div>
             <div class="coverage-cell"><span>Observer actions</span><strong>None</strong><small>No alert acknowledgement or escalation controls</small></div>
           </div>
@@ -503,6 +516,11 @@
               <div class="observer-row"><div><h4>Fixture VS-027</h4><p>Generated research participant</p></div><span class="freshness delayed">DELAYED · SIMULATED</span><div class="provenance"><strong>08:14 display age · quality 87%</strong><br/>Replay fixture · delayed-state test · no stream attached</div></div>
               <div class="observer-row"><div><h4>Fixture VS-031</h4><p>Generated research participant</p></div><span class="freshness stale">STALE · SIMULATED</span><div class="provenance"><strong>46:09 display age · quality 79%</strong><br/>Expired fixture window · interpretation withheld</div></div>
               <div class="observer-row"><div><h4>Fixture VS-044</h4><p>Generated research participant</p></div><span class="freshness none">NO DATA · SIMULATED</span><div class="provenance"><strong>No measurement quality available</strong><br/>Missing-data fixture · never presented as typical</div></div>
+              <div class="observer-row"><div><h4>Fixture VS-051</h4><p>Generated research participant</p></div><span class="freshness blocked">QUALITY BLOCKED</span><div class="provenance"><strong>Motion and contact failed the hard gate</strong><br/>Low-quality fixture · withheld rather than shown as typical</div></div>
+              <div class="observer-row"><div><h4>Fixture VS-058</h4><p>Generated research participant</p></div><span class="freshness blocked">AUTHORIZATION BLOCKED</span><div class="provenance"><strong>Named observer permit absent</strong><br/>No care-team authority · no live observation implied</div></div>
+              <div class="observer-row"><div><h4>Fixture VS-063</h4><p>Generated research participant</p></div><span class="freshness session">SESSION INACTIVE</span><div class="provenance"><strong>Scheduled window closed</strong><br/>Not continuously observed · coverage label stays explicit</div></div>
+              <div class="observer-row"><div><h4>Fixture VS-071</h4><p>Generated research participant</p></div><span class="freshness clock">CLOCK UNTRUSTED</span><div class="provenance"><strong>Device clock discontinuity</strong><br/>Timestamp rejected · sequence cannot be ordered</div></div>
+              <div class="observer-row"><div><h4>Fixture VS-080</h4><p>Generated research participant</p></div><span class="freshness blocked">SEQUENCE INVALID</span><div class="provenance"><strong>Ordinal reuse or rewind</strong><br/>Fail-closed · missing data is not imputed as normal</div></div>
             </div>
           </article>
           <aside>
@@ -572,6 +590,49 @@
             </div>
           </aside>
         </div>
+        <div class="card pad forecast-audit" style="margin-top:18px">
+          <div class="card-title"><div><span class="eyebrow">Forecast audit lane</span><h3>Committed hidden → context → reveal → outcome</h3></div><span class="tag">Simulator ledger</span></div>
+          <div class="timeline">
+            <div class="timeline-item"><span class="time">Mon 21:00</span><span class="rail"><i></i></span><div class="event"><h4>Committed hidden</h4><p>A time-stamped simulator forecast was sealed before check-in. Probability stays absent from the locked view.</p><div class="event-tags"><span>COMMITTED HIDDEN</span><span>no probability</span></div></div></div>
+            <div class="timeline-item"><span class="time">Now</span><span class="rail"><i></i></span><div class="event"><h4>Pre-reveal context</h4><p>A complete check-in would bind context to that sealed commitment. Unanswered values stay missing.</p><div class="event-tags"><span>PRE-REVEAL CONTEXT</span><span>fail closed</span></div></div></div>
+            <div class="timeline-item"><span class="time">After check-in</span><span class="rail"><i></i></span><div class="event"><h4>Reveal</h4><p>Reveal can show only the already-committed unvalidated fixture. It cannot rewrite the snapshot or invent calibration.</p><div class="event-tags"><span>REVEAL</span><span>unvalidated</span></div></div></div>
+            <div class="timeline-item"><span class="time">+72h to +73h</span><span class="rail"><i></i></span><div class="event"><h4>Outcome due</h4><p>The binary target-window check-in is not yet knowable. Missing outcomes remain missing rather than negative.</p><div class="event-tags"><span>OUTCOME DUE</span><span>not knowable yet</span></div></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="conflicts">
+        <div class="grid two">
+          <div class="card pad">
+            <div class="card-title"><div><span class="eyebrow">History conflict desk</span><h3>Rejected source revisions stay visible</h3></div><span class="tag">Fail closed</span></div>
+            <div class="observer-list">
+              <div class="observer-row"><div><h4>Health Connect fixture record-1</h4><p>Live record retained</p></div><span class="freshness blocked">CONFLICT REJECTED</span><div class="provenance"><strong>Equal sequence, different native version</strong><br/>Delete sequence 1 / opaque delete-other vs live native-1 · tombstone not applied</div></div>
+              <div class="observer-row"><div><h4>Tombstone vs resurrection</h4><p>Exact source tombstone retained</p></div><span class="freshness blocked">CONFLICT REJECTED</span><div class="provenance"><strong>Upsert reused sequence 2 with opaque native-other</strong><br/>Tombstone delete-2 kept · history was not overwritten</div></div>
+            </div>
+          </div>
+          <aside class="card pad explain">
+            <span class="eyebrow">Operator rule</span>
+            <p>Ordering is sequence-only. When two native versions share a sequence, the merge rejects the change instead of guessing. This desk is a simulator fixture; no personal history is attached.</p>
+          </aside>
+        </div>
+      </section>
+
+      <section class="view" id="inspector">
+        <div class="grid two">
+          <div class="card pad">
+            <div class="card-title"><div><span class="eyebrow">Feature inspector</span><h3>Cutoff-sealed snapshot contents</h3></div><span class="tag">canonicalSha256</span></div>
+            <div class="quality-list">
+              <div class="quality-item"><label>cardio-autonomic @ sim-v1</label><span class="sub">quality 94 · overnight window</span></div>
+              <div class="quality-item"><label>sleep @ sim-v1</label><span class="sub">quality 89 · overnight window</span></div>
+              <div class="quality-item"><label>Snapshot digest</label><span class="sub">Computed on-device from the sealed snapshot; this HTML fixture does not embed a live digest</span></div>
+              <div class="quality-item"><label>Training-case binding</label><span class="sub">includes values, windows, quality and provenance</span></div>
+            </div>
+          </div>
+          <aside class="card pad explain">
+            <span class="eyebrow">Receipt rule</span>
+            <p>A training-case receipt authenticates the sealed feature snapshot, not just case and endpoint metadata. Caller-owned maps cannot inject post-cutoff values after construction. Simulator fixture only; not personal health data.</p>
+          </aside>
+        </div>
       </section>
 
       <section class="view" id="log">
@@ -588,7 +649,7 @@
           <div class="field" style="margin-top:14px"><label>User-reported concern hold</label><button type="button" class="button" id="concern" aria-pressed="false">Report concern now — withhold wearable score</button><button type="button" class="button" id="resolve-concern" hidden>Resolve simulator hold by explicit human action</button><p class="sub">This immediately withholds wearable reassurance for this simulator session. Reloading the page clears simulator memory. No clinician or emergency service is notified; this prototype is not attended, emergency triage, or medical clearance.</p></div>
           <div class="field" style="margin-top:14px"><label for="notes">Optional note</label><textarea id="notes" placeholder="Anything the sensors cannot know…"></textarea></div>
           <div style="display:flex;justify-content:flex-end;margin-top:16px"><button class="button primary" id="save">Capture context in memory</button></div>
-          <div class="notice">This pre-reveal entry is context, not the forecast outcome. The target-window outcome can be recorded only after the 72-hour window. Medication, infusion and symptom entries remain context only; Evidessa will not diagnose adrenal function, inflammation or infection, or recommend a dose or treatment change.</div>
+          <div class="notice">This pre-reveal entry is context, not the forecast outcome. The target-window outcome can be recorded only after the 72-hour window. Medication, infusion and symptom entries remain context only; Evidessa cannot diagnose any medical condition or recommend a dose or treatment change.</div>
         </div>
       </section>
     </main>
@@ -601,6 +662,8 @@
       scientist: ["Evidessa Scientist", "A governed explanation layer over verified simulated evidence"],
       evidence: ["Evidence, not a black box", "Follow the fixture message down to generated source data"],
       timeline: ["Simulator timeline", "Generated sensor, model and context events"],
+      conflicts: ["Conflict desk", "Same-sequence native-version collisions stay rejected"],
+      inspector: ["Feature inspector", "Cutoff-sealed values, windows and provenance"],
       observer: ["Observer concept", "Non-operational simulated freshness, quality and provenance states"],
       log: ["Record what sensors cannot see", "Memory-only pre-reveal context; not the future outcome"]
     };
@@ -635,6 +698,7 @@
       const lowQualityButton = document.getElementById('activity-low-quality-state');
       qualifiedButton.setAttribute('aria-pressed', String(qualified));
       lowQualityButton.setAttribute('aria-pressed', String(!qualified));
+      document.body.classList.toggle('quality-withheld', !qualified);
       document.getElementById('activity-title').textContent = qualified
         ? 'Matched walk response'
         : 'Activity response unavailable';

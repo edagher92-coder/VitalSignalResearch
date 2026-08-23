@@ -19,6 +19,14 @@ import au.com.elied.vitalsignal.analytics.SafetyDecision
 import au.com.elied.vitalsignal.analytics.SafetyGateInput
 import au.com.elied.vitalsignal.analytics.SafetyPolicyEngine
 import au.com.elied.vitalsignal.analytics.SignalQualityEngine
+import au.com.elied.vitalsignal.analytics.canonicalSha256
+import au.com.elied.vitalsignal.audit.ForecastLedgerMutationResult
+import au.com.elied.vitalsignal.audit.InMemoryForecastAuditJournal
+import au.com.elied.vitalsignal.audit.LockedForecastView
+import au.com.elied.vitalsignal.audit.PreRevealContextCheckIn
+import au.com.elied.vitalsignal.audit.ProspectiveForecastLedger
+import au.com.elied.vitalsignal.audit.ProspectiveForecastView
+import au.com.elied.vitalsignal.audit.RevealedForecastView
 import au.com.elied.vitalsignal.model.ActivityState
 import au.com.elied.vitalsignal.model.AcquisitionOrigin
 import au.com.elied.vitalsignal.model.conservativeAcquisitionProfile
@@ -45,7 +53,19 @@ data class SimulatorPipelineResult(
     val insight: HealthInsight?,
     val forecastEstimate: ForecastEstimate,
     val effectiveDays: Int,
+    val targetFeatures: ForecastFeatureSnapshot,
+    val prospectiveView: ProspectiveForecastView? = null,
+    val ledgerReason: String? = null,
 )
+
+/**
+ * A reveal can only ever return the payload the ledger already committed. It is
+ * refused rather than recomputed when the prospective chronology is not met.
+ */
+sealed interface ForecastRevealOutcome {
+    data class Revealed(val view: RevealedForecastView) : ForecastRevealOutcome
+    data class Refused(val reason: String) : ForecastRevealOutcome
+}
 
 /** Exact-value allowlist for deterministic simulator fixtures only; never a production verifier. */
 private class SimulatorFixturePersistenceVerifier(
@@ -68,8 +88,12 @@ class SimulatorHealthPipeline(
     private val safetyPolicy: SafetyPolicyEngine = SafetyPolicyEngine(),
     private val forecastEngine: PersonalForecastEngine = PersonalForecastEngine(
         trainingCaseReceiptVerifier = ForecastTrainingCaseReceiptVerifier { trainingCase ->
-            trainingCase.verificationReceiptId?.startsWith("sim-receipt:") == true
+            trainingCase.verificationReceiptId ==
+                simulatorBoundReceipt(trainingCase.caseBindingSha256)
         },
+    ),
+    private val forecastLedger: ProspectiveForecastLedger = ProspectiveForecastLedger(
+        InMemoryForecastAuditJournal(),
     ),
 ) {
     fun evaluate(
@@ -145,12 +169,26 @@ class SimulatorHealthPipeline(
             ),
             quality = quality.score,
         )
-        val forecastEstimate = forecastEngine.forecast(
-            history = forecastHistory(now),
-            target = targetFeatures,
-            createdAtEpochMillis = now,
-            endpoint = PersonalForecastEngine.SIMULATOR_72_HOUR_POINT_ENDPOINT,
-        )
+        val rawEstimate = if (userConcernReported) {
+            ForecastEstimate(
+                state = au.com.elied.vitalsignal.analytics.ForecastModelState.ABSTAINED,
+                forecast = null,
+                validCaseCount = 0,
+                effectiveCaseWeight = 0.0,
+                reason = "Human concern overrides wearable forecast",
+            )
+        } else {
+            forecastEngine.forecast(
+                history = forecastHistory(
+                    now = now,
+                    count = if (scenario == SimulationScenario.LEARNING) 12 else 40,
+                ),
+                target = targetFeatures,
+                createdAtEpochMillis = now,
+                endpoint = PersonalForecastEngine.SIMULATOR_72_HOUR_POINT_ENDPOINT,
+            )
+        }
+        val sealed = sealThroughLedger(rawEstimate, targetFeatures, now)
 
         return SimulatorPipelineResult(
             safetyDecision = safetyDecision,
@@ -159,9 +197,142 @@ class SimulatorHealthPipeline(
             deviations = deviations,
             interpretationAssessment = interpretationAssessment,
             insight = insight,
-            forecastEstimate = forecastEstimate,
+            forecastEstimate = sealed.estimate,
             effectiveDays = effectiveDays,
+            targetFeatures = targetFeatures,
+            prospectiveView = sealed.view,
+            ledgerReason = sealed.reason,
         )
+    }
+
+
+    /**
+     * Stores the pre-reveal context check-in and then reveals, so the displayed
+     * probability comes from the committed record instead of a fresh estimate.
+     */
+    fun revealCommittedForecast(
+        result: SimulatorPipelineResult,
+        contextSnapshotSha256: String,
+    ): ForecastRevealOutcome {
+        result.prospectiveView as? LockedForecastView
+            ?: return ForecastRevealOutcome.Refused(
+                result.ledgerReason ?: "No committed forecast is available to reveal",
+            )
+        val forecast = result.forecastEstimate.forecast
+            ?: return ForecastRevealOutcome.Refused("No committed forecast payload is available")
+
+        val checkInAtEpochMillis = forecast.createdAtEpochMillis + 1L
+        val stored = forecastLedger.storePreRevealCheckIn(
+            PreRevealContextCheckIn(
+                eventId = "k-${forecast.id}-${contextSnapshotSha256.take(12)}",
+                forecastId = forecast.id,
+                recordedAtEpochMillis = checkInAtEpochMillis,
+                contextSnapshotSha256 = contextSnapshotSha256,
+            ),
+        )
+        mutationRefusal(stored)?.let { return ForecastRevealOutcome.Refused(it) }
+
+        val revealed = forecastLedger.reveal(
+            eventId = "r-${forecast.id}",
+            forecastId = forecast.id,
+            revealedAtEpochMillis = checkInAtEpochMillis + 1L,
+        )
+        mutationRefusal(revealed)?.let { return ForecastRevealOutcome.Refused(it) }
+
+        val view = revealed.view as? RevealedForecastView
+            ?: return ForecastRevealOutcome.Refused(
+                "The ledger did not return a revealed projection",
+            )
+        return ForecastRevealOutcome.Revealed(view)
+    }
+
+    private fun mutationRefusal(result: ForecastLedgerMutationResult): String? = when (result) {
+        is ForecastLedgerMutationResult.Applied,
+        is ForecastLedgerMutationResult.Idempotent,
+        -> null
+        is ForecastLedgerMutationResult.Rejected -> result.reason
+        is ForecastLedgerMutationResult.Unavailable -> result.reason
+    }
+
+    private data class SealedForecast(
+        val estimate: ForecastEstimate,
+        val view: ProspectiveForecastView?,
+        val reason: String?,
+    )
+
+    private fun sealThroughLedger(
+        estimate: ForecastEstimate,
+        targetFeatures: ForecastFeatureSnapshot,
+        nowEpochMillis: Long,
+    ): SealedForecast {
+        val forecast = estimate.forecast
+        if (forecast == null) {
+            return SealedForecast(estimate, view = null, reason = estimate.reason)
+        }
+        val digest = targetFeatures.canonicalSha256()
+        if (forecast.featureSnapshotHash != digest) {
+            return SealedForecast(
+                estimate = estimate.copy(
+                    state = au.com.elied.vitalsignal.analytics.ForecastModelState.ABSTAINED,
+                    forecast = null,
+                    validCaseCount = 0,
+                    effectiveCaseWeight = 0.0,
+                    reason = "Forecast feature digest did not match the committed snapshot",
+                ),
+                view = null,
+                reason = "Forecast feature digest did not match the committed snapshot",
+            )
+        }
+        val mutation = forecastLedger.commit(
+            eventId = "c-${forecast.id}",
+            forecast = forecast,
+            canonicalFeatureSnapshotSha256 = digest,
+            nowEpochMillis = nowEpochMillis,
+        )
+        return when (mutation) {
+            is ForecastLedgerMutationResult.Applied,
+            is ForecastLedgerMutationResult.Idempotent,
+            -> {
+                val view = mutation.view
+                if (view !is LockedForecastView) {
+                    SealedForecast(
+                        estimate = estimate.copy(
+                            state = au.com.elied.vitalsignal.analytics.ForecastModelState.ABSTAINED,
+                            forecast = null,
+                            validCaseCount = 0,
+                            effectiveCaseWeight = 0.0,
+                            reason = "Committed forecast must remain locked until check-in and reveal",
+                        ),
+                        view = view,
+                        reason = "Committed forecast must remain locked until check-in and reveal",
+                    )
+                } else {
+                    SealedForecast(estimate = estimate, view = view, reason = null)
+                }
+            }
+            is ForecastLedgerMutationResult.Rejected -> SealedForecast(
+                estimate = estimate.copy(
+                    state = au.com.elied.vitalsignal.analytics.ForecastModelState.ABSTAINED,
+                    forecast = null,
+                    validCaseCount = 0,
+                    effectiveCaseWeight = 0.0,
+                    reason = mutation.reason,
+                ),
+                view = mutation.view,
+                reason = mutation.reason,
+            )
+            is ForecastLedgerMutationResult.Unavailable -> SealedForecast(
+                estimate = estimate.copy(
+                    state = au.com.elied.vitalsignal.analytics.ForecastModelState.ABSTAINED,
+                    forecast = null,
+                    validCaseCount = 0,
+                    effectiveCaseWeight = 0.0,
+                    reason = mutation.reason,
+                ),
+                view = mutation.view,
+                reason = mutation.reason,
+            )
+        }
     }
 
     private fun qualityInputsFor(scenario: SimulationScenario): QualityInputs =
@@ -272,11 +443,12 @@ class SimulatorHealthPipeline(
         }
     }
 
-    private fun forecastHistory(now: Long): List<ForecastTrainingCase> = (1..40).map { index ->
+    private fun forecastHistory(now: Long, count: Int = 40): List<ForecastTrainingCase> =
+        (1..count).map { index ->
         // Six-hour spacing keeps all deterministic fixture windows non-negative,
         // unique and prospectively resolved even in the 13-day learning scenario.
         val cutoff = now - (index + 12L) * 6L * HOUR_MILLIS
-        ForecastTrainingCase(
+        val unsigned = ForecastTrainingCase(
             caseId = "sim-case-$index",
             endpoint = PersonalForecastEngine.SIMULATOR_72_HOUR_POINT_ENDPOINT,
             features = ForecastFeatureSnapshot(
@@ -305,8 +477,9 @@ class SimulatorHealthPipeline(
             resolvedAtEpochMillis = cutoff + 73L * HOUR_MILLIS,
             outcomeObservationId = "sim-outcome-$index",
             outcomeRecordSha256 = "%064x".format(index),
-            verificationReceiptId = "sim-receipt:$index",
+            verificationReceiptId = "sim-receipt:unsigned",
         )
+        unsigned.copy(verificationReceiptId = simulatorBoundReceipt(unsigned.caseBindingSha256))
     }
 
     private fun Double?.orZero(): Double = this ?: 0.0
@@ -410,3 +583,6 @@ class SimulatorHealthPipeline(
         )
     }
 }
+
+internal fun simulatorBoundReceipt(caseBindingSha256: String): String =
+    "sim-receipt:${caseBindingSha256.take(32)}"

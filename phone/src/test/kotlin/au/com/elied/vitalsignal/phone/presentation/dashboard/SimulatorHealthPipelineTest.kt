@@ -3,6 +3,7 @@ package au.com.elied.vitalsignal.phone.presentation.dashboard
 import au.com.elied.vitalsignal.analytics.ForecastModelState
 import au.com.elied.vitalsignal.analytics.PersistenceEvidenceStatus
 import au.com.elied.vitalsignal.analytics.SafetyDisposition
+import au.com.elied.vitalsignal.analytics.canonicalSha256
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -60,6 +61,29 @@ class SimulatorHealthPipelineTest {
     }
 
     @Test
+    fun learningScenarioLeavesTheForecastEngineLearning() {
+        val result = pipeline.evaluate(SimulationScenario.LEARNING)
+        assertEquals(ForecastModelState.LEARNING, result.forecastEstimate.state)
+        assertTrue(result.forecastEstimate.validCaseCount < 30)
+    }
+
+    @Test
+    fun humanConcernAbstainsTheForecastPayload() {
+        val result = pipeline.evaluate(SimulationScenario.DEVELOPING, userConcernReported = true)
+        assertEquals(ForecastModelState.ABSTAINED, result.forecastEstimate.state)
+        assertNull(result.forecastEstimate.forecast)
+    }
+
+    @Test
+    fun reusedSimulatorReceiptPrefixCannotAuthenticateAMutatedCase() {
+        val developing = pipeline.evaluate(SimulationScenario.DEVELOPING)
+        assertEquals(ForecastModelState.READY, developing.forecastEstimate.state)
+        val digest = developing.targetFeatures.canonicalSha256()
+        assertTrue(digest.matches(Regex("[a-f0-9]{64}")))
+        assertTrue(digest.take(12) != "a1b2c3d4e5f6")
+    }
+
+    @Test
     fun directHumanConcernOverridesEveryFixtureSensorState() {
         SimulationScenario.entries.forEach { scenario ->
             val result = pipeline.evaluate(scenario, userConcernReported = true)
@@ -68,5 +92,80 @@ class SimulatorHealthPipelineTest {
                 result.safetyDecision.disposition,
             )
         }
+    }
+
+    @Test
+    fun readyForecastIsCommittedHiddenAndReevaluateIsIdempotent() {
+        val first = pipeline.evaluate(SimulationScenario.DEVELOPING)
+        assertEquals(ForecastModelState.READY, first.forecastEstimate.state)
+        assertNotNull(first.forecastEstimate.forecast)
+        val view = first.prospectiveView as au.com.elied.vitalsignal.audit.LockedForecastView
+        assertEquals(
+            au.com.elied.vitalsignal.audit.ProspectiveForecastState.COMMITTED_HIDDEN,
+            view.state,
+        )
+        assertEquals(first.forecastEstimate.forecast!!.id, view.forecastId)
+        assertEquals(first.targetFeatures.canonicalSha256(), view.canonicalFeatureSnapshotSha256)
+
+        val second = pipeline.evaluate(SimulationScenario.DEVELOPING)
+        assertEquals(ForecastModelState.READY, second.forecastEstimate.state)
+        assertEquals(first.forecastEstimate.forecast!!.id, second.forecastEstimate.forecast!!.id)
+        val secondView = second.prospectiveView as au.com.elied.vitalsignal.audit.LockedForecastView
+        assertEquals(view.forecastId, secondView.forecastId)
+        assertEquals(view.canonicalFeatureSnapshotSha256, secondView.canonicalFeatureSnapshotSha256)
+    }
+
+    @Test
+    fun humanConcernDoesNotCommitAForecastToTheLedger() {
+        val result = pipeline.evaluate(SimulationScenario.DEVELOPING, userConcernReported = true)
+        assertEquals(ForecastModelState.ABSTAINED, result.forecastEstimate.state)
+        assertNull(result.prospectiveView)
+    }
+
+    @Test
+    fun revealReleasesTheCommittedPayloadRatherThanARecomputation() {
+        val result = pipeline.evaluate(SimulationScenario.DEVELOPING)
+        val committed = result.forecastEstimate.forecast!!
+
+        val outcome = pipeline.revealCommittedForecast(result, CONTEXT_DIGEST_A)
+
+        val view = (outcome as ForecastRevealOutcome.Revealed).view
+        assertEquals(committed.id, view.forecastId)
+        assertEquals(committed.probability, view.probability, 0.0)
+        assertEquals(committed.lowerBound, view.lowerBound, 0.0)
+        assertEquals(committed.upperBound, view.upperBound, 0.0)
+    }
+
+    @Test
+    fun aSecondDifferentCheckInCannotReopenASealedReveal() {
+        val result = pipeline.evaluate(SimulationScenario.DEVELOPING)
+        assertTrue(
+            pipeline.revealCommittedForecast(result, CONTEXT_DIGEST_A)
+                is ForecastRevealOutcome.Revealed,
+        )
+
+        val second = pipeline.revealCommittedForecast(result, CONTEXT_DIGEST_B)
+
+        assertTrue(second is ForecastRevealOutcome.Refused)
+    }
+
+    @Test
+    fun concernAndLowQualityScenariosHaveNothingToReveal() {
+        val concerned = pipeline.evaluate(SimulationScenario.DEVELOPING, userConcernReported = true)
+        val lowQuality = pipeline.evaluate(SimulationScenario.LOW_QUALITY)
+
+        assertTrue(
+            pipeline.revealCommittedForecast(concerned, CONTEXT_DIGEST_A)
+                is ForecastRevealOutcome.Refused,
+        )
+        assertTrue(
+            pipeline.revealCommittedForecast(lowQuality, CONTEXT_DIGEST_A)
+                is ForecastRevealOutcome.Refused,
+        )
+    }
+
+    private companion object {
+        const val CONTEXT_DIGEST_A = "aa11bb22cc33dd44ee55ff6600778899aabbccddeeff00112233445566778899"
+        const val CONTEXT_DIGEST_B = "99887766554433221100ffeeddccbbaa99887766554433221100ffeeddccbbaa"
     }
 }

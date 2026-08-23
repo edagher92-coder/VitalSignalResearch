@@ -598,3 +598,36 @@ components:
         executionSha256: { $ref: '#/components/schemas/Sha256' }
         issuerKeyId: { $ref: '#/components/schemas/SafeId' }
         signature: { type: string, contentEncoding: base64, minLength: 24, maxLength: 2048 }
+    TrainingCaseReceipt:
+      type: object
+      additionalProperties: false
+      description: >-
+        Contract-only receipt for a prospective training case. A verifier must
+        authenticate the exact caseBindingSha256, which includes the sealed
+        feature snapshot digest. This schema is not a deployed route.
+      required:
+        - receiptId
+        - caseId
+        - caseBindingSha256
+        - canonicalFeatureSnapshotSha256
+        - endpointId
+        - endpointVersion
+        - featureSchemaId
+        - featureSchemaVersion
+        - cutoffEpochMillis
+        - quality
+        - issuerKeyId
+        - signature
+      properties:
+        receiptId: { $ref: '#/components/schemas/SafeId' }
+        caseId: { $ref: '#/components/schemas/SafeId' }
+        caseBindingSha256: { $ref: '#/components/schemas/Sha256' }
+        canonicalFeatureSnapshotSha256: { $ref: '#/components/schemas/Sha256' }
+        endpointId: { $ref: '#/components/schemas/SafeId' }
+        endpointVersion: { $ref: '#/components/schemas/SafeId' }
+        featureSchemaId: { $ref: '#/components/schemas/SafeId' }
+        featureSchemaVersion: { $ref: '#/components/schemas/SafeId' }
+        cutoffEpochMillis: { type: integer, format: int64, minimum: 0 }
+        quality: { type: number, minimum: 0, maximum: 1 }
+        issuerKeyId: { $ref: '#/components/schemas/SafeId' }
+        signature: { type: string, contentEncoding: base64, minLength: 24, maxLength: 2048 }
