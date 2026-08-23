@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: VitalSignal Research Observer API
-  version: 0.5.0-research
+  version: 1.0.0-contract
   description: >-
     Contract-only API for consented, scheduled research observation. It is not
     deployed, continuously attended, clinically validated, or an emergency service.

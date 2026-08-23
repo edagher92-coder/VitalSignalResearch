@@ -1,15 +1,15 @@
 # Evidessa Research brand and experience system
 
-Status: working brand system for `0.5.0-research`  
+Status: working brand system for `0.6.0-research`  
 Product line: **Evidessa Research**  
 Tagline: **Your pattern, made clear.**
 
 Internal R&D programme codename: **HumanCurrent**. This name is for planning,
 research workstreams and model-development discussion only; it is not a public
 sub-brand, protocol identifier, medical claim or replacement for the preserved
-`VitalSignal` technical identifiers in version 0.5.
+`VitalSignal` technical identifiers in version 0.6.
 
-This document defines a reversible user-facing brand and an original product experience. It does not rename the repository, Android package, Kotlin namespaces, storage aliases, Data Layer paths, OpenAPI headers, signed schemas, audit identifiers or version. Those identifiers remain `VitalSignal` in version 0.5 so a visual/name change cannot silently break data compatibility, cryptographic authority or validation traceability.
+This document defines a reversible user-facing brand and an original product experience. It does not rename the repository, Android package, Kotlin namespaces, storage aliases, Data Layer paths, OpenAPI headers, signed schemas or audit identifiers. Those identifiers remain `VitalSignal` in version 0.6 so a visual/name change cannot silently break data compatibility, cryptographic authority or validation traceability.
 
 `Evidessa Research` is a working candidate. It has not completed trademark, company-name, domain, app-store or international language clearance. Do not present it as a registered or cleared commercial brand until that work is complete.
 
@@ -44,7 +44,7 @@ The tagline, **Your pattern, made clear.**, has three deliberate constraints:
 | Evidence drill-down | Evidence | Observation-to-source trace, contradictions and provenance |
 | Longitudinal view | Timeline | Sensor, context, medication, exercise, forecast and outcome events |
 | Consented observer research | Observer preview | Must remain explicitly non-operational until its separate authorization and validation gates pass |
-| Internal engineering identifiers | VitalSignal | Preserve through version 0.5; never perform a cosmetic search-and-replace across protocols |
+| Internal engineering identifiers | VitalSignal | Preserve through version 0.6; never perform a cosmetic search-and-replace across protocols |
 
 Do not add `Samsung`, `Galaxy`, `Apple`, `Health`, `Medical`, `Clinical`, `Care`, `Monitor`, `AI`, `Doctor` or `Nurse` to the product name without legal, platform, clinical and claims review.
 
@@ -110,7 +110,7 @@ This is a synthesis of interaction principles, not co-branding. The current inte
 
 ### Apple ecosystem later
 
-A future iPhone/Apple Watch lane would require a separately designed and validated HealthKit/Apple Watch adapter, its own permission model, provenance tests, background-delivery and battery evidence, and App Store/platform review. None is implemented or claimed in version 0.5.
+A future iPhone/Apple Watch lane would require a separately designed and validated HealthKit/Apple Watch adapter, its own permission model, provenance tests, background-delivery and battery evidence, and App Store/platform review. None is implemented or claimed in version 0.6.
 
 If that lane is approved:
 

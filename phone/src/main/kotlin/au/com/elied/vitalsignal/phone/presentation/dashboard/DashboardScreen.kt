@@ -615,6 +615,14 @@ private fun PatternHeroCard(
                 style = MaterialTheme.typography.bodyMedium,
                 color = Slate,
             )
+            if (state.confidence > 0 && !state.activeHumanConcern) {
+                Text(
+                    text = "The internal evidence score summarizes quality-qualified simulator evidence and policy support. It is not a probability, wellness/readiness score, or “all clear.”",
+                    modifier = Modifier.padding(top = 8.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Quiet,
+                )
+            }
             if (state.activeHumanConcern) {
                 Surface(
                     modifier = Modifier

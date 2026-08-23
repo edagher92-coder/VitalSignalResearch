@@ -1,6 +1,6 @@
 # VitalSignal Research threat model
 
-Status: engineering threat model for `0.5.0-research`; simulator-only release posture. It is not a penetration-test report, production-security certification or clinical safety approval.
+Status: engineering threat model for `0.6.0-research`; simulator-only release posture. It is not a penetration-test report, production-security certification or clinical safety approval.
 
 ## Assets and safety properties
 

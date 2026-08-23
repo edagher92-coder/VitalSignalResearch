@@ -460,7 +460,7 @@ class DemoDashboardRepository(
 
         return ForecastExplanationUiModel(
             meaning = "This generated fixture assigns $point% probability mass to a lower-than-personal-usual energy/function check-in during the single hour 72–73 hours after the cutoff. It does not mean a $point% loss of energy, a diagnosis, or that an outcome will occur.",
-            comparison = "${diagnostics.resolvedPositiveCaseCount} of ${diagnostics.resolvedCaseCount} eligible fixture cases had the outcome ($raw%). Similarity and quality weighting move that rate to $weighted% ($weightingDelta points). The Beta(${diagnostics.priorAlpha.toInt()},${diagnostics.priorBeta.toInt()}) regularizing prior then pulls the estimate toward 50%, producing $point% ($priorDelta points).",
+            comparison = "${diagnostics.resolvedPositiveCaseCount} of ${diagnostics.resolvedCaseCount} eligible fixture cases had the outcome ($raw%). Similarity and quality weighting produce ${formatTwoDecimals(diagnostics.totalCaseWeight)} effective cases and move that rate to $weighted% ($weightingDelta points). The Beta(${diagnostics.priorAlpha.toInt()},${diagnostics.priorBeta.toInt()}) regularizing prior then pulls the estimate toward 50%, producing $point% ($priorDelta points).",
             why = listOf(
                 "The cardio-autonomic feature is ${formatOneDecimal(targetCardio)} and is nearest the $nearerNeighborhood.",
                 "The sleep feature is ${formatOneDecimal(targetSleep)} relative to its generated matched reference; it changes similarity weights but is not a causal explanation.",
@@ -471,7 +471,7 @@ class DemoDashboardRepository(
                 "Freeze cardio-autonomic and sleep values, quality, cutoff, and provenance before the target window.",
                 "Weight each eligible past fixture by feature similarity × historical quality × current quality.",
                 "Combine weighted outcomes with the named Beta(${diagnostics.priorAlpha.toInt()},${diagnostics.priorBeta.toInt()}) regularizing prior.",
-                "Show an outward-rounded $lower–$upper% engineering uncertainty band using a normal posterior approximation plus a quality penalty. It is not validated coverage and excludes real-world model error.",
+                "Show an outward-rounded $lower–$upper% engineering uncertainty band using a nominal 80% normal posterior approximation plus a quality penalty. It is not validated empirical coverage and excludes real-world model error.",
             ),
             couldChange = listOf(
                 "New qualified target features before a future forecast cutoff.",
@@ -490,6 +490,9 @@ class DemoDashboardRepository(
 
     private fun percentOneDecimal(rate: Double): String =
         String.format(Locale.US, "%.1f", rate * 100.0)
+
+    private fun formatTwoDecimals(value: Double): String =
+        String.format(Locale.US, "%.2f", value)
 
     private fun signedPoints(deltaRate: Double): String =
         String.format(Locale.US, "%+.1f", deltaRate * 100.0)

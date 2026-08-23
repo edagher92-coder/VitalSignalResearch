@@ -33,7 +33,7 @@ fun governedWatchLeaseFixture(
         capability = capability,
         subjectPseudonym = subjectPseudonym,
         consentGeneration = consentGeneration,
-        appVersion = "0.5.0-research",
+        appVersion = "0.6.0-research",
         deviceModel = "Galaxy Watch Ultra2 fixture",
         firmwareGeneration = "fixture-fw-1",
         dataSchemaVersion = "watch-fixture-v1",

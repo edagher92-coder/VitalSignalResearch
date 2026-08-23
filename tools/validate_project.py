@@ -1028,6 +1028,33 @@ def validate_deliverables() -> None:
             "providerToolsEnabled:" in assistant_api and
             "credentialsIncluded:" in assistant_api,
             "assistant gateway disables storage, tools, browsing and client credentials")
+    require("version: 1.0.0-contract" in backend_api and
+            "version: 1.0.0-contract" in assistant_api,
+            "OpenAPI contracts use independent v1 technical versions")
+    release_files = (
+        "README.md",
+        "docs/ARCHITECTURE.md",
+        "docs/BACKEND_CLINICIAN_PLATFORM.md",
+        "docs/BRAND_AND_EXPERIENCE_SYSTEM.md",
+        "docs/BUILD_REPORT.md",
+        "docs/INSTALL_AND_PILOT_RUNBOOK.md",
+        "docs/PRIVACY.md",
+        "docs/SAFETY_CASE.md",
+        "docs/SESSION_HANDOFF.md",
+        "docs/STATUS_MATRIX.md",
+        "docs/THREAT_MODEL.md",
+        "docs/VALIDATION_PROTOCOL.md",
+    )
+    for release_file in release_files:
+        release_copy = read(release_file)
+        require("0.5.0-research" not in release_copy and
+                "version 0.5" not in release_copy.lower(),
+                f"current release metadata is not stale: {release_file}")
+    require("vitalsignal-0.6.0-research-simulator-debug" in
+            read(".github/workflows/verify.yml") and
+            "vitalsignal-0.6.0-research-simulator-debug" in
+            read("docs/INSTALL_AND_PILOT_RUNBOOK.md"),
+            "CI and pilot runbook name the same 0.6 simulator artifact")
     report = read("docs/BUILD_REPORT.md")
     require("0.6.0-research" in report, "build report matches source version")
     require("not run" in report.lower(), "build report records unexecuted verification honestly")

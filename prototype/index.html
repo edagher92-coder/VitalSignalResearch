@@ -337,9 +337,16 @@
     @keyframes fade-in { from { opacity: 0; } }
     @keyframes sheet-up { from { transform: translateY(70px) scale(.95); opacity: 0; } }
     body.concern-mode::before, body.concern-mode::after { opacity: .08; }
-    body.concern-mode #today > :not(.hero) { display: none !important; }
-    body.concern-mode .hero { background: rgba(45,18,24,.96); border-color: rgba(255,146,158,.55); }
-    body.concern-mode .orb::before { display: none; }
+    body.concern-mode .view > *,
+    body.quality-withheld .view > * { display: none !important; }
+    body.concern-mode #global-quality-hold { display: none !important; }
+    .withhold-banner {
+      margin: 0 0 18px; padding: 18px; border-radius: 22px; line-height: 1.55;
+      background: rgba(255,203,114,.11); border: 2px solid rgba(255,203,114,.42);
+      color: #ffe5b6;
+    }
+    .withhold-banner strong { display: block; margin-bottom: 5px; }
+    .withhold-banner .button { margin-top: 14px; }
 
     /* Accessibility floor: no meaningful status, evidence, provenance or control copy below 12 px. */
     .brand small, .eyebrow, .five-second span, .orb-value span, .tag, .sub,
@@ -442,6 +449,12 @@
       <div class="global-concern" id="global-concern-hold" role="alert" aria-live="assertive" hidden>
         <strong>Your concern takes priority; sensor and AI interpretations are withheld.</strong>
         No clinician or emergency service was notified. Follow your own care plan or contact appropriate help yourself; seek urgent help if you believe this is an emergency. This prototype cannot provide medical clearance.
+        <button type="button" class="button" id="resolve-concern" hidden>Resolve simulator hold by explicit human action</button>
+      </div>
+      <div class="withhold-banner" id="global-quality-hold" role="status" aria-live="polite" hidden>
+        <strong>LOW-QUALITY FIXTURE · ALL INTERPRETATIONS WITHHELD</strong>
+        Contact, motion and coverage failed the hard quality gate. Missing time is not normality, inactivity or recovery; no score, forecast, evidence explanation or observer interpretation is available.
+        <button type="button" class="button" id="restore-qualified">Return to qualified simulator fixture</button>
       </div>
 
       <section class="view active" id="today">
@@ -459,6 +472,7 @@
               <div><span>Evidence</span><strong id="summary-confidence">72 / 100 internal evidence score</strong></div>
               <div><span>Next step</span><strong id="summary-next">Record context, then remeasure</strong></div>
             </div>
+            <p class="sub" style="margin-top:16px">The internal evidence score summarizes quality-qualified fixture evidence and policy gates. It is not a probability, wellness/readiness score, or “all clear.”</p>
           </div>
           <div class="orb-wrap">
             <div class="orb"><div class="orb-value"><strong id="hero-confidence">72</strong><span id="hero-confidence-label">internal evidence score</span></div></div>
@@ -501,7 +515,7 @@
             <div class="explain-panel">
               <span class="eyebrow">Comparison</span>
               <h4>13 of 40 (32.5%) → 33.0% weighted → 36.4% posterior</h4>
-              <p>Similarity and quality weighting add 0.5 points. The Beta(2,2) regularizing prior then pulls toward 50%, adding 3.4 points. The displayed 36% is rounded; neither step proves that a signal caused the outcome.</p>
+              <p>Similarity and quality weighting add 0.5 points with 15.79 effective weighted cases. The Beta(2,2) regularizing prior then pulls toward 50%, adding 3.4 points. The displayed 36% is rounded; neither step proves that a signal caused the outcome.</p>
             </div>
           </div>
           <div class="explain-columns">
@@ -520,7 +534,7 @@
                 <li>Freeze two feature values, quality, cutoff and provenance before the target window.</li>
                 <li>Weight each eligible fixture by similarity × historical quality × current quality.</li>
                 <li>Combine weighted outcomes with the named Beta(2,2) regularizing prior.</li>
-                <li>Use a normal posterior approximation plus a quality penalty, then round bounds outward to 22–51%. This is an engineering band, not validated coverage.</li>
+                <li>Use a nominal 80% normal posterior approximation plus a quality penalty, then round bounds outward to 22–51%. This is an engineering band, not validated empirical coverage.</li>
               </ol>
             </div>
             <div class="explain-panel">
@@ -721,8 +735,8 @@
           <aside class="card pad">
             <div class="card-title"><div><span class="eyebrow">Audit trail</span><h3>Every answer is versioned</h3></div></div>
             <div class="quality-list">
-              <div class="quality-item"><label>Interpretation engine</label><span class="sub">research-v0.5</span></div>
-              <div class="quality-item"><label>Feature schema</label><span class="sub">0.5.0-research</span></div>
+              <div class="quality-item"><label>Interpretation engine</label><span class="sub">research-simulator-v0.6</span></div>
+              <div class="quality-item"><label>Feature schema</label><span class="sub">sim-recovery-features@1.0.0</span></div>
               <div class="quality-item"><label>Safety copy</label><span class="sub">wellness-v1</span></div>
               <div class="quality-item"><label>Device / firmware</label><span class="sub">tracked</span></div>
               <div class="quality-item"><label>Past predictions</label><span style="color:var(--amber);font-size:12px">fixture only</span></div>
@@ -785,7 +799,7 @@
             <div class="field"><label for="gi">GI symptom burden <output id="gi-out">Not answered</output></label><select id="gi" class="scale-select" aria-describedby="gi-anchor"><option value="" selected>Choose 0–10…</option><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select><small class="sub" id="gi-anchor">0 = no GI symptom burden · 10 = worst imaginable GI burden</small></div>
           </div>
             <div class="field" style="margin-top:14px"><label>Context since the last check-in</label><div class="toggle-row"><button type="button" class="toggle" aria-pressed="false">Exercise</button><button type="button" class="toggle" aria-pressed="false">Poor sleep</button><button type="button" class="toggle" aria-pressed="false">High stress</button><button type="button" class="toggle" aria-pressed="false">Medication timing</button><button type="button" class="toggle" aria-pressed="false">Infusion</button><button type="button" class="toggle" aria-pressed="false">Travel</button><button type="button" class="toggle" aria-pressed="false">Felt unwell</button></div></div>
-          <div class="field" style="margin-top:14px"><label>User-reported concern hold</label><button type="button" class="button" id="concern" aria-pressed="false">Report concern now — withhold wearable score</button><button type="button" class="button" id="resolve-concern" hidden>Resolve simulator hold by explicit human action</button><p class="sub">This immediately withholds wearable reassurance for this simulator session. Reloading the page clears simulator memory. No clinician or emergency service is notified; this prototype is not attended, emergency triage, or medical clearance.</p></div>
+          <div class="field" style="margin-top:14px"><label>User-reported concern hold</label><button type="button" class="button" id="concern" aria-pressed="false">Report concern now — withhold wearable score</button><p class="sub">This immediately withholds wearable reassurance for this simulator session. Reloading the page clears simulator memory. No clinician or emergency service is notified; this prototype is not attended, emergency triage, or medical clearance.</p></div>
           <div class="field" style="margin-top:14px"><label for="notes">Optional note</label><textarea id="notes" placeholder="Anything the sensors cannot know…"></textarea></div>
           <div style="display:flex;justify-content:flex-end;margin-top:16px"><button class="button primary" id="save">Capture context in memory</button></div>
           <div class="notice">This pre-reveal entry is context, not the forecast outcome. The target-window outcome can be recorded only after the 72-hour window. Medication, infusion and symptom entries remain context only; Evidessa cannot diagnose any medical condition or recommend a dose or treatment change.</div>
@@ -862,6 +876,7 @@
       qualifiedButton.setAttribute('aria-pressed', String(qualified));
       lowQualityButton.setAttribute('aria-pressed', String(!qualified));
       document.body.classList.toggle('quality-withheld', !qualified);
+      document.getElementById('global-quality-hold').hidden = qualified || concernLatched;
       document.getElementById('activity-title').textContent = qualified
         ? 'Matched walk response'
         : 'Activity response unavailable';
@@ -885,11 +900,18 @@
       activityState = 'low-quality';
       renderActivityState();
     });
+    document.getElementById('restore-qualified').addEventListener('click', () => {
+      activityState = 'qualified';
+      renderActivityState();
+      show('today');
+    });
     let concernLatched = false;
+    let forecastRevealed = false;
     document.getElementById('save').addEventListener('click', () => {
       const concernReported = concernLatched || document.getElementById('concern').getAttribute('aria-pressed') === 'true';
       const completeContext = scaleIds.every(id => document.getElementById(id).value !== '');
-      const reveal = !concernReported && completeContext;
+      if (!concernReported && completeContext) forecastRevealed = true;
+      const reveal = !concernReported && forecastRevealed;
       document.getElementById('forecast-title').textContent = concernReported ? 'Human concern takes priority' : reveal ? 'Lower-than-personal-usual energy/function at +72h to +73h' : 'Check-in incomplete';
       document.getElementById('forecast-tag').textContent = concernReported ? 'HUMAN PRIORITY' : reveal ? 'Unvalidated' : 'Locked';
       document.getElementById('forecast-note').textContent = concernReported ? 'Wearable forecast withheld' : reveal ? 'Frozen binary simulator target · not diagnosis or treatment guidance' : 'Unanswered values remain missing';
@@ -907,7 +929,9 @@
       toast.textContent = concernReported
         ? 'Simulator concern hold active. Nobody was notified; wearable forecast withheld.'
         : reveal
-          ? 'Context saved. Unvalidated simulated fixture estimate revealed; this is not a health prediction.'
+          ? completeContext
+            ? 'Context saved. The same unvalidated fixture commitment remains revealed; this is not a health prediction.'
+            : 'Additional partial context saved. The already-revealed fixture did not rewind or change.'
           : 'Partial context saved. Unanswered values stayed missing; forecast remains locked.';
       toast.classList.add('show');
       setTimeout(() => toast.classList.remove('show'), 2200);
@@ -917,6 +941,7 @@
     const applyImmediateConcernHold = () => {
       concernLatched = true;
       document.body.classList.add('concern-mode');
+      document.getElementById('global-quality-hold').hidden = true;
       document.getElementById('global-concern-hold').hidden = false;
       const globalConcernAction = document.getElementById('global-concern-action');
       globalConcernAction.disabled = true;
@@ -996,6 +1021,7 @@
       resolveDialog.hidden = true;
       appShell.inert = false;
       concernLatched = false;
+      forecastRevealed = false;
       document.body.classList.remove('concern-mode');
       document.getElementById('global-concern-hold').hidden = true;
       const globalConcernAction = document.getElementById('global-concern-action');
@@ -1019,7 +1045,7 @@
       document.getElementById('forecast-note').textContent = 'Record complete pre-reveal context before reveal';
       document.getElementById('forecast-value').textContent = 'Absent from locked view';
       document.getElementById('forecast-status').textContent = 'Unvalidated';
-      document.getElementById('audit-state').textContent = 'Concern resolved by human · forecast relocked';
+      document.getElementById('audit-state').textContent = 'Browser fixture reset · no durable ledger';
       document.getElementById('forecast-explain').classList.remove('revealed');
       document.getElementById('activity-qualified-state').disabled = false;
       document.getElementById('activity-low-quality-state').disabled = false;

@@ -1,12 +1,12 @@
 # Research evidence and claim boundaries
 
-Evidence review date: 23 August 2026. This file is a product-development evidence map, not medical advice or a substitute for a systematic clinical review. Version `0.5.0-research` still uses synthetic fixtures for user-visible results; none of the research associations below is an implemented detection claim.
+Evidence review date: 23 August 2026. This file is a product-development evidence map, not medical advice or a substitute for a systematic clinical review. Version `0.6.0-research` still uses synthetic fixtures for user-visible results; none of the research associations below is an implemented detection claim.
 
 ## Why the first product is personal pattern intelligence
 
 Between-person physiology varies widely while many wearable measures are relatively stable within a person. A 92,457-person analysis found large between-person resting-heart-rate differences, supporting a personal baseline instead of a universal “normal” score ([Quer et al., 2020](https://pubmed.ncbi.nlm.nih.gov/32023264/)).
 
-Once the acquisition and reference gates pass, the first defensible product should therefore identify **qualified, persistent departures from Elz's expected time- and context-matched pattern**. Version 0.5 currently demonstrates that logic only with generated fixtures and does not identify a personal or medical cause.
+Once the acquisition and reference gates pass, the first defensible product should therefore identify **qualified, persistent departures from Elz's expected time- and context-matched pattern**. Version 0.6 currently demonstrates that logic only with generated fixtures and does not identify a personal or medical cause.
 
 ## Evidence-to-product map
 

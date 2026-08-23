@@ -1,6 +1,6 @@
 # VitalSignal backend contract
 
-This directory defines the versioned network contract for a future research-observer and, only after separate authorization, regulated clinical service. It is not a running backend and is not deployed by version `0.5.0-research`.
+This directory defines versioned network contracts for a future research observer and governed assistant gateway and, only after separate authorization, a regulated clinical service. It is not a running backend and is not deployed by app version `0.6.0-research`. The OpenAPI `info.version` values are independent technical contract versions.
 
 The observer draft is [`openapi/vitalsignal-research-observer-v1.yaml`](openapi/vitalsignal-research-observer-v1.yaml). The separate contract-only assistant gateway is [`openapi/vitalsignal-assistant-gateway-v1.yaml`](openapi/vitalsignal-assistant-gateway-v1.yaml). The latter is the only component permitted to hold cloud-provider credentials; no provider key, provider authorization header or secret-bearing field exists in its phone-facing schema.
 

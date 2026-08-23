@@ -182,7 +182,9 @@ test('explains the revealed fixture probability without implying cause', () => {
   assert.match(html, /What 36% means—and how the fixture got there/);
   assert.match(html, /36 out of 100 probability mass—not “36% less energy”/);
   assert.match(html, /13 of 40 \(32\.5%\) → 33\.0% weighted → 36\.4% posterior/);
+  assert.match(html, /15\.79 effective weighted cases/);
   assert.match(html, /Beta\(2,2\) regularizing prior/);
+  assert.match(html, /nominal 80% normal posterior approximation/);
   assert.match(html, /round bounds outward to 22–51%/);
   assert.match(html, /Forty resolved synthetic cases pass prospective, schema, quality, identity and receipt gates/);
   assert.match(html, /similarity × historical quality × current quality/);
@@ -198,6 +200,8 @@ test('adds purposeful motion with reduced-motion and explicit-dialog safeguards'
   assert.doesNotMatch(html, /animation:[^;]*infinite/);
   assert.doesNotMatch(html, /id="motion-tour"/);
   assert.match(html, /id="resolve-dialog" role="dialog" aria-modal="true"/);
+  assert.match(html, /id="global-quality-hold" role="status"/);
+  assert.match(html, /body\.quality-withheld \.view > \*/);
   assert.match(html, /appShell\.inert = true/);
   assert.match(html, /event\.key === 'Escape'/);
   assert.doesNotMatch(html, /window\.confirm/);

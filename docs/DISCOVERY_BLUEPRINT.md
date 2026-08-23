@@ -72,7 +72,7 @@ The target is causal evidence for this person, not engagement. Never randomize o
 
 ## Fatigue and adrenal-insufficiency safety lane
 
-Fatigue is a strong initial outcome because it can be recorded prospectively, tied to function and sleep, and scored against a precommitted future window. Version 0.5 retains daily energy/fatigue and adds optional functional-capacity, lightheadedness, nausea/vomiting/diarrhoea, acute-illness/stressor and glucocorticoid-taper context. These are user/clinical context—not watch measurements.
+Fatigue is a strong initial outcome because it can be recorded prospectively, tied to function and sleep, and scored against a precommitted future window. Version 0.6 retains daily energy/fatigue and adds optional functional-capacity, lightheadedness, nausea/vomiting/diarrhoea, acute-illness/stressor and glucocorticoid-taper context. These are user/clinical context—not watch measurements.
 
 Adrenal insufficiency is a different and much narrower question. Galaxy Watch does not measure cortisol, ACTH, sodium, potassium, glucose or blood pressure, and its nonspecific heart-rate, HRV, sleep and activity changes cannot diagnose or exclude adrenal insufficiency. Glucocorticoid withdrawal, poor sleep, infection, inflammatory disease, deconditioning and many other conditions can produce overlapping fatigue. The Endocrine Society/ESE guideline relies on clinical and biochemical evaluation and treats haemodynamic instability or prolonged vomiting/diarrhoea in an at-risk person as a potential emergency, not as a wearable prediction problem ([guideline](https://www.endocrine.org/clinical-practice-guidelines/glucocorticoid-induced-adrenal-insufficiency)).
 

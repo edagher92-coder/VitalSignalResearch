@@ -81,7 +81,7 @@ wear/build/outputs/apk/debug/wear-debug.apk
 
 Those paths are expected outputs, not a claim that they exist now. Before installing, inspect both certificates with the Android Build Tools `apksigner` utility and confirm the SHA-256 signer digest matches:
 
-The repository workflow runs the same tests, lint and two debug assemblies on GitHub Actions. If that job passes, its `vitalsignal-0.5.0-research-simulator-debug` artifact provides both simulator-only APKs for 14 days. A downloaded artifact is a build convenience, not evidence of Samsung sensor access, personal-data readiness or hardware validation; still perform the signer check and every gate below.
+The repository workflow runs the same tests, lint and two debug assemblies on GitHub Actions. If that job passes, its `vitalsignal-0.6.0-research-simulator-debug` artifact provides both simulator-only APKs for 14 days. A downloaded artifact is a build convenience, not evidence of Samsung sensor access, personal-data readiness or hardware validation; still perform the signer check and every gate below.
 
 ```bash
 apksigner verify --print-certs phone/build/outputs/apk/debug/phone-debug.apk

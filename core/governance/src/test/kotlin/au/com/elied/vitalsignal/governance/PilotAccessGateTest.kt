@@ -198,7 +198,7 @@ class PilotAccessGateTest {
         capability = PilotCapability.PERSONAL_INTERPRETATION,
         subjectPseudonym = "pilot-1",
         consentGeneration = 1L,
-        appVersion = "0.5.0-research",
+            appVersion = "0.6.0-research",
         deviceModel = "fixture-ultra2",
         firmwareGeneration = "fixture-fw-1",
         dataSchemaVersion = "health-v1",
@@ -221,7 +221,7 @@ class PilotAccessGateTest {
     private fun receipt() = ValidationReceipt(
         receiptId = "validation-1",
         capability = PilotCapability.PERSONAL_INTERPRETATION,
-        appVersion = "0.5.0-research",
+                appVersion = "0.6.0-research",
         deviceModel = "fixture-ultra2",
         firmwareGeneration = "fixture-fw-1",
         dataSchemaVersion = "health-v1",

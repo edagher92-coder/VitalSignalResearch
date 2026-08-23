@@ -146,6 +146,35 @@ test('executes reveal, concern, dialog, reduced-motion and mobile flows in Chrom
     assert.match(revealed.explanation, /13 of 40 \(32\.5%\) → 33\.0% weighted → 36\.4% posterior/);
     assert.match(revealed.explanation, /Similarity is not causality/);
 
+    await evaluate(`(() => {
+      const energy = document.getElementById('energy');
+      energy.value = '';
+      energy.dispatchEvent(new Event('change', { bubbles: true }));
+      document.getElementById('save').click();
+    })()`);
+    const monotonic = await evaluate(`({
+      probability: document.getElementById('forecast-value').textContent,
+      audit: document.getElementById('audit-state').textContent,
+      explanationVisible: getComputedStyle(document.getElementById('forecast-explain')).display !== 'none'
+    })`);
+    assert.deepEqual(monotonic, {
+      probability: '36% fixture probability',
+      audit: 'Revealed · outcome pending',
+      explanationVisible: true,
+    });
+
+    await evaluate(`document.getElementById('activity-low-quality-state').click()`);
+    assert.equal(await evaluate(`!document.getElementById('global-quality-hold').hidden`), true);
+    for (const view of ['today', 'scientist', 'evidence', 'timeline', 'conflicts', 'inspector', 'observer', 'log']) {
+      await evaluate(`document.querySelector('[data-view="${view}"]').click()`);
+      assert.equal(
+        await evaluate(`document.querySelector('.view.active').innerText.trim()`),
+        '',
+        `quality hold leaked content in ${view}`,
+      );
+    }
+    await evaluate(`document.getElementById('restore-qualified').click()`);
+
     await evaluate(`document.getElementById('global-concern-action').click()`);
     await sleep(50);
     const held = await evaluate(`({
@@ -160,7 +189,14 @@ test('executes reveal, concern, dialog, reduced-motion and mobile flows in Chrom
     assert.equal(held.explanationVisible, false);
     assert.equal(held.todayChildrenVisible, false);
 
-    await evaluate(`document.querySelector('[data-view="log"]').click()`);
+    for (const view of ['today', 'scientist', 'evidence', 'timeline', 'conflicts', 'inspector', 'observer', 'log']) {
+      await evaluate(`document.querySelector('[data-view="${view}"]').click()`);
+      assert.equal(
+        await evaluate(`document.querySelector('.view.active').innerText.trim()`),
+        '',
+        `concern hold leaked content in ${view}`,
+      );
+    }
     await evaluate(`document.getElementById('resolve-concern').click()`);
     await waitFor(() => evaluate(`document.activeElement.id === 'keep-concern'`));
     const modal = await evaluate(`({

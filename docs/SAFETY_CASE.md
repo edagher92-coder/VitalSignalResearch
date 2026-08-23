@@ -55,7 +55,7 @@ Prohibited:
 
 ## Escalation boundaries
 
-The model may produce informational, watch or check research states, while the UI also exposes learning, unavailable, typical and remeasure states. These simulated states are not yet validated for personal display. The model cannot independently issue an emergency diagnosis. Urgent guidance may be added only through a separate deterministic route whose questions, wording, geography and emergency contacts have been medically and legally reviewed; that route is not present in version 0.5.
+The model may produce informational, watch or check research states, while the UI also exposes learning, unavailable, typical and remeasure states. These simulated states are not yet validated for personal display. The model cannot independently issue an emergency diagnosis. Urgent guidance may be added only through a separate deterministic route whose questions, wording, geography and emergency contacts have been medically and legally reviewed; that route is not present in version 0.6.
 
 The same boundary applies to adrenal-risk context: the app cannot detect or exclude adrenal insufficiency/crisis or generate a glucocorticoid dose. User-reported concern and symptoms must bypass model availability; a normal watch pattern cannot downgrade a clinician-authored emergency plan.
 

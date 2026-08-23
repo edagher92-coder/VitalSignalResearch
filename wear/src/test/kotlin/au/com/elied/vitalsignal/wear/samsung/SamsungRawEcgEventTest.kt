@@ -125,7 +125,7 @@ class SamsungRawEcgEventTest {
                 watchModel = "Galaxy Watch Ultra2 fixture",
                 firmwareVersion = "fixture-fw-1",
                 sensorSdkVersion = "1.4.1",
-                appVersion = "0.5.0-research",
+                appVersion = "0.6.0-research",
             ),
             provenance = SamsungEcgCollectionProvenance(
                 participantPseudonym = "participant-1",
