@@ -65,7 +65,7 @@ dependencies {
     // Official public watch-side APIs. Samsung's licensed AAR is intentionally
     // absent; wear/libs/README.md documents how the private adapter is added.
     implementation("androidx.health:health-services-client:1.1.0-rc02")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.10.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.11.0")
     implementation("com.google.android.gms:play-services-wearable:20.0.1")
 
     testImplementation(libs.junit)
