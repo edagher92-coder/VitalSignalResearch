@@ -227,7 +227,11 @@ test('executes reveal, concern, dialog, reduced-motion and mobile flows in Chrom
   } finally {
     page?.close();
     browser?.close();
-    chrome.kill('SIGTERM');
+    if (chrome.exitCode === null) {
+      const exited = new Promise(resolve => chrome.once('exit', resolve));
+      chrome.kill('SIGTERM');
+      await Promise.race([exited, sleep(3_000)]);
+    }
     await new Promise(resolve => server.close(resolve));
     await rm(profile, { recursive: true, force: true });
   }
