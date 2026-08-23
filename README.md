@@ -6,6 +6,8 @@ Evidessa Research is the working user-facing brand for version `0.5.0-research`,
 
 The repository, Android package/namespace, cryptographic aliases, protocol routes, signed schemas and versioned audit identifiers intentionally retain their existing `VitalSignal` internal names. That separation makes the brand reversible without an unsafe protocol migration or a break in validation traceability.
 
+`HumanCurrent` is the internal R&D programme codename. It does not appear as a consumer product, clinical service or protocol identity.
+
 This is a wellness/research system under development. It is not a diagnosis, medical clearance, emergency monitor or validated health prediction. Symptoms and professional medical advice override the application.
 
 **Release posture:** GO for simulator-only engineering evaluation. NO-GO for personal health-data collection, visible health forecasting, hardware claims, clinical monitoring, public release, or any Ollama/OpenAI/Anthropic-generated user result. Those lanes remain locked behind the gates below.

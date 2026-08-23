@@ -178,6 +178,9 @@ def validate_brand_and_experience() -> None:
             "trademark" in system.lower() and
             "no samsung or apple affiliation" in system.lower(),
             "brand system records clearance and independence boundaries")
+    require("Internal R&D programme codename: **HumanCurrent**" in system and
+            "`HumanCurrent` is the internal R&D programme codename" in readme,
+            "HumanCurrent remains an internal R&D codename rather than a public or protocol identity")
     require("Evidence Weave" in system and "living baseline ribbon" in system and
             "Samsung-first" in system and "Apple Health" in system,
             "brand system records the original cross-platform experience synthesis")
