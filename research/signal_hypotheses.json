@@ -1,0 +1,159 @@
+{
+  "schema_version": "vitalsignal-signal-registry-v1",
+  "reviewed_at": "2026-08-23",
+  "product_status": "research_only_no_live_sensor_data",
+  "ranking_basis": "Exploratory hypothesis novelty and research tractability only. This is not product priority, clinical importance or evidence strength; the ranked output lanes in docs/SENSOR_TO_OUTPUT_AUDIT.md govern implementation order.",
+  "promotion_rule": "Frozen definition, quality tests, reference agreement, chronological person-level holdout, prospective calibration, subgroup/device robustness and clinical/human-factors review are all required.",
+  "hypotheses": [
+    {
+      "rank": 1,
+      "id": "ecg_ppg_hemodynamic_fingerprint",
+      "name": "Co-timed ECG–PPG timing and morphology fingerprint",
+      "status": "documented_payload_physical_timing_unverified",
+      "evidence_maturity": "official_api_access_derived_signal_unvalidated",
+      "required_signals": ["ecg_on_demand_500_hz", "embedded_ppg_green", "lead_off", "saturation_quality"],
+      "reference_measurements": ["upper_arm_cuff", "reference_ecg", "finger_ppg_or_tonometry"],
+      "falsifiable_test": "Confirm cadence/timestamps, test same-session and day-to-day repeatability, then determine whether derived timing/morphology adds stable information after contact, posture and temperature controls.",
+      "allowed_output": "Qualified timing or morphology changed from the personal reference; cause unknown.",
+      "prohibited_claims": ["blood_pressure", "arterial_stiffness", "vascular_age", "qt_interval", "arrhythmia_diagnosis"]
+    },
+    {
+      "rank": 2,
+      "id": "physiological_reserve_response",
+      "name": "Activity-conditioned cardiac cost and recovery reserve",
+      "status": "platform_neutral_engine_unit_tested_with_synthetic_fixtures_ui_snapshot_not_runtime_bound",
+      "evidence_maturity": "moderate_association_novel_device_implementation",
+      "required_signals": ["reviewed_function_protocol", "human_concern_state", "heart_rate", "ibi", "accelerometer", "gps_grade_speed_when_walk", "ambient_temperature", "context"],
+      "reference_measurements": ["manual_or_video_five_times_sit_to_stand_timing", "validated_walk_test_when_separately_reviewed", "reference_ecg"],
+      "falsifiable_test": "Repeat the same externally reviewed physical configuration, hold on human concern before sensor scoring, and test whether task time plus residual/recovery features are reliable and prospectively associated with preregistered fatigue/function outcomes.",
+      "allowed_output": "Response to the matched research protocol changed across independent signal families.",
+      "prohibited_claims": ["vo2max", "ischemia", "heart_failure", "safe_to_exercise"]
+    },
+    {
+      "rank": 3,
+      "id": "multisystem_early_change",
+      "name": "Persistent multisystem early-change trajectory",
+      "status": "planned_shadow_feature",
+      "evidence_maturity": "promising_translational_condition_dependent",
+      "required_signals": ["resting_hr", "hrv", "respiration", "skin_ambient_temperature", "oxygen_instability", "sleep", "activity", "symptoms_and_user_concern"],
+      "reference_measurements": ["condition_specific_clinician_adjudication", "labs_or_testing_when_ordered"],
+      "falsifiable_test": "Precommit thresholds and compare lead time and sensitivity at a fixed false-alert budget against single-metric controls.",
+      "allowed_output": "Several independent qualified systems are more unusual than the matched personal pattern; a person's concern remains independently actionable even when sensors are normal.",
+      "prohibited_claims": ["infection", "sepsis", "ibd_flare", "medical_deterioration_diagnosis"]
+    },
+    {
+      "rank": 4,
+      "id": "ibd_associated_trajectory",
+      "name": "IBD-associated personal physiological trajectory",
+      "status": "planned_external_label_study",
+      "evidence_maturity": "promising_clinical_independent_validation_required",
+      "required_signals": ["circadian_hrv", "resting_hr", "sleep", "activity", "spo2", "symptoms", "medication_and_infusion_context"],
+      "reference_measurements": ["fecal_calprotectin", "crp_esr", "clinician_adjudication", "endoscopy_or_imaging_when_clinically_obtained"],
+      "falsifiable_test": "Freeze the model and prospectively score lead time, calibration and false alerts per week for a predefined lab-confirmed outcome window.",
+      "allowed_output": "The current pattern resembles a previously recorded physiology-and-symptom context.",
+      "prohibited_claims": ["ibd_flare_diagnosis", "inflammation_measurement", "adrenal_insufficiency", "treatment_change"]
+    },
+    {
+      "rank": 5,
+      "id": "fatigue_glucocorticoid_context_trajectory",
+      "name": "Fatigue, functional capacity and glucocorticoid-context trajectory",
+      "status": "planned_prospective_context_study",
+      "evidence_maturity": "fatigue_is_trackable_adrenal_specificity_unproven",
+      "required_signals": ["prospective_energy_fatigue_checkin", "functional_capacity", "lightheadedness_and_orthostatic_context", "nausea_vomiting_diarrhea_context", "medication_dose_and_taper_phase", "acute_illness_stressor", "resting_hr", "hrv", "sleep", "activity"],
+      "reference_measurements": ["clinician_assessment", "morning_cortisol_when_ordered", "acth_stimulation_test_when_ordered", "validated_blood_pressure", "electrolytes_and_glucose_when_ordered"],
+      "falsifiable_test": "Pre-register fatigue and functional outcomes, test whether qualified physiology plus context improves prospective prediction over persistence, and separately measure whether any association survives sleep, illness, exertion and glucocorticoid-withdrawal confounding.",
+      "allowed_output": "Fatigue, function or posture-response context changed from the personal pattern; the watch cannot determine the cause.",
+      "prohibited_claims": ["adrenal_insufficiency_detected", "adrenal_crisis_detected_or_excluded", "cortisol_estimate", "stress_dose_or_taper_instruction", "adrenal_fatigue"]
+    },
+    {
+      "rank": 6,
+      "id": "overnight_cardiorespiratory_stress_dose",
+      "name": "Overnight oxygen burden and pulse-response proxy",
+      "status": "planned_paired_reference_study",
+      "evidence_maturity": "established_reference_construct_wrist_transfer_unproven",
+      "required_signals": ["sleep_spo2", "pulse_rate", "ppg_respiration_proxy", "movement", "position_if_available"],
+      "reference_measurements": ["polysomnography_or_validated_home_sleep_study"],
+      "falsifiable_test": "Test paired-night agreement for area, duration, event recovery and pulse-response metrics before any user-facing screening output.",
+      "allowed_output": "Qualified overnight oxygen stability trend or research burden proxy.",
+      "prohibited_claims": ["sleep_apnoea_diagnosis", "osa_severity", "event_specific_hypoxic_burden_without_validation"]
+    },
+    {
+      "rank": 7,
+      "id": "circadian_integrity",
+      "name": "Circadian phase, amplitude and cross-rhythm alignment",
+      "status": "planned_shadow_feature",
+      "evidence_maturity": "strong_observational_not_individual_disease_predictor",
+      "required_signals": ["skin_ambient_temperature", "activity", "sleep_wake", "resting_hr", "hrv", "ambient_light_if_exposed"],
+      "reference_measurements": ["research_actigraphy", "dim_light_melatonin_onset_or_core_temperature_subset"],
+      "falsifiable_test": "Compare preregistered consistent-schedule and usual-routine blocks for phase alignment, fatigue and sleep-regularity outcomes.",
+      "allowed_output": "Personal rhythms appear more or less aligned than the matched reference.",
+      "prohibited_claims": ["individual_disease_risk", "watch_measured_melatonin", "treatment_prescription"]
+    },
+    {
+      "rank": 8,
+      "id": "orthostatic_response_signature",
+      "name": "Posture-linked autonomic and presyncope response signature",
+      "status": "protocol_and_clearance_not_implemented",
+      "evidence_maturity": "controlled_watch6_tilt_feasibility_ultra2_free_living_external_validation_absent",
+      "required_signals": ["imu_posture", "heart_rate", "ibi", "ppg_amplitude", "symptom_checkin"],
+      "reference_measurements": ["continuous_beat_to_beat_bp", "reference_ecg"],
+      "falsifiable_test": "First characterize Ultra2 timing against continuous BP and ECG under an externally reviewed protocol; then require external-site and prospective free-living validation with false alerts per person-week before any presyncope claim.",
+      "allowed_output": "The posture-response timing or recovery changed from the qualified personal reference.",
+      "prohibited_claims": ["fainting_prediction", "vasovagal_syncope", "pots", "orthostatic_hypotension", "dysautonomia", "dehydration", "adrenal_crisis"]
+    },
+    {
+      "rank": 9,
+      "id": "mobility_reserve",
+      "name": "Mobility reserve and frailty-associated trajectory",
+      "status": "planned_reference_validation",
+      "evidence_maturity": "emerging_to_moderate",
+      "required_signals": ["accelerometer", "gyro_if_available", "barometer_if_available", "heart_rate", "activity_bouts"],
+      "reference_measurements": ["instrumented_walkway_or_lumbar_imu", "clinical_frailty_assessment", "prospective_fall_followup"],
+      "falsifiable_test": "Estimate test-retest reliability and association with standardized walk/chair-rise reference measures.",
+      "allowed_output": "Personal movement and recovery pattern changed.",
+      "prohibited_claims": ["fall_prediction", "frailty_diagnosis"]
+    },
+    {
+      "rank": 10,
+      "id": "heat_strain_response",
+      "name": "Workload-adjusted heat-strain response",
+      "status": "planned_safe_reference_sessions",
+      "evidence_maturity": "promising_sweat_estimate_imprecise",
+      "required_signals": ["skin_ambient_temperature", "heart_rate", "gps_pace_grade", "sweat_loss_estimate", "humidity", "recovery"],
+      "reference_measurements": ["core_temperature", "pre_post_body_mass", "fluid_intake_output"],
+      "falsifiable_test": "Test whether the fused response tracks reference strain better than heart rate or sweat estimate alone.",
+      "allowed_output": "Heat and workload response differs from matched personal sessions.",
+      "prohibited_claims": ["core_temperature", "heat_illness_diagnosis", "exact_fluid_or_electrolyte_dose"]
+    },
+    {
+      "rank": 11,
+      "id": "mf_bia_spectral_fingerprint",
+      "name": "Multi-frequency bioimpedance spectral fingerprint",
+      "status": "planned_standardized_measurement_study",
+      "evidence_maturity": "exploratory_on_ultra2",
+      "required_signals": ["impedance_5_10_50_250_khz", "phase_5_10_50_250_khz", "posture_time_temperature_context"],
+      "reference_measurements": ["validated_multi_frequency_bia", "weight_and_fluid_context", "clinical_assessment_when_available"],
+      "falsifiable_test": "Quantify standardized morning repeatability and whether spectral changes track reference fluid-state measures.",
+      "allowed_output": "The standardized impedance spectrum changed from the personal reference.",
+      "prohibited_claims": ["dehydration", "edema", "heart_failure_congestion", "inflammation", "precise_body_fluid_compartment"]
+    }
+  ],
+  "low_risk_intervention_candidates": [
+    {
+      "id": "consistent_wake_time",
+      "status": "requires_user_and_protocol_review",
+      "outcomes": ["sleep_regularity", "circadian_alignment", "next_day_energy_checkin"]
+    },
+    {
+      "id": "morning_outdoor_light",
+      "status": "requires_user_and_protocol_review",
+      "outcomes": ["sleep_timing", "circadian_alignment", "next_day_energy_checkin"]
+    },
+    {
+      "id": "training_load_choice",
+      "status": "requires_clinical_and_exercise_safety_review",
+      "outcomes": ["response_recovery_signature", "next_day_energy_checkin"]
+    }
+  ],
+  "never_randomize": ["medication_dose", "steroid_timing_or_taper", "biologic_therapy", "urgent_care_or_delay_of_care"]
+}

@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Evidessa Research</string>
+    <string name="capture_channel_name">Research capture</string>
+    <string name="capture_channel_description">Visible high-fidelity sensor research sessions</string>
+    <string name="capture_notification_title">Evidessa research capture</string>
+    <string name="capture_notification_starting">Preparing watch sensors…</string>
+    <string name="capture_notification_active">Research capture is active</string>
+    <string name="capture_notification_stop">Stop</string>
+</resources>

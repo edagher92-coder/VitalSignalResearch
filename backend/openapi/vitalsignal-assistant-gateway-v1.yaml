@@ -1,0 +1,566 @@
+openapi: 3.1.0
+info:
+  title: VitalSignal Governed Assistant Gateway API
+  version: 0.5.0-research
+  description: >-
+    Contract-only API for a credential-isolating VitalSignal gateway. The phone
+    and watch never hold OpenAI, Anthropic, or Ollama gateway credentials and
+    never contact a cloud model directly. The gateway verifies a signed health
+    packet, privacy receipt, provider-policy attestation and frozen release,
+    recomputes the minimized provider projection, requests strict structured
+    output, and signs the exact provider result. The app-side governed core
+    independently verifies that signature, rechecks consent, applies deterministic
+    policy, commits an audit record, and only then exposes reviewed template IDs.
+    It is not deployed, a medical
+    professional, a diagnostic service, treatment authority, or emergency monitor.
+servers:
+  - url: https://assistant.invalid/v1
+    description: Deliberately non-routable documentation placeholder
+security:
+  - oauth2: [vitalsignal.assistant.select]
+    mutualTls: []
+paths:
+  /reasoning-selections:
+    post:
+      summary: Request a governed advisory template selection
+      operationId: createGovernedReasoningSelection
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/PermitToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GovernedReasoningRequest'
+      responses:
+        '200':
+          description: >-
+            Gateway-authenticated strict candidate or explicit provider refusal.
+            The phone must still verify this signature and every exact binding,
+            recheck consent, run deterministic policy and durably audit before display.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignedProviderWireResponse'
+        '409':
+          description: Idempotency-key conflict, replay, or release-generation conflict
+        '413':
+          description: Bounded request or provider response size exceeded
+        '422':
+          description: >-
+            Signature, consent, purpose, minimization, retention, residency,
+            model, schema, prompt, response binding, or deterministic policy rejected
+        '429':
+          description: Purpose/provider rate limit reached
+        '503':
+          description: Circuit open, provider unavailable, timeout, or audit unavailable
+components:
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://identity.invalid/authorize
+          tokenUrl: https://identity.invalid/token
+          scopes:
+            vitalsignal.assistant.select: Request a consented advisory template selection
+    mutualTls:
+      type: mutualTLS
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        pattern: '^[A-Za-z0-9][A-Za-z0-9._:/-]{15,127}$'
+    PermitToken:
+      name: VitalSignal-Permit
+      in: header
+      required: true
+      description: Opaque short-lived purpose, subject, consent-generation and route-bound permit
+      schema:
+        type: string
+        minLength: 32
+        maxLength: 4096
+  schemas:
+    SafeId:
+      type: string
+      pattern: '^[A-Za-z0-9][A-Za-z0-9._:/-]{0,199}$'
+    Sha256:
+      type: string
+      pattern: '^[a-f0-9]{64}$'
+    Base64Payload:
+      type: string
+      contentEncoding: base64
+      maxLength: 1398104
+    ReasoningProvider:
+      type: string
+      enum: [OLLAMA_LOCAL, OPENAI_RESPONSES, ANTHROPIC_MESSAGES]
+    ExecutionMode:
+      type: string
+      enum: [PRIMARY_ADVISORY, SHADOW_CHALLENGER]
+    ReasoningPurpose:
+      type: string
+      enum:
+        - EXPLAIN_VERIFIED_HEALTH_STATE
+        - SELECT_REVIEWED_FOLLOW_UP
+        - OFFLINE_SHADOW_EVALUATION
+    PayloadClass:
+      type: string
+      enum: [SYNTHETIC_FIXTURE, PERSONAL_HEALTH_MINIMIZED]
+    RetentionMode:
+      type: string
+      enum: [LOCAL_ONLY, PROVIDER_STANDARD, MODIFIED_ABUSE_MONITORING, ZERO_DATA_RETENTION]
+    ResidencyRegion:
+      type: string
+      enum: [LOCAL_PRIVATE_NETWORK, AUSTRALIA, EUROPEAN_UNION, UNITED_STATES, PROVIDER_CONTROLLED]
+    SignedHealthStateEnvelope:
+      type: object
+      additionalProperties: false
+      required:
+        - signingKeyId
+        - canonicalPayloadSha256
+        - canonicalPayloadBase64
+        - signatureBase64
+      properties:
+        signingKeyId:
+          $ref: '#/components/schemas/SafeId'
+        canonicalPayloadSha256:
+          $ref: '#/components/schemas/Sha256'
+        canonicalPayloadBase64:
+          $ref: '#/components/schemas/Base64Payload'
+        signatureBase64:
+          type: string
+          contentEncoding: base64
+          maxLength: 21848
+    SignedPolicyEnvelope:
+      description: >-
+        Exact canonical receipt plus authority signature. The decoded payload is
+        accepted only after canonical-byte equality, signature, time and TTL checks.
+      type: object
+      additionalProperties: false
+      required: [signingKeyId, canonicalPayloadSha256, canonicalPayloadBase64, signatureBase64]
+      properties:
+        signingKeyId:
+          $ref: '#/components/schemas/SafeId'
+        canonicalPayloadSha256:
+          $ref: '#/components/schemas/Sha256'
+        canonicalPayloadBase64:
+          $ref: '#/components/schemas/Base64Payload'
+        signatureBase64:
+          type: string
+          contentEncoding: base64
+          maxLength: 10924
+    PrivacyReceipt:
+      type: object
+      additionalProperties: false
+      required:
+        - receiptId
+        - inputSnapshotSha256
+        - consentGeneration
+        - consentReceiptSha256
+        - purpose
+        - payloadClass
+        - transmittedFields
+        - dataMinimizationPolicySha256
+        - redactionPolicySha256
+        - policySha256
+        - residencyRegion
+        - retentionMode
+        - providerPolicyAttestationId
+        - evidenceRetrievalMode
+        - personaPreferencesSeparateFromHealthRecord
+        - issuedAtEpochMillis
+        - expiresAtEpochMillis
+      properties:
+        receiptId:
+          $ref: '#/components/schemas/SafeId'
+        inputSnapshotSha256:
+          $ref: '#/components/schemas/Sha256'
+        consentGeneration:
+          type: integer
+          format: int64
+          minimum: 1
+        consentReceiptSha256:
+          $ref: '#/components/schemas/Sha256'
+        purpose:
+          $ref: '#/components/schemas/ReasoningPurpose'
+        payloadClass:
+          $ref: '#/components/schemas/PayloadClass'
+        transmittedFields:
+          type: array
+          minItems: 7
+          maxItems: 7
+          uniqueItems: true
+          items:
+            type: string
+            enum:
+              - INPUT_SNAPSHOT_HASH
+              - METRIC_ID_VALUE_UNIT_QUALITY_WINDOW
+              - EVIDENCE_ID_KIND_CONTENT_HASH
+              - APPROVED_TEMPLATE_MEASUREMENT_QUESTION_IDS
+              - QUALITY_GAP_COUNT
+              - POLICY_HASH
+              - PERSONA_ENUMS
+        dataMinimizationPolicySha256:
+          $ref: '#/components/schemas/Sha256'
+        redactionPolicySha256:
+          $ref: '#/components/schemas/Sha256'
+        policySha256:
+          $ref: '#/components/schemas/Sha256'
+        residencyRegion:
+          $ref: '#/components/schemas/ResidencyRegion'
+        retentionMode:
+          $ref: '#/components/schemas/RetentionMode'
+        providerPolicyAttestationId:
+          $ref: '#/components/schemas/SafeId'
+        evidenceRetrievalMode:
+          type: string
+          const: CURATED_EVIDENCE_BACKEND_ONLY
+        personaPreferencesSeparateFromHealthRecord:
+          type: boolean
+          const: true
+        issuedAtEpochMillis:
+          type: integer
+          format: int64
+          minimum: 1
+        expiresAtEpochMillis:
+          type: integer
+          format: int64
+          minimum: 2
+    PersonaPreferences:
+      description: >-
+        Communication preferences only. Names, health facts, demographics,
+        diagnoses, symptoms, medications and free text are not representable.
+      type: object
+      additionalProperties: false
+      required: [preferenceVersion, tone, detail, questionStyle, readNumbersAloud, updatedAtEpochMillis]
+      properties:
+        preferenceVersion:
+          $ref: '#/components/schemas/SafeId'
+        tone:
+          type: string
+          enum: [CALM, DIRECT, TECHNICAL]
+        detail:
+          type: string
+          enum: [CONCISE, BALANCED, DETAILED]
+        questionStyle:
+          type: string
+          enum: [ONE_AT_A_TIME, GROUPED]
+        readNumbersAloud:
+          type: boolean
+        updatedAtEpochMillis:
+          type: integer
+          format: int64
+          minimum: 1
+    GovernedReasoningRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - provider
+        - gatewayRouteId
+        - modelSnapshotId
+        - modelManifestSha256
+        - executionMode
+        - purpose
+        - payloadClass
+        - consentGeneration
+        - privacyReceiptId
+        - requestSha256
+        - inputSnapshotSha256
+        - providerPolicyAttestationSha256
+        - privacyReceiptCanonicalSha256
+        - personaPreferencesSha256
+        - signedHealthState
+        - signedPrivacyReceipt
+        - signedProviderPolicyAttestation
+        - personaPreferences
+        - promptSha256
+        - jsonSchemaSha256
+        - policySha256
+        - minimizedPromptBase64
+        - strictJsonSchemaBase64
+        - connectTimeoutMillis
+        - overallTimeoutMillis
+        - maxResponseBodyBytes
+        - strictStructuredOutput
+        - storeResponse
+        - backgroundMode
+        - providerBrowsingEnabled
+        - providerToolsEnabled
+        - credentialsIncluded
+        - evidenceRetrievalMode
+      properties:
+        provider:
+          $ref: '#/components/schemas/ReasoningProvider'
+        gatewayRouteId:
+          $ref: '#/components/schemas/SafeId'
+        modelSnapshotId:
+          $ref: '#/components/schemas/SafeId'
+        modelManifestSha256:
+          $ref: '#/components/schemas/Sha256'
+        executionMode:
+          $ref: '#/components/schemas/ExecutionMode'
+        purpose:
+          $ref: '#/components/schemas/ReasoningPurpose'
+        payloadClass:
+          $ref: '#/components/schemas/PayloadClass'
+        consentGeneration:
+          type: integer
+          format: int64
+          minimum: 1
+        privacyReceiptId:
+          $ref: '#/components/schemas/SafeId'
+        requestSha256:
+          $ref: '#/components/schemas/Sha256'
+        inputSnapshotSha256:
+          $ref: '#/components/schemas/Sha256'
+        providerPolicyAttestationSha256:
+          $ref: '#/components/schemas/Sha256'
+        privacyReceiptCanonicalSha256:
+          $ref: '#/components/schemas/Sha256'
+        personaPreferencesSha256:
+          $ref: '#/components/schemas/Sha256'
+        signedHealthState:
+          $ref: '#/components/schemas/SignedHealthStateEnvelope'
+        signedPrivacyReceipt:
+          allOf:
+            - $ref: '#/components/schemas/SignedPolicyEnvelope'
+          description: >-
+            Canonical signed ReasoningPrivacyReceipt. It is decoded into the
+            documented PrivacyReceipt schema only after authority verification.
+        signedProviderPolicyAttestation:
+          allOf:
+            - $ref: '#/components/schemas/SignedPolicyEnvelope'
+          description: >-
+            Canonical signed provider-account retention/residency/data-use attestation;
+            a hash or caller assertion alone is not accepted.
+        personaPreferences:
+          $ref: '#/components/schemas/PersonaPreferences'
+        promptSha256:
+          $ref: '#/components/schemas/Sha256'
+        jsonSchemaSha256:
+          $ref: '#/components/schemas/Sha256'
+        policySha256:
+          $ref: '#/components/schemas/Sha256'
+        minimizedPromptBase64:
+          description: >-
+            Exact already-minimized provider projection. The gateway recomputes
+            it from the verified envelopes and rejects any byte mismatch.
+          $ref: '#/components/schemas/Base64Payload'
+        strictJsonSchemaBase64:
+          description: >-
+            Generic schema bytes whose hash must equal jsonSchemaSha256;
+            definitions cannot contain personal or health data.
+          $ref: '#/components/schemas/Base64Payload'
+        connectTimeoutMillis:
+          type: integer
+          minimum: 1
+          maximum: 30000
+        overallTimeoutMillis:
+          type: integer
+          minimum: 1
+          maximum: 120000
+        maxResponseBodyBytes:
+          type: integer
+          minimum: 1024
+          maximum: 1048576
+        strictStructuredOutput:
+          type: boolean
+          const: true
+        storeResponse:
+          type: boolean
+          const: false
+        backgroundMode:
+          type: boolean
+          const: false
+        providerBrowsingEnabled:
+          type: boolean
+          const: false
+        providerToolsEnabled:
+          type: boolean
+          const: false
+        credentialsIncluded:
+          description: Provider credentials are impossible in this request contract.
+          type: boolean
+          const: false
+        evidenceRetrievalMode:
+          type: string
+          const: CURATED_EVIDENCE_BACKEND_ONLY
+    NarrativeClaim:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - kind
+        - templateId
+        - metricReferenceIds
+        - evidenceReferenceIds
+        - disconfirmingEvidenceReferenceIds
+        - certainty
+      properties:
+        id:
+          $ref: '#/components/schemas/SafeId'
+        kind:
+          type: string
+          enum: [OBSERVATION, TREND, ENGINE_FORECAST, HYPOTHESIS]
+        templateId:
+          type: string
+          enum:
+            - observation.personal-baseline-deviation.v1
+            - trend.directional-change.v1
+            - forecast.authoritative-engine-output.v1
+            - hypothesis.contextual-association.v1
+        metricReferenceIds:
+          type: array
+          maxItems: 64
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/SafeId'
+        evidenceReferenceIds:
+          type: array
+          maxItems: 64
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/SafeId'
+        disconfirmingEvidenceReferenceIds:
+          type: array
+          maxItems: 64
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/SafeId'
+        certainty:
+          type: string
+          enum: [LOW, MODERATE]
+    ReasoningCandidate:
+      type: object
+      additionalProperties: false
+      required:
+        - schemaVersion
+        - inputSnapshotSha256
+        - claims
+        - nextMeasurementIds
+        - questionIdsForUser
+        - abstain
+        - abstainReason
+      properties:
+        schemaVersion:
+          type: string
+          const: local-reasoning-v2
+        inputSnapshotSha256:
+          $ref: '#/components/schemas/Sha256'
+        claims:
+          type: array
+          maxItems: 32
+          items:
+            $ref: '#/components/schemas/NarrativeClaim'
+        nextMeasurementIds:
+          type: array
+          maxItems: 64
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/SafeId'
+        questionIdsForUser:
+          type: array
+          maxItems: 64
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/SafeId'
+        abstain:
+          type: boolean
+        abstainReason:
+          type: [string, 'null']
+          enum:
+            - INSUFFICIENT_EVIDENCE
+            - LOW_SIGNAL_QUALITY
+            - CONFLICTING_SIGNALS
+            - STALE_EVIDENCE
+            - MODEL_OR_SCHEMA_FAILURE
+            - null
+    ProviderWireResponsePayload:
+      description: >-
+        Provider result as authenticated by the VitalSignal gateway. Candidate
+        and refusal are mutually exclusive. No free clinical prose is representable.
+      type: object
+      additionalProperties: false
+      required:
+        - requestSha256
+        - providerRequestIdSha256
+        - provider
+        - modelSnapshotId
+        - modelManifestSha256
+        - promptSha256
+        - jsonSchemaSha256
+        - policySha256
+        - strictStructuredOutputValidated
+        - responseBodySizeBytes
+        - candidate
+        - refusalCode
+        - completedAtEpochMillis
+      properties:
+        requestSha256:
+          $ref: '#/components/schemas/Sha256'
+        providerRequestIdSha256:
+          $ref: '#/components/schemas/Sha256'
+        provider:
+          $ref: '#/components/schemas/ReasoningProvider'
+        modelSnapshotId:
+          $ref: '#/components/schemas/SafeId'
+        modelManifestSha256:
+          $ref: '#/components/schemas/Sha256'
+        promptSha256:
+          $ref: '#/components/schemas/Sha256'
+        jsonSchemaSha256:
+          $ref: '#/components/schemas/Sha256'
+        policySha256:
+          $ref: '#/components/schemas/Sha256'
+        strictStructuredOutputValidated:
+          type: boolean
+          const: true
+        responseBodySizeBytes:
+          type: integer
+          minimum: 0
+          maximum: 1048576
+        candidate:
+          oneOf:
+            - $ref: '#/components/schemas/ReasoningCandidate'
+            - type: 'null'
+        refusalCode:
+          type: [string, 'null']
+          enum:
+            - SAFETY_REFUSAL
+            - POLICY_REFUSAL
+            - INSUFFICIENT_CONTEXT
+            - CAPACITY_UNAVAILABLE
+            - null
+        completedAtEpochMillis:
+          type: integer
+          format: int64
+          minimum: 1
+    SignedProviderWireResponse:
+      description: >-
+        Gateway signature covers the exact request/provider/model/prompt/schema/policy
+        bindings, strict-output flag, byte count, candidate or refusal, and completion time.
+      type: object
+      additionalProperties: false
+      required:
+        - gatewaySigningKeyId
+        - canonicalPayloadSha256
+        - canonicalPayloadBase64
+        - gatewaySignatureBase64
+        - payload
+      properties:
+        gatewaySigningKeyId:
+          $ref: '#/components/schemas/SafeId'
+        canonicalPayloadSha256:
+          $ref: '#/components/schemas/Sha256'
+        canonicalPayloadBase64:
+          $ref: '#/components/schemas/Base64Payload'
+        gatewaySignatureBase64:
+          type: string
+          contentEncoding: base64
+          maxLength: 10924
+        payload:
+          $ref: '#/components/schemas/ProviderWireResponsePayload'

@@ -1,0 +1,52 @@
+# Implementation status matrix
+
+Checkpoint: `0.5.0-research` · simulator UI + tested research/data-plane controls · real personal data locked
+
+Release decision: **GO only for simulator engineering evaluation.** Personal collection, visible forecasts, physical-hardware performance, Ollama output, clinician monitoring, clinical claims and public release are **NO-GO** until their separate evidence gates pass.
+
+| Capability | Status | Evidence / boundary |
+|---|---|---|
+| Shared health and provenance contracts | Implemented + platform-neutral tested | Windows preserve time/offset/provenance; forecasts require canonical SHA-256 snapshots |
+| Window quality engine | Implemented + platform-neutral tested | Hard gates for coverage, validity, contact, continuity, clipping and motion |
+| Personal matched baseline | Implemented + platform-neutral tested | Median/MAD, ≥28 effective days and ≥20 matched samples; exact context, bounded source age, coherent local date/offset and unique provenance are required; future/stale/duplicate/wrong-hour windows fail closed |
+| Finalized daily activity trends | Implemented + platform-neutral synthetic-fixture tested | Steps, distance, active time and elevation use 7/28/90-day robust references only after complete qualified-or-explicit-gap accounting; off-wrist, charging, depleted-battery, reboot, permission, contact, preemption and sync gaps never become inactivity |
+| Activity-conditioned exercise response | Implemented + platform-neutral synthetic-fixture tested | Same protocol/device/firmware/source stratum; steps, distance, active duration, time-weighted average HR, persistent peak, personal-band time, matched-workload cardiac cost, fixed 60/120/300-second recovery and drift are quality/provenance gated. The simulator UI shows a reviewed static fixture snapshot, not a live engine runtime binding; no physical or medical validation exists |
+| Standardized personal-response engine | Implemented + platform-neutral tested | Same protocol/device/firmware, ≥12 qualified episodes across ≥28 days and ≥2 independent changed families |
+| Adaptive sensing planner | Implemented + platform-neutral tested | Persistence, quality, freshness, battery and cooldown gates; can only request a validated user-initiated capture |
+| Watch power/contact continuity | Implemented + platform-neutral tested; Android composition absent | Battery, charging, thermal, off-wrist, process, reboot, clock and consent interruptions become explicit never-normal gaps; exact same-generation resume permits preserve sequence/provenance through an encrypted bounded journal. No boot receiver or hardware lifecycle result exists |
+| Empirical cohort context | Implemented + platform-neutral tested | Exact device/protocol/unit/age/study stratum and sample/freshness gates; structurally advisory |
+| Correlation-aware interpretation | Implemented + platform-neutral tested | HR/HRV grouped; within-family opposing normalized directions are explicit conflict, contribute zero and abstain |
+| Deterministic safety policy | Implemented + platform-neutral tested | Learning, unavailable, abstained, typical, remeasure and eligible states; `TYPICAL` requires complete expected-family coverage |
+| Verified persistence gate | Implemented + platform-neutral tested | No caller count; only authenticated, provenance-bound, strictly prior, chronological, bounded-gap, quality-qualified and direction-consistent episodes can boost persistence |
+| Urgent symptom pathway | Policy boundary only | Model cannot issue urgent status; no reviewed questionnaire/emergency UI |
+| N-of-1 binary forecast control | Implemented + platform-neutral tested | Frozen content-addressed +72h-to-+73h point-assessment endpoint; prior-only exact-schema cases, 30-case/effective-weight gate, authenticated outcomes, uncertainty and abstention. No user-visible calibrated forecast is authorised |
+| Prospective forecast chronology | Implemented + platform-neutral tested | Hidden commit, separate pre-reveal context, reveal, future outcome and indeterminate missing state |
+| Encrypted forecast audit journal | Implemented + pure-JVM fault-tested | Complete event/state recovery; tag/schema/trailing corruption forces unavailable |
+| Human-concern hold and journal | Implemented + platform-neutral tested | Authority-verified report/resolve events are append-only and restart-safe; unavailable state fails safe. Simulator-session only: no clinician or emergency service is notified |
+| Signed pilot access governance | Implemented + platform-neutral tested | The trusted `core:governance` boundary issues opaque, short-lived decisions bound to consent generation, capability, subject and exact device/firmware/schema validation evidence; pause and recovery fail closed. Production signer/KMS provisioning and whole-app composition remain absent |
+| Evidence-based promotion | Implemented + platform-neutral tested | Private, public and medical surfaces require cumulative exact-version/environment evidence |
+| Privacy-command ledger | Implemented + platform-neutral tested | Tracks pause/export/delete targets and exact completion receipts; physical executors are absent |
+| Research clinician observer contracts | Implemented + platform-neutral tested | Log-only is non-shareable; short-lived purpose/identity/destination-bound composite permits, freshness/dropout/coverage and FHIR-shaped audited drafts; no AU Core/destination-profile conformance claim |
+| Clinician acknowledgement/escalation ledger | Implemented + platform-neutral tested | Every mutation uses a signed actor/role/action/version permit; alert state and audit commit atomically; no hospital workflow/backend exists |
+| Governed Ollama explanation | Signed-packet authority, template selector, verifier and audit-before-delivery implemented | Model has no free-prose field; real HTTPS gateway, inference and model benchmark not yet run |
+| Governed OpenAI/Anthropic assistant | Provider-neutral policy/privacy receipts, minimized projection, strict schema, replay/rate/circuit/timeout gates, audit-before-delivery, UI state and offline release governance implemented + platform-neutral tested | Contract/mock only; no key, gateway, real API call or personal cloud result. Standard cloud retention is synthetic-only; externally attested ZDR is mandatory for minimized personal cloud packets |
+| AES-GCM local record store | Implemented + pure-JVM fault-tested | Header AAD, bounded payloads, fsynced temporary file, atomic publication and quarantine |
+| Application-encrypted watch batch | Implemented + pure-JVM fault-tested | AES-GCM authenticates payload plus routing/provenance metadata; fixture keys only |
+| Phone receipt-before-ACK | Implemented + pure-JVM fault-tested | ACK only after durable encrypted commit; identical retry safely re-ACKs after restart |
+| ACK application authentication | Implemented + pure-JVM fault-tested | Purpose-separated HMAC-SHA-256; recomputed inner checksum cannot forge deletion authority |
+| Crash-safe watch outbox | Implemented + pure-JVM fault-tested | Encrypted atomic snapshot, bounded deterministic retry, consent fencing and exact authorised deletion |
+| Physical Data Layer listener/publisher source | Manifest-declared adapter source + stub/API-shape tested | Exact path/node/generation/key fences and bounded receipt publish; a crash-safe phone receipt-delivery outbox exists, while app-startup composition, Android worker scheduling and signed APK/device results are absent |
+| Public Health Services passive source | Manifest-declared adapter source + seam/stub tested | HEART_RATE_BPM + granular STEPS, measurement timestamps and exact lease/store commit; the continuity state machine exists, but app-startup composition and Android reboot restoration remain absent |
+| Samsung Health Sensor SDK | Catalog/contracts only | Licensed AAR and concrete tracker adapter absent; ECG record preserves embedded PPG and status metadata |
+| Samsung Health/Health Connect/FHIR history | Canonical contracts/gates/reconciler implemented; real reads locked | The current immutable permit binds source + broad scopes only. It does **not** yet bind exact data types, query time range, purpose or destination, and there is no authenticated current-consent/revocation recheck plus atomic writer fence at read completion. No real Samsung Health or Health Connect read may run until that end-to-end authority exists; source revisions/deletes/conflicts are preserved in generated-data tests only |
+| Android Keystore boundary | Source implemented; runtime unverified | Load and initialise are separate; missing expected key fails closed; StrongBox opportunistic |
+| Phone/watch simulator | Implemented in source | Explicitly simulated and personal-data locked; forecast/demo state is memory-only, while injected test journals exercise restart behavior outside the visible demo |
+| Fatigue/adrenal-context lane | Typed outcomes/context + protocol documented and platform-neutral tested | Fatigue/function are prospective outcomes; no cortisol/adrenal diagnosis, symptom triage or medication advice is active |
+| Backend/clinician network | OpenAPI contract only | No HTTP service, database, IAM, portal, cloud deployment or attended clinical service exists |
+| Android/Compose Gradle build | Not verified here | AGP/Android dependencies unavailable in this workspace; Android Studio/CI is the next compilation gate |
+| Physical Galaxy Watch/phone tests | Not run | Pairing, signer, permission, Keystore, process-kill, battery, clock, radio and firmware tests required |
+| Reference and prospective validation | Not started | No reference-device agreement, calibration, false-alert, human-factors or clinical performance evidence |
+| Regulated clinical monitoring | Locked | Needs intended-use review, clinical service design, QMS, cybersecurity, performance/human-factors evidence and authorisation |
+| Commercial release readiness | Not ready | Samsung, privacy/security, clinical, regulatory, accessibility and external-validation gates remain |
+
+“Implemented” means the stated source behavior passed deterministic non-device tests listed in `BUILD_REPORT.md`. It does not mean Android-compiled, production-hardened, clinically validated, penetration-tested, medically authorised or suitable for treatment decisions.

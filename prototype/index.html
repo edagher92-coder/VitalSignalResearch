@@ -1,0 +1,774 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#080b12" />
+  <title>Evidessa Research — Product prototype</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #041112;
+      --surface: rgba(10, 29, 30, .78);
+      --surface-solid: #091a1c;
+      --surface-2: #102629;
+      --line: rgba(220, 255, 247, .105);
+      --text: #e8fbf6;
+      --muted: #96afac;
+      --cyan: #72e8c8;
+      --blue: #91cfff;
+      --violet: #b9b0ff;
+      --amber: #ffcb72;
+      --rose: #ff929e;
+      --shadow: 0 24px 80px rgba(0, 0, 0, .42);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 18% -5%, rgba(114, 232, 200, .16), transparent 32rem),
+        radial-gradient(circle at 92% 18%, rgba(145, 207, 255, .09), transparent 30rem),
+        linear-gradient(150deg, rgba(7, 36, 36, .3), transparent 55%),
+        var(--bg);
+    }
+    button, input, textarea { font: inherit; }
+    button { color: inherit; min-height: 48px; }
+    .shell {
+      width: min(1240px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 72px;
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      gap: 30px;
+    }
+    .side {
+      min-height: calc(100vh - 56px);
+      position: sticky;
+      top: 28px;
+      align-self: start;
+      display: flex;
+      flex-direction: column;
+      padding: 25px 18px 18px;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: linear-gradient(160deg, rgba(14, 39, 40, .92), rgba(4, 17, 18, .84));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(22px);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; padding: 0 8px 24px; }
+    .brand-mark {
+      width: 42px; height: 42px; border-radius: 15px; position: relative; flex: 0 0 auto;
+      display: grid; place-items: center;
+      background: linear-gradient(145deg, rgba(114,232,200,.18), rgba(145,207,255,.10));
+      border: 1px solid rgba(114,232,200,.25);
+      box-shadow: 0 0 32px rgba(100, 231, 213, .2);
+    }
+    .brand-mark svg { width: 29px; height: 29px; overflow: visible; }
+    .brand-weave-baseline, .brand-weave-observed { fill: none; stroke-width: 2.4; stroke-linecap: round; }
+    .brand-weave-baseline { stroke: var(--cyan); }
+    .brand-weave-observed { stroke: var(--blue); }
+    .brand-weave-proof { fill: var(--text); filter: drop-shadow(0 0 4px var(--cyan)); }
+    .brand strong { display: block; font-size: 15px; letter-spacing: .01em; }
+    .brand small { display: block; color: var(--muted); font-size: 11px; line-height: 1.45; }
+    .brand .tagline { color: var(--text); }
+    nav { display: grid; gap: 7px; }
+    .nav-button {
+      appearance: none; border: 0; background: transparent; width: 100%; text-align: left;
+      padding: 12px 13px; border-radius: 15px; color: var(--muted); cursor: pointer;
+      display: flex; gap: 12px; align-items: center; transition: .2s ease;
+    }
+    .nav-button:hover { background: rgba(255,255,255,.045); color: var(--text); }
+    .nav-button.active { background: rgba(114, 232, 200, .10); color: var(--text); box-shadow: inset 0 0 0 1px rgba(114,232,200,.14); }
+    .nav-icon { width: 23px; height: 23px; border-radius: 8px; border: 1px solid currentColor; display: grid; place-items: center; font-size: 10px; }
+    .side-study { margin-top: auto; border: 1px solid var(--line); background: rgba(255,255,255,.028); padding: 14px; border-radius: 18px; }
+    .side-study .eyebrow { margin: 0 0 8px; }
+    .progress { height: 6px; border-radius: 9px; background: rgba(255,255,255,.08); overflow: hidden; margin: 12px 0 9px; }
+    .progress span { display: block; height: 100%; width: 46%; border-radius: inherit; background: linear-gradient(90deg, var(--cyan), var(--blue)); }
+    .side-study small { color: var(--muted); line-height: 1.4; }
+
+    main { min-width: 0; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; margin: 4px 2px 24px; }
+    .topbar h1 { font-size: clamp(24px, 3vw, 36px); line-height: 1.12; letter-spacing: -.035em; margin: 0; }
+    .topbar p { margin: 7px 0 0; color: var(--muted); font-size: 13px; }
+    .sync { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
+    .top-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+    .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 12px var(--cyan); }
+    .sim-banner {
+      margin: 0 0 18px; padding: 12px 15px; border: 1px solid rgba(244,201,107,.24);
+      border-radius: 16px; background: rgba(244,201,107,.075); color: #f4d995;
+      font-size: 12px; font-weight: 750; letter-spacing: .04em;
+    }
+    .global-concern {
+      margin: 0 0 18px; padding: 16px 18px; border: 2px solid rgba(255,146,158,.55);
+      border-radius: 18px; background: rgba(255,146,158,.12); color: #ffd7dc;
+      font-size: 14px; line-height: 1.55;
+    }
+    [hidden] { display: none !important; }
+    body.concern-mode #scientist .grid,
+    body.concern-mode #evidence .grid { display: none; }
+    .view { display: none; animation: rise .35s ease both; }
+    .view.active { display: block; }
+    @keyframes rise { from { opacity: 0; transform: translateY(6px); } }
+    .grid { display: grid; gap: 18px; }
+    .grid.two { grid-template-columns: minmax(0, 1.4fr) minmax(280px, .8fr); }
+    .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .card {
+      border: 1px solid var(--line);
+      background: linear-gradient(155deg, rgba(15, 42, 43, .88), rgba(6, 20, 21, .82));
+      border-radius: 24px;
+      box-shadow: 0 16px 55px rgba(0,0,0,.22);
+      backdrop-filter: blur(16px);
+    }
+    .pad { padding: 22px; }
+    .eyebrow { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .15em; font-weight: 700; }
+    .hero { min-height: 360px; display: grid; grid-template-columns: 1fr 220px; overflow: hidden; position: relative; }
+    .hero::before { content: ""; position: absolute; inset: auto -70px -120px 10%; height: 260px; background: radial-gradient(ellipse, rgba(114,232,200,.16), transparent 66%); }
+    .hero-copy { padding: 28px 10px 28px 28px; position: relative; z-index: 1; }
+    .status-chip { display: inline-flex; align-items: center; gap: 8px; padding: 8px 11px; border-radius: 999px; background: rgba(100, 231, 213, .09); color: var(--cyan); font-size: 12px; border: 1px solid rgba(100,231,213,.14); }
+    .status-chip i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor; }
+    .hero h2 { max-width: 580px; font-size: clamp(30px, 4.4vw, 52px); line-height: 1.03; letter-spacing: -.05em; margin: 24px 0 16px; }
+    .hero p { color: #b7c2d3; line-height: 1.58; max-width: 600px; margin: 0; font-size: 14px; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 25px; }
+    .five-second { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); margin-top: 25px; padding-top: 18px; max-width: 650px; }
+    .five-second div { padding: 0 16px; border-left: 1px solid var(--line); }
+    .five-second div:first-child { padding-left: 0; border-left: 0; }
+    .five-second span { display: block; color: var(--muted); font-size: 9px; letter-spacing: .11em; text-transform: uppercase; }
+    .five-second strong { display: block; margin-top: 5px; font-size: 12px; line-height: 1.35; }
+    .button { appearance: none; border: 1px solid var(--line); background: var(--surface-2); border-radius: 14px; padding: 11px 14px; cursor: pointer; font-weight: 650; font-size: 12px; transition: .2s ease; }
+    .button:hover { transform: translateY(-1px); border-color: rgba(117,169,255,.32); }
+    button:focus-visible, input:focus-visible, textarea:focus-visible, #forecast-title:focus-visible { outline: 3px solid var(--amber); outline-offset: 3px; }
+    .button.primary { color: #07110f; border: 0; background: linear-gradient(125deg, var(--cyan), #91f0e4); }
+    .orb-wrap { display: grid; place-items: center; position: relative; }
+    .orb { width: 172px; height: 172px; position: relative; display: grid; place-items: center; }
+    .orb::before, .orb::after { content: ""; position: absolute; border-radius: 50%; }
+    .orb::before { inset: 0; background: conic-gradient(from -40deg, var(--cyan) 0 63%, rgba(255,255,255,.06) 63% 100%); -webkit-mask: radial-gradient(circle, transparent 62%, black 64%); mask: radial-gradient(circle, transparent 62%, black 64%); filter: drop-shadow(0 0 13px rgba(100,231,213,.18)); }
+    .orb::after { inset: 19px; border: 1px solid rgba(255,255,255,.07); background: radial-gradient(circle at 35% 30%, rgba(117,169,255,.14), rgba(10,13,20,.74) 67%); box-shadow: inset 0 0 35px rgba(100,231,213,.05); }
+    .orb-value { position: relative; z-index: 1; text-align: center; }
+    .orb-value strong { display: block; font-size: 41px; letter-spacing: -.05em; }
+    .orb-value span { color: var(--muted); font-size: 10px; letter-spacing: .11em; text-transform: uppercase; }
+
+    .mini { min-height: 178px; }
+    .card-title { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+    .card-title h3 { font-size: 15px; margin: 5px 0 0; letter-spacing: -.01em; }
+    .tag { color: var(--cyan); font-size: 10px; background: rgba(100,231,213,.08); border: 1px solid rgba(100,231,213,.12); border-radius: 99px; padding: 6px 8px; white-space: nowrap; }
+    .big-number { font-size: 34px; font-weight: 720; letter-spacing: -.04em; }
+    .sub { color: var(--muted); font-size: 11px; line-height: 1.5; }
+    .spark { width: 100%; height: 54px; margin: 11px 0 0; }
+    .spark path.line { fill: none; stroke: var(--cyan); stroke-width: 2.1; stroke-linecap: round; }
+    .spark path.area { fill: url(#fade); opacity: .48; }
+    .forecast-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+    .forecast-row:first-of-type { border-top: 0; }
+    .forecast-row strong { font-size: 13px; }
+    .forecast-row small { display: block; color: var(--muted); margin-top: 4px; }
+    .range { color: var(--cyan); font-size: 12px; font-weight: 700; }
+    .quality-list { display: grid; gap: 13px; }
+    .quality-item { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; }
+    .quality-item label { font-size: 12px; }
+    .bar { grid-column: 1 / -1; height: 5px; background: rgba(255,255,255,.065); border-radius: 6px; overflow: hidden; margin-top: -4px; }
+    .bar span { height: 100%; display: block; border-radius: inherit; background: linear-gradient(90deg, var(--blue), var(--cyan)); }
+    .trace { margin-top: 18px; padding: 18px 20px; display: flex; align-items: center; gap: 10px; overflow: auto; }
+    .trace-node { min-width: 114px; text-align: center; border: 1px solid var(--line); border-radius: 14px; padding: 10px; background: rgba(255,255,255,.025); }
+    .trace-node strong { display: block; font-size: 11px; }
+    .trace-node small { color: var(--muted); font-size: 9px; }
+    .trace-arrow { color: rgba(255,255,255,.25); font-size: 18px; }
+    .trace-label { flex: 0 0 auto; color: var(--cyan); font-size: 9px; font-weight: 750; letter-spacing: .11em; text-transform: uppercase; writing-mode: vertical-rl; transform: rotate(180deg); }
+
+    .activity-response { margin-top: 18px; position: relative; overflow: hidden; }
+    .activity-response::before { content: ""; position: absolute; inset: -180px -90px auto 42%; height: 300px; background: radial-gradient(circle, rgba(114,232,200,.11), transparent 68%); pointer-events: none; }
+    .activity-response > * { position: relative; }
+    .activity-controls { display: flex; flex-wrap: wrap; gap: 8px; margin: -3px 0 17px; }
+    .activity-controls .button[aria-pressed="true"] { color: #07110f; background: linear-gradient(125deg, var(--cyan), #91f0e4); border-color: transparent; }
+    .activity-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .activity-heart-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
+    .activity-cell { min-width: 0; padding: 14px; border: 1px solid var(--line); border-radius: 17px; background: rgba(255,255,255,.026); }
+    .activity-cell span { display: block; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+    .activity-cell strong { display: block; margin-top: 7px; font-size: 21px; letter-spacing: -.025em; }
+    .activity-cell small { display: block; color: var(--muted); font-size: 12px; line-height: 1.45; margin-top: 4px; }
+    .activity-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
+    .activity-detail { padding: 15px; border-radius: 17px; background: rgba(145,207,255,.045); border: 1px solid rgba(145,207,255,.11); }
+    .activity-detail span { display: block; color: var(--muted); font-size: 12px; }
+    .activity-detail strong { display: block; margin-top: 6px; font-size: 13px; line-height: 1.45; }
+    .activity-safety { margin: 14px 0 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+    .activity-concern-copy { display: none; margin-top: 14px; padding: 16px; border: 1px solid rgba(255,146,158,.3); border-radius: 17px; background: rgba(255,146,158,.09); color: #ffd7dc; font-size: 13px; line-height: 1.55; }
+    body.concern-mode .activity-response .activity-controls,
+    body.concern-mode .activity-response .activity-analytics { display: none; }
+    body.concern-mode .activity-response .activity-concern-copy { display: block; }
+
+    .observer-banner { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; padding: 15px 17px; border: 1px solid rgba(255,146,158,.26); border-radius: 18px; background: rgba(255,146,158,.07); color: #ffc4cb; }
+    .observer-banner strong { font-size: 11px; letter-spacing: .07em; }
+    .observer-banner span { color: var(--muted); font-size: 11px; line-height: 1.45; }
+    .coverage-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .coverage-cell { padding: 14px; border: 1px solid var(--line); border-radius: 17px; background: rgba(255,255,255,.022); }
+    .coverage-cell span { display: block; color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .1em; }
+    .coverage-cell strong { display: block; margin-top: 7px; font-size: 19px; }
+    .coverage-cell small { display: block; margin-top: 4px; color: var(--muted); font-size: 9px; line-height: 1.4; }
+    .observer-list { display: grid; gap: 10px; margin-top: 16px; }
+    .observer-row { display: grid; grid-template-columns: minmax(130px, 1fr) minmax(150px, 1.1fr) minmax(170px, 1.4fr); gap: 14px; align-items: center; padding: 14px; border: 1px solid var(--line); border-radius: 17px; background: rgba(255,255,255,.022); }
+    .observer-row h4 { margin: 0 0 4px; font-size: 12px; }
+    .observer-row p { margin: 0; color: var(--muted); font-size: 10px; }
+    .freshness { display: inline-flex; align-items: center; gap: 7px; width: fit-content; border-radius: 99px; padding: 6px 9px; font-size: 9px; font-weight: 800; letter-spacing: .06em; border: 1px solid currentColor; }
+    .freshness::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .freshness.live { color: var(--cyan); }
+    .freshness.delayed { color: var(--blue); }
+    .freshness.stale { color: var(--amber); }
+    .freshness.none { color: var(--rose); }
+    .provenance { color: var(--muted); font-size: 9px; line-height: 1.5; }
+    .provenance strong { color: var(--text); font-size: 10px; }
+
+    .evidence-list, .timeline { display: grid; gap: 12px; }
+    .evidence-item { display: grid; grid-template-columns: 44px 1fr auto; gap: 14px; align-items: center; border: 1px solid var(--line); border-radius: 18px; padding: 15px; background: rgba(255,255,255,.022); }
+    .domain-mark { width: 44px; height: 44px; border-radius: 15px; display: grid; place-items: center; font-size: 15px; background: rgba(117,169,255,.1); color: var(--blue); }
+    .domain-mark.warm { background: rgba(244,201,107,.1); color: var(--amber); }
+    .domain-mark.violet { background: rgba(185,161,255,.1); color: var(--violet); }
+    .evidence-item h4 { margin: 0 0 5px; font-size: 13px; }
+    .evidence-item p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.45; }
+    .delta { text-align: right; }
+    .delta strong { display: block; font-size: 13px; }
+    .delta small { color: var(--muted); font-size: 9px; }
+    .explain { margin-top: 18px; background: rgba(117,169,255,.055); border-color: rgba(117,169,255,.12); }
+    .explain p { color: #bcc8d9; font-size: 13px; line-height: 1.65; margin-bottom: 0; }
+
+    .timeline-item { display: grid; grid-template-columns: 70px 15px 1fr; gap: 14px; min-height: 84px; }
+    .time { color: var(--muted); font-size: 11px; padding-top: 4px; }
+    .rail { position: relative; display: flex; justify-content: center; }
+    .rail::after { content: ""; position: absolute; top: 15px; bottom: -20px; width: 1px; background: var(--line); }
+    .timeline-item:last-child .rail::after { display: none; }
+    .rail i { width: 9px; height: 9px; border: 2px solid var(--cyan); background: var(--bg); border-radius: 50%; position: relative; z-index: 1; margin-top: 4px; }
+    .event h4 { margin: 0 0 5px; font-size: 13px; }
+    .event p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+    .event-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .event-tags span { padding: 5px 7px; border-radius: 8px; background: rgba(255,255,255,.045); color: #bdc6d5; font-size: 9px; }
+
+    .log-grid { display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .field { border: 1px solid var(--line); border-radius: 18px; padding: 15px; background: rgba(255,255,255,.022); }
+    .field > label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 13px; }
+    .field output { color: var(--cyan); font-weight: 700; }
+    input[type="range"] { width: 100%; accent-color: var(--cyan); }
+    select { width: 100%; color: var(--text); background: #101722; border: 1px solid var(--line); border-radius: 12px; padding: 11px; }
+    textarea { width: 100%; min-height: 100px; color: var(--text); background: rgba(5,7,11,.55); border: 1px solid var(--line); border-radius: 14px; resize: vertical; padding: 12px; outline: none; }
+    textarea:focus { border-color: rgba(100,231,213,.4); }
+    .toggle-row { display: flex; gap: 9px; flex-wrap: wrap; }
+    .toggle { border: 1px solid var(--line); background: rgba(255,255,255,.025); border-radius: 11px; padding: 8px 10px; cursor: pointer; font-size: 10px; color: var(--muted); }
+    .toggle.on { background: rgba(100,231,213,.1); border-color: rgba(100,231,213,.2); color: var(--cyan); }
+    .notice { margin-top: 18px; padding: 15px 18px; border: 1px solid rgba(244,201,107,.16); background: rgba(244,201,107,.055); border-radius: 18px; color: #d7caab; font-size: 11px; line-height: 1.55; }
+    .toast { position: fixed; left: 50%; bottom: 22px; transform: translate(-50%, 20px); opacity: 0; pointer-events: none; background: #eafffb; color: #07110f; padding: 11px 15px; border-radius: 13px; font-size: 12px; font-weight: 700; transition: .25s ease; box-shadow: var(--shadow); }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    /* Accessibility floor: no meaningful status, evidence, provenance or control copy below 12 px. */
+    .brand small, .eyebrow, .five-second span, .orb-value span, .tag, .sub,
+    .trace-node strong, .trace-node small, .trace-label, .observer-banner strong,
+    .observer-banner span, .coverage-cell span, .coverage-cell small, .observer-row p,
+    .freshness, .provenance, .provenance strong, .evidence-item p, .delta small,
+    .time, .event p, .event-tags span, .toggle, .notice { font-size: 12px; }
+    select, .toggle, .button { min-height: 48px; }
+
+    @media (max-width: 900px) {
+      .shell { width: min(680px, calc(100% - 22px)); grid-template-columns: 1fr; padding-top: 12px; }
+      .side { min-height: auto; position: static; padding: 14px; border-radius: 22px; }
+      .brand { padding-bottom: 12px; }
+      nav { display: grid; grid-template-columns: repeat(6, 1fr); }
+      .nav-button { justify-content: center; padding: 9px 5px; font-size: 10px; gap: 5px; flex-direction: column; }
+      .nav-button { min-height: 56px; font-size: 12px; }
+      .nav-icon { width: 20px; height: 20px; }
+      .side-study { display: none; }
+      .grid.two, .grid.three { grid-template-columns: 1fr; }
+      .coverage-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .activity-heart-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .hero { grid-template-columns: 1fr; }
+      .orb-wrap { padding: 0 0 26px; }
+    }
+    @media (max-width: 540px) {
+      .shell { width: calc(100% - 16px); gap: 16px; }
+      .topbar { padding: 0 5px; }
+      .topbar { align-items: flex-start; gap: 10px; }
+      .top-actions { max-width: 48%; }
+      .sync span:last-child { display: none; }
+      .hero-copy { padding: 23px 20px 12px; }
+      .hero h2 { font-size: 37px; }
+      .hero p { font-size: 13px; }
+      .pad { padding: 18px; }
+      .log-grid { grid-template-columns: 1fr; }
+      .evidence-item { grid-template-columns: 40px 1fr; }
+      .delta { grid-column: 2; text-align: left; }
+      .trace { padding: 14px; }
+      .five-second { grid-template-columns: 1fr; gap: 12px; }
+      .five-second div, .five-second div:first-child { padding: 0; border: 0; }
+      .observer-row { grid-template-columns: 1fr; }
+      .activity-metrics, .activity-detail-grid { grid-template-columns: 1fr; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="side" aria-label="Primary navigation">
+      <div class="brand" data-brand-system="evidence-weave-v1">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" focusable="false">
+            <path class="brand-weave-baseline" d="M3 10 C10 3, 21 5, 29 18" />
+            <path class="brand-weave-observed" d="M3 22 C11 29, 20 26, 29 13" />
+            <circle class="brand-weave-proof" cx="23" cy="18" r="2" />
+          </svg>
+        </div>
+        <div><strong>Evidessa Research</strong><small class="tagline">Your pattern, made clear.</small><small>Simulator · v0.5.0</small></div>
+      </div>
+      <nav>
+        <button type="button" class="nav-button active" data-view="today" aria-controls="today" aria-current="page"><span class="nav-icon">●</span><span>Today</span></button>
+        <button type="button" class="nav-button" data-view="scientist" aria-controls="scientist"><span class="nav-icon">✦</span><span>Scientist</span></button>
+        <button type="button" class="nav-button" data-view="evidence" aria-controls="evidence"><span class="nav-icon">↗</span><span>Evidence</span></button>
+        <button type="button" class="nav-button" data-view="timeline" aria-controls="timeline"><span class="nav-icon">≋</span><span>Timeline</span></button>
+        <button type="button" class="nav-button" data-view="observer" aria-controls="observer"><span class="nav-icon">◎</span><span>Observer</span></button>
+        <button type="button" class="nav-button" data-view="log" aria-controls="log"><span class="nav-icon">＋</span><span>Check-in</span></button>
+      </nav>
+      <div class="side-study">
+        <p class="eyebrow">Fixture baseline</p>
+        <strong>30 simulated days</strong>
+        <div class="progress"><span style="width:100%"></span></div>
+        <small>The duration gate passes in this fixture. Product and clinical validation remain separate.</small>
+      </div>
+    </aside>
+
+    <main>
+      <header class="topbar">
+        <div><h1 id="view-title" tabindex="-1">Good morning, Elz</h1><p id="view-subtitle" aria-live="polite">Simulator walkthrough · no personal health data</p></div>
+        <div class="top-actions">
+          <div class="sync"><span class="sync-dot"></span><span>Fixture loaded</span></div>
+          <button type="button" class="button global-concern-action" id="global-concern-action">I feel concerned</button>
+        </div>
+      </header>
+
+      <div class="sim-banner" role="status">SIMULATED DATA · NOT YOUR HEALTH DATA · NO GALAXY WATCH IS CONNECTED · MEMORY-ONLY UI · INDEPENDENT RESEARCH PROTOTYPE · NOT AFFILIATED WITH SAMSUNG OR APPLE</div>
+      <div class="global-concern" id="global-concern-hold" role="alert" aria-live="assertive" hidden>
+        <strong>Your concern takes priority; sensor and AI interpretations are withheld.</strong>
+        No clinician or emergency service was notified. Follow your own care plan or contact appropriate help yourself; seek urgent help if you believe this is an emergency. This prototype cannot provide medical clearance.
+      </div>
+
+      <section class="view active" id="today">
+        <div class="card hero">
+          <div class="hero-copy">
+            <span class="status-chip" id="hero-status"><i></i>Developing fixture · remeasure</span>
+            <h2 id="hero-title" tabindex="-1">A simulated recovery shift is developing.</h2>
+            <p id="hero-summary">One cardio-autonomic fixture moved from its matched baseline. It still needs persistence and a second independent domain before escalation. How you feel matters more than the score. This app cannot diagnose or rule out a medical condition.</p>
+            <div class="hero-actions">
+              <button class="button primary" data-goto="evidence">See what contributed</button>
+              <button class="button" data-goto="log">Record how I feel</button>
+            </div>
+            <div class="five-second" aria-label="Five-second summary">
+              <div><span>What changed</span><strong id="summary-change">One simulated sensor family moved</strong></div>
+              <div><span>Evidence</span><strong id="summary-confidence">72 / 100 internal evidence score</strong></div>
+              <div><span>Next step</span><strong id="summary-next">Record context, then remeasure</strong></div>
+            </div>
+          </div>
+          <div class="orb-wrap">
+            <div class="orb"><div class="orb-value"><strong id="hero-confidence">72</strong><span id="hero-confidence-label">internal evidence score</span></div></div>
+          </div>
+        </div>
+
+        <div class="grid three" style="margin-top:18px">
+          <article class="card pad mini">
+            <div class="card-title"><div><span class="eyebrow">Simulated overnight deviation</span><h3>Fixture differs from expected</h3></div><span class="tag">Fixture qualified</span></div>
+            <div class="big-number">+0.4<span style="font-size:14px;color:var(--muted)"> robust units</span></div>
+            <svg class="spark" viewBox="0 0 240 54" preserveAspectRatio="none" aria-label="Seven-night simulated trend inside a personal baseline band"><defs><linearGradient id="fade" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#72e8c8"/><stop offset="1" stop-color="#72e8c8" stop-opacity="0"/></linearGradient></defs><rect x="0" y="19" width="240" height="23" rx="8" fill="#72e8c8" opacity=".09"/><path class="area" d="M0,45 C25,35 38,42 59,30 S95,35 116,27 S150,20 173,24 S210,8 240,14 L240,54 L0,54Z"/><path class="line" d="M0,45 C25,35 38,42 59,30 S95,35 116,27 S150,20 173,24 S210,8 240,14"/><circle cx="240" cy="14" r="4" fill="#e8fbf6"/></svg>
+            <div class="sub">Shaded area = fixture’s activity- and time-matched expected band</div>
+          </article>
+          <article class="card pad mini">
+            <div class="card-title"><div><span class="eyebrow">Simulator forecast</span><h3 id="forecast-title" tabindex="-1">Check-in required</h3></div><span class="tag" id="forecast-tag">Locked</span></div>
+            <div class="forecast-row"><div><strong>72-hour point assessment · +72h to +73h</strong><small id="forecast-note">Record complete pre-reveal context before reveal</small></div><span class="range" id="forecast-value">Absent from locked view</span></div>
+            <div class="forecast-row"><div><strong>Validation status</strong><small>Simulator fixture only</small></div><span class="range" id="forecast-status">Unvalidated</span></div>
+          </article>
+          <article class="card pad mini">
+            <div class="card-title"><div><span class="eyebrow">Interpretability</span><h3>Input signal quality</h3></div><span class="tag">96%</span></div>
+            <div class="quality-list">
+              <div class="quality-item"><label>Simulated contact</label><span class="sub">96%</span><div class="bar"><span style="width:96%"></span></div></div>
+              <div class="quality-item"><label>Overnight coverage</label><span class="sub">91%</span><div class="bar"><span style="width:91%"></span></div></div>
+              <div class="quality-item"><label>Baseline duration gate</label><span class="sub">Passed</span><div class="bar"><span style="width:100%;background:linear-gradient(90deg,var(--violet),var(--blue))"></span></div></div>
+            </div>
+          </article>
+        </div>
+
+        <article class="card pad activity-response" aria-labelledby="activity-title">
+          <div class="card-title">
+            <div><span class="eyebrow">Activity + workload response</span><h3 id="activity-title">Matched walk response</h3></div>
+            <span class="tag" id="activity-status">QUALIFIED FIXTURE · UNVALIDATED</span>
+          </div>
+          <p class="sub" style="margin:-8px 0 14px">SIMULATED MATCHED WALK · RESEARCH ONLY · deterministic activity-exercise-response-v1 fixture</p>
+          <div class="activity-controls" role="group" aria-label="Activity response safety-state fixture">
+            <button type="button" class="button" id="activity-qualified-state" aria-pressed="true">Qualified fixture</button>
+            <button type="button" class="button" id="activity-low-quality-state" aria-pressed="false">Low-quality fixture</button>
+          </div>
+          <div class="activity-concern-copy" role="status">
+            <strong>HUMAN CONCERN HOLD</strong><br />How the person feels takes priority. Exercise analytics are hidden because steps, heart rate or recovery cannot reassure, provide fitness or medical clearance, or resolve this simulator hold.
+          </div>
+          <div class="activity-analytics">
+            <div class="activity-values" id="activity-values">
+              <div class="activity-metrics" aria-label="Simulated matched exercise dose">
+                <div class="activity-cell"><span>Session steps</span><strong>1,000</strong><small>qualified fixture count</small></div>
+                <div class="activity-cell"><span>Distance</span><strong>0.90 km</strong><small>matched protocol dose</small></div>
+                <div class="activity-cell"><span>Active time</span><strong>10 min</strong><small>continuous fixture phase</small></div>
+              </div>
+              <div class="activity-heart-grid" aria-label="Qualified simulated heart response">
+                <div class="activity-cell"><span>Qualified avg HR</span><strong>125 bpm</strong><small>time-weighted</small></div>
+                <div class="activity-cell"><span>Persistent peak HR</span><strong>130 bpm</strong><small>duration-weighted 95th percentile</small></div>
+                <div class="activity-cell"><span>HR recovery</span><strong>20 bpm</strong><small>drop at 60 seconds</small></div>
+                <div class="activity-cell"><span>Cardiac cost</span><strong>65.0</strong><small>matched-workload fixture units</small></div>
+              </div>
+              <div class="activity-detail-grid">
+                <div class="activity-detail"><span>Personal HR-band time</span><strong>6m 40s middle · 3m 20s upper</strong></div>
+                <div class="activity-detail"><span>Response comparison</span><strong>Within the qualified fixture's personal range · no cross-family response-change rule met</strong></div>
+              </div>
+            </div>
+            <div class="activity-detail-grid" aria-label="Activity coverage and gap state">
+              <div class="activity-detail"><span>Coverage</span><strong id="activity-coverage">HR 100% · workload 100% · recovery 3/3 points</strong></div>
+              <div class="activity-detail"><span>Gap state</span><strong id="activity-gap">No gaps in the simulated active + recovery interval</strong></div>
+            </div>
+            <div class="notice" id="activity-abstain" role="status" aria-live="polite" hidden>ABSTAINED · Missing time is not inactivity or recovery. Low-quality values are absent rather than displayed as zero, normal, or a completed session. No workload-response comparison is shown.</div>
+            <p class="activity-safety">Descriptive and unvalidated research output only. Matched-workload cardiac cost means time-weighted heart rate above the session's protocol resting reference per versioned workload unit; neither higher nor lower is interpreted alone. This cannot establish fitness, readiness, illness, cause, diagnosis, treatment, exercise clearance or medical clearance.</p>
+          </div>
+        </article>
+
+        <div class="card trace" aria-label="Interpretation trace">
+          <div class="trace-label">Story → source</div>
+          <div class="trace-node"><strong>One message</strong><small>remeasure first</small></div><span class="trace-arrow">→</span>
+          <div class="trace-node"><strong>5 metrics</strong><small>one family shifted</small></div><span class="trace-arrow">→</span>
+          <div class="trace-node"><strong>5 windows</strong><small>quality qualified</small></div><span class="trace-arrow">→</span>
+          <div class="trace-node"><strong>Fixture data</strong><small>generated, versioned</small></div><span class="trace-arrow">↺</span>
+          <div class="trace-node"><strong>Explainable</strong><small>raw data rolls up</small></div>
+        </div>
+
+        <article class="card pad" style="margin-top:18px" aria-label="Pilot data plane status">
+          <div class="card-title"><div><span class="eyebrow">Pilot data plane</span><h3>Integrity core implemented; personal ingestion remains locked</h3></div><span class="tag" style="color:var(--amber)">REAL DATA LOCKED</span></div>
+          <div class="grid three">
+            <div class="forecast-row"><div><strong>Encrypted journal</strong><small>AES-GCM · atomic append · restart recovery</small></div><span class="range">Core tested</span></div>
+            <div class="forecast-row"><div><strong>Watch receipt</strong><small>Authenticate → durable commit → exact ACK</small></div><span class="range">No device batch</span></div>
+            <div class="forecast-row"><div><strong>Forecast audit</strong><small>Hidden → context → reveal → later outcome</small></div><span class="range" id="audit-state">Committed hidden</span></div>
+          </div>
+          <p class="sub" style="margin:16px 0 0">The encrypted and restart-safe components are exercised with fixtures. Physical watch pairing, Keystore lifecycle, process-kill injection and Samsung SDK behaviour are not yet verified, so this prototype cannot ingest personal data.</p>
+        </article>
+      </section>
+
+      <section class="view" id="scientist">
+        <div class="grid two">
+          <article class="card pad">
+            <div class="card-title"><div><span class="eyebrow">Governed assistant</span><h3>Evidessa Scientist</h3></div><span class="tag">REVIEWED SIMULATOR EXPLANATION</span></div>
+            <div class="card pad explain" style="margin-top:0">
+              <span class="eyebrow">What the evidence supports</span>
+              <p>One simulated cardio-autonomic family differs from its matched fixture. A second independent domain and persistence are not present, so the reviewed simulator explanation remains: record context and remeasure.</p>
+            </div>
+            <div class="event-tags" style="margin-top:15px"><span>cardio-autonomic family</span><span>independent-domain gate</span><span>measurement quality</span></div>
+            <p class="sub" style="margin:16px 0 0">Reviewed template · no model call · no cloud call · every statement maps to the generated evidence above.</p>
+          </article>
+          <aside>
+            <div class="card pad">
+              <div class="card-title"><div><span class="eyebrow">Replaceable intelligence</span><h3>Private first, cloud optional</h3></div></div>
+              <div class="quality-list">
+                <div class="quality-item"><label>Ollama on your server</label><span class="sub">Local default · disabled in this prototype</span></div>
+                <div class="quality-item"><label>OpenAI Responses</label><span class="sub">Optional gateway · policy receipt required</span></div>
+                <div class="quality-item"><label>Claude Messages</label><span class="sub">Optional gateway · policy receipt required</span></div>
+                <div class="quality-item"><label>Release-policy gate</label><span style="color:var(--cyan);font-size:12px">Authoritative for display eligibility—not medical truth</span></div>
+              </div>
+            </div>
+            <div class="notice">Advisory research assistant only. It cannot diagnose, prescribe or recommend treatment, change medication, clear an emergency, notify a clinician, or improve itself in production. Candidate changes must pass offline evaluation and human review.</div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="view" id="observer">
+        <div class="observer-banner" role="status">
+          <strong>NON-OPERATIONAL OBSERVER PREVIEW</strong>
+          <span>Simulated display states only · no participants connected · no alerts or paging · NO ATTENDED MONITORING</span>
+        </div>
+        <div class="card pad">
+          <div class="card-title"><div><span class="eyebrow">Clinician / research observer concept</span><h3>Coverage and freshness at a glance</h3></div><span class="tag" style="color:var(--rose)">DESIGN FIXTURE ONLY</span></div>
+          <div class="coverage-grid" aria-label="Simulated observer coverage">
+            <div class="coverage-cell"><span>Connected participants</span><strong>0</strong><small>No data source is attached</small></div>
+            <div class="coverage-cell"><span>UI states demonstrated</span><strong>4 / 4</strong><small>Live, delayed, stale and no-data fixtures</small></div>
+            <div class="coverage-cell"><span>Qualified fixture windows</span><strong>3 / 4</strong><small>Display test only, not clinical coverage</small></div>
+            <div class="coverage-cell"><span>Observer actions</span><strong>None</strong><small>No alert acknowledgement or escalation controls</small></div>
+          </div>
+        </div>
+
+        <div class="grid two" style="margin-top:18px">
+          <article class="card pad">
+            <div class="card-title"><div><span class="eyebrow">Freshness state matrix</span><h3>How timing would be communicated</h3></div><span class="tag">All rows simulated</span></div>
+            <div class="observer-list">
+              <div class="observer-row"><div><h4>Fixture VS-014</h4><p>Generated research participant</p></div><span class="freshness live">SIMULATED LIVE-STATE · NO STREAM</span><div class="provenance"><strong>42 seconds display age · quality 94%</strong><br/>Generated packet fixture · schema 0.5 · no stream attached</div></div>
+              <div class="observer-row"><div><h4>Fixture VS-027</h4><p>Generated research participant</p></div><span class="freshness delayed">DELAYED · SIMULATED</span><div class="provenance"><strong>08:14 display age · quality 87%</strong><br/>Replay fixture · delayed-state test · no stream attached</div></div>
+              <div class="observer-row"><div><h4>Fixture VS-031</h4><p>Generated research participant</p></div><span class="freshness stale">STALE · SIMULATED</span><div class="provenance"><strong>46:09 display age · quality 79%</strong><br/>Expired fixture window · interpretation withheld</div></div>
+              <div class="observer-row"><div><h4>Fixture VS-044</h4><p>Generated research participant</p></div><span class="freshness none">NO DATA · SIMULATED</span><div class="provenance"><strong>No measurement quality available</strong><br/>Missing-data fixture · never presented as typical</div></div>
+            </div>
+          </article>
+          <aside>
+            <div class="card pad">
+              <div class="card-title"><div><span class="eyebrow">Observer interpretation</span><h3>Quality before physiology</h3></div></div>
+              <div class="quality-list">
+                <div class="quality-item"><label>Freshness label</label><span class="sub">Always visible</span></div>
+                <div class="quality-item"><label>Signal quality</label><span class="sub">Per fixture window</span></div>
+                <div class="quality-item"><label>Provenance</label><span class="sub">Source + schema</span></div>
+                <div class="quality-item"><label>Missing data</label><span class="sub">Never “normal”</span></div>
+              </div>
+            </div>
+            <div class="card pad explain">
+              <span class="eyebrow">Safety boundary</span>
+              <p>This concept is not an attended-monitoring service, alarm console or clinical record. It does not notify a clinician, detect emergencies, diagnose, rule out a condition, or establish that anyone is reviewing the display.</p>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="view" id="evidence">
+        <div class="grid two">
+          <div class="card pad">
+            <div class="card-title"><div><span class="eyebrow">Why the fixture changed</span><h3>Qualified simulated evidence</h3></div><span class="tag">5 / 5 windows usable</span></div>
+            <div class="evidence-list">
+              <div class="evidence-item"><span class="domain-mark">♥</span><div><h4>Cardio-autonomic</h4><p>Nocturnal resting HR was higher than its sleep- and time-matched reference. HRV remained near expected, so this is not two votes.</p></div><div class="delta"><strong>+1.7 robust units</strong><small>moderate contribution</small></div></div>
+              <div class="evidence-item"><span class="domain-mark violet">☾</span><div><h4>Sleep and restoration</h4><p>Generated duration and timing were close to the fixture pattern. Consumer sleep stages would not be treated as ground truth.</p></div><div class="delta"><strong>+0.1 robust units</strong><small>does not corroborate</small></div></div>
+              <div class="evidence-item"><span class="domain-mark warm">≈</span><div><h4>Respiratory and oxygenation</h4><p>The qualified fixture trend was stable. Low-quality segments were excluded rather than filled as normal.</p></div><div class="delta"><strong>−0.2 robust units</strong><small>does not corroborate</small></div></div>
+            </div>
+          </div>
+          <aside>
+            <div class="card pad">
+              <div class="card-title"><div><span class="eyebrow">Decision logic</span><h3>Why this is not an alert</h3></div></div>
+              <p class="sub" style="font-size:12px">Only one independent sensor family moved and it has not persisted. The safe action is to record context and remeasure—not infer a cause.</p>
+              <div class="quality-list" style="margin-top:18px">
+                <div class="quality-item"><label>Two-domain corroboration</label><span class="sub">Not met</span></div>
+                <div class="quality-item"><label>2-of-3-night persistence</label><span class="sub">Not met</span></div>
+                <div class="quality-item"><label>Measurement quality</label><span style="color:var(--cyan);font-size:12px">Met</span></div>
+              </div>
+            </div>
+            <div class="card pad explain">
+              <span class="eyebrow">Plain-language interpretation</span>
+              <p>Higher resting heart rate can occur with many ordinary or health-related factors, including exertion, disrupted sleep, stress, heat, illness or medication context. This app cannot tell which cause applies and cannot diagnose or rule out a medical condition.</p>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="view" id="timeline">
+        <div class="grid two">
+          <div class="card pad">
+            <div class="card-title"><div><span class="eyebrow">Last 24 hours</span><h3>Physiology plus context</h3></div><span class="tag">Local time</span></div>
+            <div class="timeline">
+              <div class="timeline-item"><span class="time">07:18</span><span class="rail"><i></i></span><div class="event"><h4>Fixture interpretation updated</h4><p>Five generated metric windows passed quality checks; one correlated sensor family differed from baseline.</p><div class="event-tags"><span>simulator only</span><span>quality v2</span></div></div></div>
+              <div class="timeline-item"><span class="time">06:54</span><span class="rail"><i></i></span><div class="event"><h4>Receipt path tested with fixtures</h4><p>Application-level AES-GCM authentication and durable commit precede every ACK. No physical watch-to-phone batch was sent.</p><div class="event-tags"><span>no device</span><span>core test only</span></div></div></div>
+              <div class="timeline-item"><span class="time">Mon</span><span class="rail"><i></i></span><div class="event"><h4>Simulator baseline generated</h4><p>Thirty deterministic fixture days were created for reproducible interface and safety-state testing.</p><div class="event-tags"><span>synthetic</span><span>schema 0.5</span></div></div></div>
+            </div>
+          </div>
+          <aside class="card pad">
+            <div class="card-title"><div><span class="eyebrow">Audit trail</span><h3>Every answer is versioned</h3></div></div>
+            <div class="quality-list">
+              <div class="quality-item"><label>Interpretation engine</label><span class="sub">research-v0.5</span></div>
+              <div class="quality-item"><label>Feature schema</label><span class="sub">0.5.0-research</span></div>
+              <div class="quality-item"><label>Safety copy</label><span class="sub">wellness-v1</span></div>
+              <div class="quality-item"><label>Device / firmware</label><span class="sub">tracked</span></div>
+              <div class="quality-item"><label>Past predictions</label><span style="color:var(--amber);font-size:12px">fixture only</span></div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="view" id="log">
+        <div class="card pad">
+          <div class="card-title"><div><span class="eyebrow">Pre-forecast check-in</span><h3>How do you feel right now?</h3></div><span class="tag">About 30 seconds</span></div>
+          <div class="log-grid">
+            <div class="field"><label for="energy">Energy <output id="energy-out">Not answered</output></label><select id="energy" class="scale-select" aria-describedby="energy-anchor"><option value="" selected>Choose 0–10…</option><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select><small class="sub" id="energy-anchor">0 = no usable energy · 10 = usual or best energy</small></div>
+            <div class="field"><label for="fatigue">Fatigue <output id="fatigue-out">Not answered</output></label><select id="fatigue" class="scale-select" aria-describedby="fatigue-anchor"><option value="" selected>Choose 0–10…</option><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select><small class="sub" id="fatigue-anchor">0 = no fatigue · 10 = worst imaginable fatigue</small></div>
+            <div class="field"><label for="stress">Perceived stress <output id="stress-out">Not answered</output></label><select id="stress" class="scale-select" aria-describedby="stress-anchor"><option value="" selected>Choose 0–10…</option><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select><small class="sub" id="stress-anchor">0 = no perceived stress · 10 = worst imaginable stress</small></div>
+            <div class="field"><label for="sleep">Perceived sleep <output id="sleep-out">Not answered</output></label><select id="sleep" class="scale-select" aria-describedby="sleep-anchor"><option value="" selected>Choose 0–10…</option><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select><small class="sub" id="sleep-anchor">0 = worst imaginable sleep · 10 = usual or best sleep</small></div>
+            <div class="field"><label for="gi">GI symptom burden <output id="gi-out">Not answered</output></label><select id="gi" class="scale-select" aria-describedby="gi-anchor"><option value="" selected>Choose 0–10…</option><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select><small class="sub" id="gi-anchor">0 = no GI symptom burden · 10 = worst imaginable GI burden</small></div>
+          </div>
+            <div class="field" style="margin-top:14px"><label>Context since the last check-in</label><div class="toggle-row"><button type="button" class="toggle" aria-pressed="false">Exercise</button><button type="button" class="toggle" aria-pressed="false">Poor sleep</button><button type="button" class="toggle" aria-pressed="false">High stress</button><button type="button" class="toggle" aria-pressed="false">Medication timing</button><button type="button" class="toggle" aria-pressed="false">Infusion</button><button type="button" class="toggle" aria-pressed="false">Travel</button><button type="button" class="toggle" aria-pressed="false">Felt unwell</button></div></div>
+          <div class="field" style="margin-top:14px"><label>User-reported concern hold</label><button type="button" class="button" id="concern" aria-pressed="false">Report concern now — withhold wearable score</button><button type="button" class="button" id="resolve-concern" hidden>Resolve simulator hold by explicit human action</button><p class="sub">This immediately withholds wearable reassurance for this simulator session. Reloading the page clears simulator memory. No clinician or emergency service is notified; this prototype is not attended, emergency triage, or medical clearance.</p></div>
+          <div class="field" style="margin-top:14px"><label for="notes">Optional note</label><textarea id="notes" placeholder="Anything the sensors cannot know…"></textarea></div>
+          <div style="display:flex;justify-content:flex-end;margin-top:16px"><button class="button primary" id="save">Capture context in memory</button></div>
+          <div class="notice">This pre-reveal entry is context, not the forecast outcome. The target-window outcome can be recorded only after the 72-hour window. Medication, infusion and symptom entries remain context only; Evidessa will not diagnose adrenal function, inflammation or infection, or recommend a dose or treatment change.</div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <div class="toast" role="status" aria-live="polite">Pre-reveal context captured in memory</div>
+
+  <script>
+    const meta = {
+      today: ["Good morning, Elz", "Simulator walkthrough · no personal health data"],
+      scientist: ["Evidessa Scientist", "A governed explanation layer over verified simulated evidence"],
+      evidence: ["Evidence, not a black box", "Follow the fixture message down to generated source data"],
+      timeline: ["Simulator timeline", "Generated sensor, model and context events"],
+      observer: ["Observer concept", "Non-operational simulated freshness, quality and provenance states"],
+      log: ["Record what sensors cannot see", "Memory-only pre-reveal context; not the future outcome"]
+    };
+    const show = (id) => {
+      document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === id));
+      document.querySelectorAll('.nav-button').forEach(b => {
+        const active = b.dataset.view === id;
+        b.classList.toggle('active', active);
+        if (active) b.setAttribute('aria-current', 'page');
+        else b.removeAttribute('aria-current');
+      });
+      document.getElementById('view-title').textContent = meta[id][0];
+      document.getElementById('view-subtitle').textContent = meta[id][1];
+      window.scrollTo({top: 0, behavior: 'smooth'});
+      requestAnimationFrame(() => document.getElementById('view-title').focus());
+    };
+    document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => show(b.dataset.view)));
+    document.querySelectorAll('[data-goto]').forEach(b => b.addEventListener('click', () => show(b.dataset.goto)));
+    const scaleIds = ['energy','fatigue','stress','sleep','gi'];
+    scaleIds.forEach(id => {
+      const input = document.getElementById(id), out = document.getElementById(id + '-out');
+      input.addEventListener('change', () => out.value = input.value || 'Not answered');
+    });
+    document.querySelectorAll('.toggle').forEach(b => b.addEventListener('click', () => {
+      const selected = b.classList.toggle('on');
+      b.setAttribute('aria-pressed', String(selected));
+    }));
+    let activityState = 'qualified';
+    const renderActivityState = () => {
+      const qualified = activityState === 'qualified';
+      const qualifiedButton = document.getElementById('activity-qualified-state');
+      const lowQualityButton = document.getElementById('activity-low-quality-state');
+      qualifiedButton.setAttribute('aria-pressed', String(qualified));
+      lowQualityButton.setAttribute('aria-pressed', String(!qualified));
+      document.getElementById('activity-title').textContent = qualified
+        ? 'Matched walk response'
+        : 'Activity response unavailable';
+      document.getElementById('activity-status').textContent = qualified
+        ? 'QUALIFIED FIXTURE · UNVALIDATED'
+        : 'ABSTAINED · LOW QUALITY';
+      document.getElementById('activity-values').hidden = !qualified;
+      document.getElementById('activity-abstain').hidden = qualified;
+      document.getElementById('activity-coverage').textContent = qualified
+        ? 'HR 100% · workload 100% · recovery 3/3 points'
+        : 'HR 58% · workload 72% · fixed recovery incomplete';
+      document.getElementById('activity-gap').textContent = qualified
+        ? 'No gaps in the simulated active + recovery interval'
+        : 'Off-wrist and motion-contaminated fixture time is explicitly missing';
+    };
+    document.getElementById('activity-qualified-state').addEventListener('click', () => {
+      activityState = 'qualified';
+      renderActivityState();
+    });
+    document.getElementById('activity-low-quality-state').addEventListener('click', () => {
+      activityState = 'low-quality';
+      renderActivityState();
+    });
+    let concernLatched = false;
+    document.getElementById('save').addEventListener('click', () => {
+      const concernReported = concernLatched || document.getElementById('concern').getAttribute('aria-pressed') === 'true';
+      const completeContext = scaleIds.every(id => document.getElementById(id).value !== '');
+      const reveal = !concernReported && completeContext;
+      document.getElementById('forecast-title').textContent = concernReported ? 'Human concern takes priority' : reveal ? 'Lower-than-personal-usual energy/function at +72h to +73h' : 'Check-in incomplete';
+      document.getElementById('forecast-tag').textContent = concernReported ? 'HUMAN PRIORITY' : reveal ? 'Unvalidated' : 'Locked';
+      document.getElementById('forecast-note').textContent = concernReported ? 'Wearable forecast withheld' : reveal ? 'Frozen binary simulator target · not diagnosis or treatment guidance' : 'Unanswered values remain missing';
+      document.getElementById('forecast-value').textContent = concernReported ? 'Withheld' : reveal ? '38% fixture probability' : 'Absent from locked view';
+      document.getElementById('forecast-status').textContent = concernReported ? 'Use care plan or appropriate help' : reveal ? '80% interval · 24–53%' : 'Complete all five anchored responses';
+      document.getElementById('audit-state').textContent = concernReported ? 'Concern recorded · forecast withheld' : reveal ? 'Revealed · outcome pending' : 'Committed hidden · partial context';
+      if (concernReported) {
+        concernLatched = true;
+        document.getElementById('resolve-concern').hidden = false;
+        document.getElementById('hero-title').textContent = 'Your concern takes priority.';
+        document.getElementById('hero-summary').textContent = 'Do not rely on the wearable score for reassurance. No clinician or emergency service was notified; this prototype is not attended. Follow your care plan or contact appropriate help yourself; seek urgent help if you believe this is an emergency.';
+      }
+      const toast = document.querySelector('.toast');
+      toast.textContent = concernReported
+        ? 'Simulator concern hold active. Nobody was notified; wearable forecast withheld.'
+        : reveal
+          ? 'Context saved. Unvalidated simulated fixture estimate revealed; this is not a health prediction.'
+          : 'Partial context saved. Unanswered values stayed missing; forecast remains locked.';
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2200);
+      show('today');
+      requestAnimationFrame(() => document.getElementById('forecast-title').focus());
+    });
+    const applyImmediateConcernHold = () => {
+      concernLatched = true;
+      document.body.classList.add('concern-mode');
+      document.getElementById('global-concern-hold').hidden = false;
+      const globalConcernAction = document.getElementById('global-concern-action');
+      globalConcernAction.disabled = true;
+      globalConcernAction.textContent = 'Concern hold active';
+      const checkInConcern = document.getElementById('concern');
+      checkInConcern.setAttribute('aria-pressed', 'true');
+      checkInConcern.textContent = 'Simulator concern hold active';
+      checkInConcern.disabled = true;
+      document.getElementById('resolve-concern').hidden = false;
+      document.getElementById('hero-status').innerHTML = '<i></i>User-reported concern hold';
+      document.getElementById('hero-title').textContent = 'Your concern takes priority.';
+      document.getElementById('hero-summary').textContent = 'Do not rely on the wearable score for reassurance. No clinician or emergency service was notified; this prototype is not attended. Follow your care plan or contact appropriate help yourself.';
+      document.getElementById('summary-change').textContent = 'User-reported concern overrides sensors';
+      document.getElementById('summary-confidence').textContent = 'Wearable confidence withheld';
+      document.getElementById('summary-next').textContent = 'Use your care plan or contact help yourself';
+      document.getElementById('hero-confidence').textContent = '—';
+      document.getElementById('hero-confidence-label').textContent = 'withheld';
+      document.getElementById('forecast-title').textContent = 'User-reported concern hold';
+      document.getElementById('forecast-tag').textContent = 'CONCERN HOLD';
+      document.getElementById('forecast-note').textContent = 'Wearable forecast withheld';
+      document.getElementById('forecast-value').textContent = 'Withheld';
+      document.getElementById('forecast-status').textContent = 'No clinician or emergency service notified';
+      document.getElementById('audit-state').textContent = 'Concern recorded · forecast withheld';
+      document.getElementById('activity-title').textContent = 'Your concern takes priority';
+      document.getElementById('activity-status').textContent = 'HUMAN PRIORITY · ANALYTICS HIDDEN';
+      document.getElementById('activity-qualified-state').disabled = true;
+      document.getElementById('activity-low-quality-state').disabled = true;
+      const toast = document.querySelector('.toast');
+      toast.setAttribute('role', 'alert');
+      toast.setAttribute('aria-live', 'assertive');
+      toast.textContent = 'Simulator concern hold active. Nobody was notified; wearable forecast withheld.';
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2200);
+      show('today');
+      requestAnimationFrame(() => document.getElementById('hero-title').focus());
+    };
+    document.getElementById('global-concern-action').addEventListener('click', applyImmediateConcernHold);
+    document.getElementById('concern').addEventListener('click', event => {
+      event.currentTarget.setAttribute('aria-pressed', 'true');
+      event.currentTarget.textContent = 'Simulator concern hold active';
+      event.currentTarget.disabled = true;
+      applyImmediateConcernHold();
+    });
+    document.getElementById('resolve-concern').addEventListener('click', event => {
+      if (!window.confirm('Resolve this simulator-session concern hold? This is not medical clearance.')) return;
+      concernLatched = false;
+      document.body.classList.remove('concern-mode');
+      document.getElementById('global-concern-hold').hidden = true;
+      const globalConcernAction = document.getElementById('global-concern-action');
+      globalConcernAction.disabled = false;
+      globalConcernAction.textContent = 'I feel concerned';
+      event.currentTarget.hidden = true;
+      const concern = document.getElementById('concern');
+      concern.disabled = false;
+      concern.setAttribute('aria-pressed', 'false');
+      concern.textContent = 'Report concern now — withhold wearable score';
+      document.getElementById('hero-status').innerHTML = '<i></i>Developing fixture · remeasure';
+      document.getElementById('hero-title').textContent = 'A simulated recovery shift is developing.';
+      document.getElementById('hero-summary').textContent = 'One cardio-autonomic fixture moved from its matched baseline. It still needs persistence and a second independent domain before escalation. How you feel matters more than the score. This app cannot diagnose or rule out a medical condition.';
+      document.getElementById('summary-change').textContent = 'One simulated sensor family moved';
+      document.getElementById('summary-confidence').textContent = '72 / 100 internal evidence score';
+      document.getElementById('summary-next').textContent = 'Record context, then remeasure';
+      document.getElementById('hero-confidence').textContent = '72';
+      document.getElementById('hero-confidence-label').textContent = 'internal evidence score';
+      document.getElementById('forecast-title').textContent = 'Check-in required';
+      document.getElementById('forecast-tag').textContent = 'Locked';
+      document.getElementById('forecast-note').textContent = 'Record complete pre-reveal context before reveal';
+      document.getElementById('forecast-value').textContent = 'Absent from locked view';
+      document.getElementById('forecast-status').textContent = 'Unvalidated';
+      document.getElementById('audit-state').textContent = 'Concern resolved by human · forecast relocked';
+      document.getElementById('activity-qualified-state').disabled = false;
+      document.getElementById('activity-low-quality-state').disabled = false;
+      renderActivityState();
+      const toast = document.querySelector('.toast');
+      toast.setAttribute('role', 'status');
+      toast.setAttribute('aria-live', 'polite');
+      toast.textContent = 'Simulator hold resolved by explicit person action. This is not medical clearance.';
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2200);
+    });
+  </script>
+</body>
+</html>
