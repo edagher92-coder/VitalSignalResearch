@@ -2,6 +2,9 @@
 
 Checkpoint: 2026-08-23 (Australia/Sydney) · source version `0.6.0-research`
 
+Local source candidate exercised: `88eda6c`. GitHub Actions evidence must bind
+the final app-repository branch tip before merge.
+
 ## Reproduced in this workspace
 
 | Check | Result | Scope |
@@ -11,7 +14,7 @@ Checkpoint: 2026-08-23 (Australia/Sydney) · source version `0.6.0-research`
 | Phone + Wear debug APK assembly | **Passed** | Both identify package `au.com.elied.vitalsignal`, version code 6, version `0.6.0-research`, target/compile SDK 37 |
 | APK signer continuity | **Passed** | Both APKs verify with Android Debug signer SHA-256 `06825f8547232d421162e4429502d8e188fd8d4a7f16938bf19748d7470f417f` |
 | `python3 tools/validate_project.py` | **Passed** | Tracked-file hygiene, module/version/manifests, claims copy, safety/governance/privacy/transport invariants, backend/assistant contract boundaries, required tests/docs and prototype contract |
-| `node --test prototype/prototype.test.mjs` | **16 passed, 0 failed** | Navigation, concern override, engine-aligned forecast explanation, observer states, reduced-motion source contract and simulator/medical boundaries |
+| `node --test prototype/*.test.mjs` | **17 passed, 0 failed** | 16 static contracts plus a real headless-Chromium flow covering reveal, concern suppression, modal focus/Escape/inert behavior, relock focus, reduced motion and 400px mobile overflow/banner height |
 | Prototype JavaScript syntax | Passed | Extracted inline program parsed by Node 24 |
 | JSON documents | Passed | Research hypothesis and repository JSON documents parsed without error |
 | OpenAPI boundary checks | Passed | Observer and assistant gateway declare OpenAPI 3.1, non-routable placeholders, mTLS/idempotency and fail-closed provider controls |
