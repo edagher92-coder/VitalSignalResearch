@@ -1,0 +1,600 @@
+openapi: 3.1.0
+info:
+  title: VitalSignal Research Observer API
+  version: 0.5.0-research
+  description: >-
+    Contract-only API for consented, scheduled research observation. It is not
+    deployed, continuously attended, clinically validated, or an emergency service.
+servers:
+  - url: https://observer.invalid/v1
+    description: Deliberately non-routable documentation placeholder
+paths:
+  /sessions/{sessionId}/samples:
+    post:
+      security:
+        - oauth2: [vitalsignal.samples.write]
+          mutualTls: []
+      summary: Commit a quality-qualified scalar sample
+      operationId: commitScalarSample
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/PermitToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QualifiedScalarSample'
+      responses:
+        '201':
+          description: Durably committed with an exact receipt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DurableReceipt'
+        '409':
+          description: Idempotency or sequence conflict
+        '422':
+          description: Quality, provenance, time, consent, or authorization rejected
+  /sessions/{sessionId}/heartbeats:
+    post:
+      security:
+        - oauth2: [vitalsignal.heartbeat.write]
+          mutualTls: []
+      summary: Commit a short-lived named-observer heartbeat
+      operationId: commitObserverHeartbeat
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/PermitToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ObserverHeartbeat'
+      responses:
+        '201':
+          description: Heartbeat durably committed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DurableReceipt'
+        '422':
+          description: Expired, future-dated, mismatched, or unauthorized heartbeat
+  /sessions/{sessionId}/concerns:
+    post:
+      security:
+        - oauth2: [vitalsignal.concerns.write]
+          mutualTls: []
+      summary: Commit an explicit participant concern or authorized human resolution
+      description: >-
+        Human concern is independent of wearable output and latches until an explicit,
+        authorized human resolution is durably committed. This is not emergency triage.
+      operationId: commitParticipantConcern
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/PermitToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ParticipantConcernEvent'
+      responses:
+        '201':
+          description: Concern state durably committed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DurableReceipt'
+        '409':
+          description: Conflicting replay or concern-state version conflict
+        '422':
+          description: Identity, authority, chronology, consent, or session binding rejected
+  /sessions/{sessionId}/status:
+    get:
+      security:
+        - oauth2: [vitalsignal.status.read]
+          mutualTls: []
+      summary: Read the freshness-aware observer state
+      operationId: readObserverStatus
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+        - $ref: '#/components/parameters/PermitToken'
+      responses:
+        '200':
+          description: Current non-diagnostic availability projection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObserverStatus'
+  /alerts/{alertId}/actions:
+    post:
+      security:
+        - oauth2: [vitalsignal.alerts.action]
+          mutualTls: []
+      summary: Apply one signed, version-bound alert action atomically with its audit record
+      operationId: applyAlertAction
+      parameters:
+        - $ref: '#/components/parameters/AlertId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/AlertActionPermitToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertAction'
+      responses:
+        '200':
+          description: Atomic state and audit commit completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertState'
+        '409':
+          description: Expected version/state conflict or replay
+        '422':
+          description: Permit, role, action, subject, session, or time binding rejected
+  /fhir/observation-drafts:
+    post:
+      security:
+        - oauth2: [vitalsignal.fhir-drafts.write]
+          mutualTls: []
+      summary: Commit an audited FHIR-shaped Observation draft
+      operationId: commitFhirObservationDraft
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/PermitToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FhirDraftEnvelope'
+      responses:
+        '201':
+          description: Draft and canonical digest durably audited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DurableReceipt'
+        '422':
+          description: Provenance, quality, plausibility, profile, or authority rejected
+  /privacy/commands/{commandId}:
+    get:
+      security:
+        - oauth2: [vitalsignal.privacy-status.read]
+          mutualTls: []
+      summary: Read completion state for an authorized privacy command
+      operationId: readPrivacyCommand
+      parameters:
+        - name: commandId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/SafeId'
+        - $ref: '#/components/parameters/PrivacyPermitToken'
+      responses:
+        '200':
+          description: Per-target completion receipts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivacyCommandStatus'
+components:
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://identity.invalid/authorize
+          tokenUrl: https://identity.invalid/token
+          scopes:
+            vitalsignal.samples.write: Commit quality-qualified scalar samples for an exact session
+            vitalsignal.heartbeat.write: Commit a named observer heartbeat for an exact destination
+            vitalsignal.concerns.write: Commit participant concern or authorized resolution events
+            vitalsignal.status.read: Read freshness-aware state for an authorized session
+            vitalsignal.alerts.action: Apply an exact signed/version-bound alert action
+            vitalsignal.fhir-drafts.write: Commit an audited FHIR-shaped draft only
+            vitalsignal.privacy-status.read: Read one subject-authorized privacy command status
+    mutualTls:
+      type: mutualTLS
+  parameters:
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/SafeId'
+    AlertId:
+      name: alertId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/SafeId'
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 16
+        maxLength: 128
+    PermitToken:
+      name: VitalSignal-Permit
+      in: header
+      required: true
+      description: Opaque, short-lived, purpose- and destination-bound access permit
+      schema:
+        type: string
+        minLength: 32
+        maxLength: 4096
+    AlertActionPermitToken:
+      name: VitalSignal-Alert-Action-Permit
+      in: header
+      required: true
+      description: Opaque, short-lived actor/role/action/alert/version-bound permit
+      schema:
+        type: string
+        minLength: 32
+        maxLength: 4096
+    PrivacyPermitToken:
+      name: VitalSignal-Privacy-Permit
+      in: header
+      required: true
+      description: Opaque, short-lived subject/command/purpose-bound status-read permit
+      schema:
+        type: string
+        minLength: 32
+        maxLength: 4096
+  schemas:
+    SafeId:
+      type: string
+      pattern: '^[A-Za-z0-9._-]{1,96}$'
+    Sha256:
+      type: string
+      pattern: '^[a-f0-9]{64}$'
+    SensorSource:
+      type: string
+      description: >-
+        Canonical source vocabulary. Acceptance still requires an exact match to
+        the authenticated session allow-list; simulator and user-reported values
+        cannot enter an observed live sensor stream.
+      enum: [GALAXY_WATCH_ULTRA_2, SAMSUNG_HEALTH, HEALTH_CONNECT, USER_REPORTED, REFERENCE_DEVICE, SIMULATOR]
+    ClinicalDataClass:
+      type: string
+      enum: [DERIVED_SCALAR_SUMMARY, FHIR_OBSERVATION_DRAFT, RAW_WAVEFORM]
+    QualifiedScalarSample:
+      type: object
+      additionalProperties: false
+      required:
+        - sampleId
+        - sessionId
+        - subjectPseudonym
+        - streamId
+        - consentGeneration
+        - metric
+        - dataClass
+        - value
+        - unit
+        - observedAtEpochMillis
+        - receivedAtGatewayEpochMillis
+        - sequence
+        - source
+        - sourceDeviceId
+        - gatewayDeviceId
+        - firmwareGeneration
+        - acquisitionProtocolVersion
+        - dataSchemaVersion
+        - quality
+        - provenanceIds
+        - canonicalPayloadSha256
+      properties:
+        sampleId: { $ref: '#/components/schemas/SafeId' }
+        sessionId: { $ref: '#/components/schemas/SafeId' }
+        subjectPseudonym: { $ref: '#/components/schemas/SafeId' }
+        streamId: { $ref: '#/components/schemas/SafeId' }
+        consentGeneration: { type: integer, format: int64, minimum: 1 }
+        metric:
+          type: string
+          enum: [HEART_RATE, RESPIRATORY_RATE, OXYGEN_SATURATION]
+        dataClass:
+          type: string
+          enum: [DERIVED_SCALAR_SUMMARY, FHIR_OBSERVATION_DRAFT]
+        value: { type: number }
+        unit: { type: string, minLength: 1, maxLength: 32 }
+        observedAtEpochMillis: { type: integer, format: int64, minimum: 1 }
+        receivedAtGatewayEpochMillis: { type: integer, format: int64, minimum: 1 }
+        sequence: { type: integer, format: int64, minimum: 0 }
+        source: { $ref: '#/components/schemas/SensorSource' }
+        sourceDeviceId: { $ref: '#/components/schemas/SafeId' }
+        gatewayDeviceId: { $ref: '#/components/schemas/SafeId' }
+        firmwareGeneration: { $ref: '#/components/schemas/SafeId' }
+        acquisitionProtocolVersion: { $ref: '#/components/schemas/SafeId' }
+        dataSchemaVersion: { $ref: '#/components/schemas/SafeId' }
+        quality: { $ref: '#/components/schemas/ClinicalQualityEvidence' }
+        provenanceIds:
+          type: array
+          minItems: 1
+          maxItems: 64
+          uniqueItems: true
+          items: { $ref: '#/components/schemas/SafeId' }
+        canonicalPayloadSha256: { $ref: '#/components/schemas/Sha256' }
+    ObserverHeartbeat:
+      type: object
+      additionalProperties: false
+      required: [receiptId, sessionId, destinationId, observerPrincipalId, recordedAtEpochMillis, expiresAtEpochMillis, issuerKeyId, signature]
+      properties:
+        receiptId: { $ref: '#/components/schemas/SafeId' }
+        sessionId: { $ref: '#/components/schemas/SafeId' }
+        destinationId: { $ref: '#/components/schemas/SafeId' }
+        observerPrincipalId: { $ref: '#/components/schemas/SafeId' }
+        recordedAtEpochMillis: { type: integer, format: int64, minimum: 1 }
+        expiresAtEpochMillis: { type: integer, format: int64, minimum: 1 }
+        issuerKeyId: { $ref: '#/components/schemas/SafeId' }
+        signature: { type: string, contentEncoding: base64, maxLength: 2048 }
+    ObserverStatus:
+      type: object
+      additionalProperties: false
+      required: [sessionId, availability, observerCoverage, displayLabel, evaluatedAtEpochMillis, measurementAtEpochMillis, gatewayReceivedAtEpochMillis, viewedAgeMillis, qualityEvidence, activeConcern, concernRecordedAtEpochMillis]
+      properties:
+        sessionId: { $ref: '#/components/schemas/SafeId' }
+        availability:
+          type: string
+          enum: [LIVE, DELAYED, STALE, NO_DATA, QUALITY_BLOCKED, VALIDATION_BLOCKED, AUTHORIZATION_BLOCKED, SESSION_INACTIVE, CLOCK_UNTRUSTED, SEQUENCE_INVALID]
+        observerCoverage:
+          type: string
+          enum: [ACTIVE_NAMED_OBSERVER, SCHEDULED_NOT_CURRENTLY_OBSERVED, NOT_CONTINUOUSLY_OBSERVED]
+        displayLabel: { type: string, maxLength: 240 }
+        evaluatedAtEpochMillis: { type: integer, format: int64, minimum: 1 }
+        measurementAtEpochMillis: { type: [integer, 'null'], format: int64, minimum: 1 }
+        gatewayReceivedAtEpochMillis: { type: [integer, 'null'], format: int64, minimum: 1 }
+        viewedAgeMillis: { type: [integer, 'null'], format: int64, minimum: 0 }
+        qualityEvidence:
+          oneOf:
+            - $ref: '#/components/schemas/ClinicalQualityEvidence'
+            - type: 'null'
+        activeConcern: { type: boolean }
+        concernRecordedAtEpochMillis: { type: [integer, 'null'], format: int64, minimum: 1 }
+    ClinicalQualityEvidence:
+      type: object
+      additionalProperties: false
+      required: [score, coverage, contact, motionContamination, validity, clipping, timestampContinuity, usable, reasons, evaluatorVersion]
+      properties:
+        score: { type: number, minimum: 0, maximum: 1 }
+        coverage: { type: number, minimum: 0, maximum: 1 }
+        contact: { type: number, minimum: 0, maximum: 1 }
+        motionContamination: { type: number, minimum: 0, maximum: 1 }
+        validity: { type: number, minimum: 0, maximum: 1 }
+        clipping: { type: number, minimum: 0, maximum: 1 }
+        timestampContinuity: { type: number, minimum: 0, maximum: 1 }
+        usable: { type: boolean }
+        reasons:
+          type: array
+          minItems: 0
+          maxItems: 32
+          items: { type: string, minLength: 1, maxLength: 240 }
+        evaluatorVersion: { $ref: '#/components/schemas/SafeId' }
+    ParticipantConcernEvent:
+      type: object
+      additionalProperties: false
+      required: [eventId, concernId, sessionId, subjectPseudonym, consentGeneration, expectedVersion, state, actorPrincipalId, actorRole, recordedAtEpochMillis, contextSnapshotSha256, authorityReceiptId]
+      properties:
+        eventId: { $ref: '#/components/schemas/SafeId' }
+        concernId: { $ref: '#/components/schemas/SafeId' }
+        sessionId: { $ref: '#/components/schemas/SafeId' }
+        subjectPseudonym: { $ref: '#/components/schemas/SafeId' }
+        consentGeneration: { type: integer, format: int64, minimum: 1 }
+        expectedVersion: { type: integer, format: int64, minimum: 0 }
+        state:
+          type: string
+          enum: [REPORTED, RESOLVED_BY_HUMAN]
+        actorPrincipalId: { $ref: '#/components/schemas/SafeId' }
+        actorRole:
+          type: string
+          enum: [PARTICIPANT, AUTHORIZED_CLINICIAN]
+        recordedAtEpochMillis: { type: integer, format: int64, minimum: 1 }
+        contextSnapshotSha256: { $ref: '#/components/schemas/Sha256' }
+        authorityReceiptId: { $ref: '#/components/schemas/SafeId' }
+    AlertAction:
+      type: object
+      additionalProperties: false
+      required: [transitionId, expectedVersion, expectedState, action, atEpochMillis, reason]
+      properties:
+        transitionId: { $ref: '#/components/schemas/SafeId' }
+        expectedVersion: { type: integer, format: int64, minimum: 0 }
+        expectedState:
+          type: string
+          enum: [CREATED, ROUTED, ACKNOWLEDGED, ESCALATED, RESOLVED, CANCELLED]
+        action:
+          type: string
+          enum: [CREATE, ROUTE, ACKNOWLEDGE, ESCALATE, RESOLVE, CANCEL]
+        atEpochMillis: { type: integer, format: int64, minimum: 1 }
+        reason: { type: string, minLength: 1, maxLength: 500 }
+    AlertState:
+      type: object
+      additionalProperties: false
+      required: [alertId, state, version, lastTransitionId, lastTransitionAtEpochMillis]
+      properties:
+        alertId: { $ref: '#/components/schemas/SafeId' }
+        state:
+          type: string
+          enum: [CREATED, ROUTED, ACKNOWLEDGED, ESCALATED, RESOLVED, CANCELLED]
+        version: { type: integer, format: int64, minimum: 0 }
+        lastTransitionId: { $ref: '#/components/schemas/SafeId' }
+        lastTransitionAtEpochMillis: { type: integer, format: int64, minimum: 1 }
+    FhirId:
+      type: string
+      pattern: '^[A-Za-z0-9.-]{1,64}$'
+    FhirCodingDraft:
+      type: object
+      additionalProperties: false
+      required: [system, code, display]
+      properties:
+        system: { type: string, minLength: 1, maxLength: 240 }
+        code: { type: string, minLength: 1, maxLength: 96 }
+        display: { type: string, minLength: 1, maxLength: 240 }
+    FhirQuantityDraft:
+      type: object
+      additionalProperties: false
+      required: [value, unit, system, code]
+      properties:
+        value: { type: number }
+        unit: { type: string, minLength: 1, maxLength: 32 }
+        system: { type: string, const: 'http://unitsofmeasure.org' }
+        code: { type: string, enum: ['/min', '%'] }
+    FhirObservationDraft:
+      type: object
+      additionalProperties: false
+      description: >-
+        Audited FHIR-shaped projection with the complete acquisition and quality
+        provenance required by the v2 canonical digest. This remains a draft,
+        not a destination-profile conformance claim.
+      required:
+        - observationId
+        - status
+        - sessionId
+        - sampleId
+        - streamId
+        - sequence
+        - subjectPseudonym
+        - metric
+        - dataClass
+        - source
+        - code
+        - quantity
+        - effectiveEpochMillis
+        - issuedEpochMillis
+        - sourceDeviceId
+        - gatewayDeviceId
+        - firmwareGeneration
+        - acquisitionProtocolVersion
+        - dataSchemaVersion
+        - consentGeneration
+        - qualityEvidence
+        - provenanceIds
+        - exportAuditEventId
+        - securityLabels
+      properties:
+        observationId: { $ref: '#/components/schemas/FhirId' }
+        status:
+          type: string
+          enum: [registered, preliminary, final, amended, corrected, cancelled, entered-in-error, unknown]
+        sessionId: { $ref: '#/components/schemas/SafeId' }
+        sampleId: { $ref: '#/components/schemas/SafeId' }
+        streamId: { $ref: '#/components/schemas/SafeId' }
+        sequence: { type: integer, format: int64, minimum: 0 }
+        subjectPseudonym: { $ref: '#/components/schemas/SafeId' }
+        metric:
+          type: string
+          enum: [HEART_RATE, RESPIRATORY_RATE, OXYGEN_SATURATION]
+        dataClass: { $ref: '#/components/schemas/ClinicalDataClass' }
+        source: { $ref: '#/components/schemas/SensorSource' }
+        code: { $ref: '#/components/schemas/FhirCodingDraft' }
+        quantity: { $ref: '#/components/schemas/FhirQuantityDraft' }
+        effectiveEpochMillis: { type: integer, format: int64, minimum: 1 }
+        issuedEpochMillis: { type: integer, format: int64, minimum: 1 }
+        sourceDeviceId: { $ref: '#/components/schemas/SafeId' }
+        gatewayDeviceId: { $ref: '#/components/schemas/SafeId' }
+        firmwareGeneration: { $ref: '#/components/schemas/SafeId' }
+        acquisitionProtocolVersion: { $ref: '#/components/schemas/SafeId' }
+        dataSchemaVersion: { $ref: '#/components/schemas/SafeId' }
+        consentGeneration: { type: integer, format: int64, minimum: 1 }
+        qualityEvidence: { $ref: '#/components/schemas/ClinicalQualityEvidence' }
+        provenanceIds:
+          type: array
+          minItems: 1
+          maxItems: 64
+          uniqueItems: true
+          items: { $ref: '#/components/schemas/SafeId' }
+        exportAuditEventId: { $ref: '#/components/schemas/FhirId' }
+        securityLabels:
+          type: array
+          minItems: 1
+          maxItems: 16
+          items: { $ref: '#/components/schemas/FhirCodingDraft' }
+    FhirDraftEnvelope:
+      type: object
+      additionalProperties: false
+      required: [draftSha256, observationDraft]
+      properties:
+        draftSha256: { $ref: '#/components/schemas/Sha256' }
+        observationDraft: { $ref: '#/components/schemas/FhirObservationDraft' }
+    DurableReceipt:
+      type: object
+      additionalProperties: false
+      required: [receiptId, canonicalPayloadSha256, committedAtEpochMillis]
+      properties:
+        receiptId: { $ref: '#/components/schemas/SafeId' }
+        canonicalPayloadSha256: { $ref: '#/components/schemas/Sha256' }
+        committedAtEpochMillis: { type: integer, format: int64, minimum: 1 }
+    PrivacyCommandStatus:
+      type: object
+      additionalProperties: false
+      required: [commandId, commandType, commandSha256, state, completedTargets, pendingTargets, targetReceipts]
+      properties:
+        commandId: { $ref: '#/components/schemas/SafeId' }
+        commandType:
+          type: string
+          enum: [PAUSE, EXPORT, DELETE]
+        commandSha256: { $ref: '#/components/schemas/Sha256' }
+        state:
+          type: string
+          enum: [PENDING, PARTIAL, COMPLETE, CONFLICT]
+        completedTargets:
+          type: array
+          uniqueItems: true
+          items: { $ref: '#/components/schemas/PrivacyTarget' }
+        pendingTargets:
+          type: array
+          uniqueItems: true
+          items: { $ref: '#/components/schemas/PrivacyTarget' }
+        targetReceipts:
+          type: array
+          items:
+            $ref: '#/components/schemas/PrivacyTargetReceipt'
+    PrivacyTarget:
+      type: string
+      enum:
+        - PHONE_ENCRYPTED_STORE
+        - PHONE_HISTORY_CACHE
+        - PHONE_RECEIPT_DELIVERY_OUTBOX
+        - WATCH_OUTBOX
+        - WATCH_LOCAL_CACHE
+        - WATCH_CONTINUITY_JOURNAL
+        - TRANSPORT_REPLAY_STORE
+        - FORECAST_AUDIT_JOURNAL
+        - HUMAN_CONCERN_JOURNAL
+        - MONITORING_SESSION_STORE
+        - LOCAL_REASONING_INDEX
+        - PROVIDER_REASONING_AUDIT
+        - PERSONAL_MODEL_STATE
+        - EXPORT_ARCHIVE
+        - CLOUD_PROVIDER_STATE
+        - OBSERVER_BACKEND
+        - WATCH_COLLECTION_RUNTIME
+        - PHONE_HISTORY_INGESTION_RUNTIME
+        - LOCAL_REASONING_RUNTIME
+        - CLOUD_REASONING_RUNTIME
+        - CLINICAL_MONITORING_RUNTIME
+    PrivacyTargetReceipt:
+      type: object
+      additionalProperties: false
+      required: [commandId, commandSha256, target, consentGeneration, completedAtEpochMillis, affectedRecordCount, disposition, executionSha256, issuerKeyId, signature]
+      properties:
+        commandId: { $ref: '#/components/schemas/SafeId' }
+        commandSha256: { $ref: '#/components/schemas/Sha256' }
+        target: { $ref: '#/components/schemas/PrivacyTarget' }
+        consentGeneration: { type: integer, format: int64, minimum: 1 }
+        completedAtEpochMillis: { type: integer, format: int64, minimum: 1 }
+        affectedRecordCount: { type: integer, format: int64, minimum: 0 }
+        disposition:
+          type: string
+          enum: [PAUSED, EXPORTED, DELETED, CRYPTO_ERASED, ANONYMISED, NOT_PRESENT]
+        executionSha256: { $ref: '#/components/schemas/Sha256' }
+        issuerKeyId: { $ref: '#/components/schemas/SafeId' }
+        signature: { type: string, contentEncoding: base64, minLength: 24, maxLength: 2048 }
