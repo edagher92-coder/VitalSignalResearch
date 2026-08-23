@@ -1030,6 +1030,7 @@
       toast.textContent = 'Simulator hold resolved by explicit person action. This is not medical clearance.';
       toast.classList.add('show');
       setTimeout(() => toast.classList.remove('show'), 2200);
+      show('today');
       requestAnimationFrame(() => document.getElementById('hero-title').focus());
     });
 
