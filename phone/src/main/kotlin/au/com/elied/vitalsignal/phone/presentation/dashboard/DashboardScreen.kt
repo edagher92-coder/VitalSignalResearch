@@ -119,7 +119,7 @@ fun DashboardScreen(
     }
     LaunchedEffect(state.activeHumanConcern) {
         if (state.activeHumanConcern) {
-            pane = DashboardPane.TODAY
+            pane = paneAfterConcernHold()
         }
     }
 
@@ -129,10 +129,7 @@ fun DashboardScreen(
         bottomBar = {
             DashboardBottomBar(
                 pane = pane,
-                concernActive = state.activeHumanConcern,
                 onSelectPane = { pane = it },
-                onLog = onOpenQuickLog,
-                onReportConcern = onReportHumanConcern,
             )
         },
     ) { scaffoldPadding ->
@@ -145,7 +142,6 @@ fun DashboardScreen(
                     ),
                 ),
         ) {
-            DashboardAtmosphere(active = !state.activeHumanConcern)
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -164,6 +160,7 @@ fun DashboardScreen(
                         state = state,
                         onToggleExplanation = onToggleExplanation,
                         onOpenQuickLog = onOpenQuickLog,
+                        onReportHumanConcern = onReportHumanConcern,
                         onResolveHumanConcern = { resolveConcernConfirmationOpen = true },
                     )
                     DashboardPane.EVIDENCE -> EvidencePane(state)
@@ -218,6 +215,7 @@ private fun TodayPane(
     state: DashboardUiState,
     onToggleExplanation: () -> Unit,
     onOpenQuickLog: () -> Unit,
+    onReportHumanConcern: () -> Unit,
     onResolveHumanConcern: () -> Unit,
 ) {
     PatternHeroCard(
@@ -225,13 +223,58 @@ private fun TodayPane(
         onToggleExplanation,
         onResolveHumanConcern = onResolveHumanConcern,
     )
+    TodayActions(
+        concernActive = state.activeHumanConcern,
+        forecastLocked = state.forecast.status == ForecastStatus.LOCKED,
+        onReportConcern = onReportHumanConcern,
+        onCheckIn = onOpenQuickLog,
+    )
     if (!state.activeHumanConcern) {
-        ForecastCard(state.forecast, onOpenQuickLog)
+        ForecastCard(state.forecast)
+    }
+}
+
+@Composable
+private fun TodayActions(
+    concernActive: Boolean,
+    forecastLocked: Boolean,
+    onReportConcern: () -> Unit,
+    onCheckIn: () -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (!concernActive) {
+            OutlinedButton(
+                onClick = onReportConcern,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 52.dp)
+                    .semantics { liveRegion = LiveRegionMode.Assertive },
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Rose),
+            ) {
+                Text("I feel concerned")
+            }
+        }
+        if (forecastLocked && !concernActive) {
+            Button(
+                onClick = onCheckIn,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 52.dp),
+                shape = RoundedCornerShape(18.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Mint, contentColor = Ink),
+            ) {
+                Text("Record pre-forecast check-in")
+            }
+        }
     }
 }
 
 @Composable
 private fun EvidencePane(state: DashboardUiState) {
+    PaneIntro(
+        title = "Evidence",
+        summary = "Follow the story down to qualified fixtures. Nothing here is a diagnosis.",
+    )
     if (state.activeHumanConcern) {
         WithheldByConcernCard()
         return
@@ -249,6 +292,10 @@ private fun LabPane(
     state: DashboardUiState,
     onSelectSimulationScenario: (SimulationScenario) -> Unit,
 ) {
+    PaneIntro(
+        title = "Lab",
+        summary = "Operator fixtures for this simulator session. Not personal data and not a live monitor.",
+    )
     if (state.activeHumanConcern) {
         WithheldByConcernCard()
         return
@@ -261,6 +308,23 @@ private fun LabPane(
         SimulationLab(
             selected = state.activeSimulationScenario,
             onSelect = onSelectSimulationScenario,
+        )
+    }
+}
+
+@Composable
+private fun PaneIntro(title: String, summary: String) {
+    Column(modifier = Modifier.padding(top = 4.dp, bottom = 2.dp)) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.headlineMedium,
+            color = Ice,
+        )
+        Text(
+            text = summary,
+            modifier = Modifier.padding(top = 4.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = Slate,
         )
     }
 }
@@ -307,7 +371,7 @@ private fun ResearchAssistantCard(assistant: ResearchAssistantUiModel) {
             StatusPill(
                 label = when (assistant.status) {
                     ResearchAssistantStatus.REVIEWED_SIMULATOR_EXPLANATION ->
-                        "REVIEWED SIMULATOR EXPLANATION"
+                        "REVIEWED"
                     ResearchAssistantStatus.ABSTAINED -> "ABSTAINED"
                     ResearchAssistantStatus.BLOCKED -> "BLOCKED"
                     ResearchAssistantStatus.DISABLED -> "DISABLED"
@@ -403,36 +467,6 @@ private fun assistantTemplate(id: ResearchAssistantTemplateId): AssistantTemplat
         narrative = "A person-reported concern or reviewed symptom route takes priority. Wearable interpretation is withheld; no assistant response can provide reassurance or medical clearance.",
         evidenceLabels = emptyList(),
     )
-}
-
-@Composable
-private fun DashboardAtmosphere(active: Boolean) {
-    if (!active) {
-        Canvas(Modifier.fillMaxSize()) {
-            drawCircle(
-                color = Rose.copy(alpha = 0.045f),
-                radius = size.width * 0.8f,
-                center = Offset(size.width * 0.5f, size.height * 0.08f),
-            )
-        }
-        return
-    }
-    Canvas(Modifier.fillMaxSize()) {
-        drawCircle(
-            brush = Brush.radialGradient(
-                colors = listOf(Mint.copy(alpha = 0.085f), Color.Transparent),
-                center = Offset(size.width * 0.12f, size.height * 0.08f),
-                radius = size.width * 0.85f,
-            ),
-            radius = size.width * 0.85f,
-            center = Offset(size.width * 0.12f, size.height * 0.08f),
-        )
-        drawCircle(
-            color = Blue.copy(alpha = 0.028f),
-            radius = size.width * 0.72f,
-            center = Offset(size.width * 1.04f, size.height * 0.34f),
-        )
-    }
 }
 
 @Composable
@@ -634,14 +668,14 @@ private fun PatternHeroCard(
                     color = statusColor,
                 )
             }
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(16.dp))
             Text(
                 text = state.headline,
                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-                style = MaterialTheme.typography.displaySmall,
+                style = MaterialTheme.typography.headlineMedium,
                 color = Ice,
             )
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(8.dp))
             Text(
                 text = state.summary,
                 style = MaterialTheme.typography.bodyLarge,
@@ -709,10 +743,11 @@ private fun PatternHeroCard(
                             onClick = onResolveHumanConcern,
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .heightIn(min = 48.dp)
                                 .padding(top = 10.dp),
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = Ice),
                         ) {
-                            Text("Resolve simulator hold by explicit human action")
+                            Text("Resolve simulator hold")
                         }
                         Text(
                             "Resolving this app hold is not medical clearance and does not replace care.",
@@ -723,17 +758,7 @@ private fun PatternHeroCard(
                     }
                 }
             }
-            Spacer(Modifier.height(20.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                StatBlock(
-                    "Qualified metrics",
-                    state.qualifiedSignalCount.toString(),
-                    Modifier.weight(1f),
-                )
-                StatBlock("Quality", "${state.signalQuality}%", Modifier.weight(1f))
-                StatBlock("Recheck", state.recheckLabel, Modifier.weight(1f))
-            }
-            Spacer(Modifier.height(18.dp))
+            Spacer(Modifier.height(14.dp))
             OutlinedButton(
                 onClick = onToggleExplanation,
                 modifier = Modifier.fillMaxWidth(),
@@ -928,7 +953,6 @@ private fun EvidenceRow(item: EvidenceUiModel) {
 @Composable
 private fun ForecastCard(
     forecast: ForecastUiModel,
-    onOpenQuickLog: () -> Unit,
 ) {
     var explanationExpanded by remember(forecast.status) { mutableStateOf(false) }
     DashboardCard {
@@ -972,17 +996,12 @@ private fun ForecastCard(
             )
         }
         if (forecast.status == ForecastStatus.LOCKED) {
-            Button(
-                onClick = onOpenQuickLog,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 52.dp)
-                    .padding(top = 14.dp),
-                shape = RoundedCornerShape(18.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Mint, contentColor = Ink),
-            ) {
-                Text("Record pre-forecast check-in")
-            }
+            Text(
+                text = "Use the check-in button above to record pre-reveal context. The estimate stays hidden until that check-in is complete.",
+                modifier = Modifier.padding(top = 12.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = Slate,
+            )
         }
         if (
             forecast.status == ForecastStatus.AVAILABLE &&
@@ -1799,16 +1818,19 @@ private fun QualityRow(signal: QualitySignalUiModel, color: Color) {
 
 @Composable
 private fun FiveSecondSummaryRow(summary: FiveSecondSummaryUiModel) {
-    Row(
+    val stacked = todaySummaryLayout() == TodaySummaryLayout.STACKED
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 16.dp)
+            .padding(top = 14.dp)
             .semantics { contentDescription = "Five-second summary" },
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        FiveSecondCell("What changed", summary.whatChanged, Modifier.weight(1f))
-        FiveSecondCell("Evidence", summary.evidence, Modifier.weight(1f))
-        FiveSecondCell("Next step", summary.nextStep, Modifier.weight(1f))
+        if (stacked) {
+            FiveSecondCell("What changed", summary.whatChanged, Modifier.fillMaxWidth())
+            FiveSecondCell("Evidence", summary.evidence, Modifier.fillMaxWidth())
+            FiveSecondCell("Next step", summary.nextStep, Modifier.fillMaxWidth())
+        }
     }
 }
 
@@ -2141,16 +2163,13 @@ private fun SimulationLab(
 @Composable
 private fun DashboardBottomBar(
     pane: DashboardPane,
-    concernActive: Boolean,
     onSelectPane: (DashboardPane) -> Unit,
-    onLog: () -> Unit,
-    onReportConcern: () -> Unit,
 ) {
     Surface(
         color = SurfaceDeep.copy(alpha = 0.98f),
-        shadowElevation = 16.dp,
+        shadowElevation = 12.dp,
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
@@ -2159,70 +2178,26 @@ private fun DashboardBottomBar(
                     top = 8.dp,
                     bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 8.dp,
                 ),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                PaneTab(
-                    title = "Today",
-                    selected = pane == DashboardPane.TODAY,
-                    onClick = { onSelectPane(DashboardPane.TODAY) },
-                    modifier = Modifier.weight(1f),
-                )
-                PaneTab(
-                    title = "Evidence",
-                    selected = pane == DashboardPane.EVIDENCE,
-                    onClick = { onSelectPane(DashboardPane.EVIDENCE) },
-                    modifier = Modifier.weight(1f),
-                )
-                PaneTab(
-                    title = "Lab",
-                    selected = pane == DashboardPane.LAB,
-                    onClick = { onSelectPane(DashboardPane.LAB) },
-                    modifier = Modifier.weight(1f),
-                )
-            }
-            Text(
-                text = if (concernActive) {
-                    "Concern hold active · nobody was notified"
-                } else {
-                    "Add context to this simulator session"
-                },
-                style = MaterialTheme.typography.labelLarge,
-                color = if (concernActive) Rose else Ice,
+            PaneTab(
+                title = "Today",
+                selected = pane == DashboardPane.TODAY,
+                onClick = { onSelectPane(DashboardPane.TODAY) },
+                modifier = Modifier.weight(1f),
             )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                OutlinedButton(
-                    onClick = onReportConcern,
-                    enabled = !concernActive,
-                    modifier = Modifier
-                        .weight(1f)
-                        .heightIn(min = 48.dp)
-                        .semantics { liveRegion = LiveRegionMode.Assertive },
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Rose),
-                ) {
-                    Text(if (concernActive) "Hold active" else "I feel concerned")
-                }
-                Button(
-                    onClick = onLog,
-                    modifier = Modifier
-                        .weight(1f)
-                        .heightIn(min = 48.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Mint,
-                        contentColor = Ink,
-                    ),
-                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
-                ) {
-                    Text("Check-in")
-                }
-            }
+            PaneTab(
+                title = "Evidence",
+                selected = pane == DashboardPane.EVIDENCE,
+                onClick = { onSelectPane(DashboardPane.EVIDENCE) },
+                modifier = Modifier.weight(1f),
+            )
+            PaneTab(
+                title = "Lab",
+                selected = pane == DashboardPane.LAB,
+                onClick = { onSelectPane(DashboardPane.LAB) },
+                modifier = Modifier.weight(1f),
+            )
         }
     }
 }
@@ -2299,7 +2274,7 @@ private fun QuickLogDialog(
         text = {
             Column(
                 modifier = Modifier
-                    .heightIn(max = 390.dp)
+                    .heightIn(max = 560.dp)
                     .verticalScroll(rememberScrollState()),
             ) {
                 OutlinedButton(
