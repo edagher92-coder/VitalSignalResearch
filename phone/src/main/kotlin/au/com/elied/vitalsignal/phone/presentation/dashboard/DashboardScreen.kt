@@ -110,10 +110,16 @@ fun DashboardScreen(
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     var resolveConcernConfirmationOpen by remember { mutableStateOf(false) }
+    var pane by remember { mutableStateOf(DashboardPane.TODAY) }
     LaunchedEffect(state.savedMessage) {
         state.savedMessage?.let {
             snackbarHostState.showSnackbar(it)
             onSavedMessageShown()
+        }
+    }
+    LaunchedEffect(state.activeHumanConcern) {
+        if (state.activeHumanConcern) {
+            pane = DashboardPane.TODAY
         }
     }
 
@@ -122,7 +128,9 @@ fun DashboardScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             DashboardBottomBar(
+                pane = pane,
                 concernActive = state.activeHumanConcern,
+                onSelectPane = { pane = it },
                 onLog = onOpenQuickLog,
                 onReportConcern = onReportHumanConcern,
             )
@@ -133,7 +141,7 @@ fun DashboardScreen(
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
-                        listOf(Color(0xFF082022), Ink, Color(0xFF031011)),
+                        listOf(Color(0xFF06191A), Ink, Color(0xFF031011)),
                     ),
                 ),
         ) {
@@ -144,36 +152,25 @@ fun DashboardScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(
                         top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding(),
-                        bottom = scaffoldPadding.calculateBottomPadding() + 20.dp,
+                        bottom = scaffoldPadding.calculateBottomPadding() + 16.dp,
                     )
-                    .padding(horizontal = 18.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 DashboardHeader(state)
                 if (state.isSimulated) SimulationBanner(state.dataModeLabel)
-                PatternHeroCard(
-                    state,
-                    onToggleExplanation,
-                    onResolveHumanConcern = { resolveConcernConfirmationOpen = true },
-                )
-                if (!state.activeHumanConcern) {
-                    ForecastCard(state.forecast, onOpenQuickLog)
-                    ResearchAssistantCard(state.researchAssistant)
-                    PersonalTrendCard(state.trend, state.baselineDays, state.baselineTargetDays)
-                    ActivityWorkloadResponseCard(state.activityResponse)
-                    SignalQualityCard(state)
-                    InterpretationTraceCard(state)
-                    DataPlaneCard(state.dataPlane)
-                    TimelineCard(state.timeline)
-                    if (state.conflictDesk.isNotEmpty()) ConflictDeskCard(state.conflictDesk)
-                    if (state.featureInspector.isNotEmpty()) FeatureInspectorCard(state.featureInspector)
-                    if (state.forecastAudit.isNotEmpty()) ForecastAuditTimeline(state.forecastAudit)
-                    if (state.isSimulated) {
-                        SimulationLab(
-                            selected = state.activeSimulationScenario,
-                            onSelect = onSelectSimulationScenario,
-                        )
-                    }
+                when (pane) {
+                    DashboardPane.TODAY -> TodayPane(
+                        state = state,
+                        onToggleExplanation = onToggleExplanation,
+                        onOpenQuickLog = onOpenQuickLog,
+                        onResolveHumanConcern = { resolveConcernConfirmationOpen = true },
+                    )
+                    DashboardPane.EVIDENCE -> EvidencePane(state)
+                    DashboardPane.LAB -> LabPane(
+                        state = state,
+                        onSelectSimulationScenario = onSelectSimulationScenario,
+                    )
                 }
                 SafetyNote()
             }
@@ -212,6 +209,77 @@ fun DashboardScreen(
                     Text("Keep hold active", color = Ice)
                 }
             },
+        )
+    }
+}
+
+@Composable
+private fun TodayPane(
+    state: DashboardUiState,
+    onToggleExplanation: () -> Unit,
+    onOpenQuickLog: () -> Unit,
+    onResolveHumanConcern: () -> Unit,
+) {
+    PatternHeroCard(
+        state,
+        onToggleExplanation,
+        onResolveHumanConcern = onResolveHumanConcern,
+    )
+    if (!state.activeHumanConcern) {
+        ForecastCard(state.forecast, onOpenQuickLog)
+    }
+}
+
+@Composable
+private fun EvidencePane(state: DashboardUiState) {
+    if (state.activeHumanConcern) {
+        WithheldByConcernCard()
+        return
+    }
+    ResearchAssistantCard(state.researchAssistant)
+    PersonalTrendCard(state.trend, state.baselineDays, state.baselineTargetDays)
+    ActivityWorkloadResponseCard(state.activityResponse)
+    SignalQualityCard(state)
+    InterpretationTraceCard(state)
+    TimelineCard(state.timeline)
+}
+
+@Composable
+private fun LabPane(
+    state: DashboardUiState,
+    onSelectSimulationScenario: (SimulationScenario) -> Unit,
+) {
+    if (state.activeHumanConcern) {
+        WithheldByConcernCard()
+        return
+    }
+    DataPlaneCard(state.dataPlane)
+    if (state.conflictDesk.isNotEmpty()) ConflictDeskCard(state.conflictDesk)
+    if (state.featureInspector.isNotEmpty()) FeatureInspectorCard(state.featureInspector)
+    if (state.forecastAudit.isNotEmpty()) ForecastAuditTimeline(state.forecastAudit)
+    if (state.isSimulated) {
+        SimulationLab(
+            selected = state.activeSimulationScenario,
+            onSelect = onSelectSimulationScenario,
+        )
+    }
+}
+
+@Composable
+private fun WithheldByConcernCard() {
+    DashboardCard {
+        SectionLabel("Hold active")
+        Text(
+            text = "Wearable interpretation is withheld",
+            modifier = Modifier.padding(top = 6.dp),
+            style = MaterialTheme.typography.titleLarge,
+            color = Ice,
+        )
+        Text(
+            text = "A person-reported concern takes priority. These research surfaces stay hidden so a reassuring fixture cannot override how you feel. Return to Today to keep or resolve the simulator hold.",
+            modifier = Modifier.padding(top = 8.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = Slate,
         )
     }
 }
@@ -369,58 +437,52 @@ private fun DashboardAtmosphere(active: Boolean) {
 
 @Composable
 private fun DashboardHeader(state: DashboardUiState) {
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 14.dp, bottom = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
+            .padding(top = 12.dp, bottom = 2.dp),
     ) {
-        Row(
-            modifier = Modifier.weight(1f),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             BrandMark()
             Spacer(Modifier.width(12.dp))
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = ProductBrand.DISPLAY_NAME,
                     style = MaterialTheme.typography.labelMedium,
                     color = Mint,
-                    letterSpacing = 1.8.sp,
+                    letterSpacing = 1.4.sp,
                 )
                 Text(
                     text = ProductBrand.TAGLINE,
                     style = MaterialTheme.typography.labelMedium,
                     color = Quiet,
                 )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = state.greeting,
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = Ice,
-                )
             }
-        }
-        Column(horizontalAlignment = Alignment.End) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(7.dp)
-                        .background(Mint, CircleShape),
-                )
-                Spacer(Modifier.width(6.dp))
+            Surface(
+                color = Amber.copy(alpha = 0.12f),
+                shape = RoundedCornerShape(999.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Amber.copy(alpha = 0.28f)),
+            ) {
                 Text(
                     text = if (state.isSimulated) "Simulator" else "Pilot data mode",
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                     style = MaterialTheme.typography.labelMedium,
-                    color = MintSoft,
+                    color = Amber,
                 )
             }
-            Text(
-                text = state.lastSyncLabel,
-                style = MaterialTheme.typography.labelMedium,
-                color = Quiet,
-            )
         }
+        Text(
+            text = state.greeting,
+            modifier = Modifier.padding(top = 14.dp),
+            style = MaterialTheme.typography.headlineLarge,
+            color = Ice,
+        )
+        Text(
+            text = state.lastSyncLabel,
+            modifier = Modifier.padding(top = 4.dp),
+            style = MaterialTheme.typography.labelMedium,
+            color = Quiet,
+        )
     }
 }
 
@@ -586,7 +648,6 @@ private fun PatternHeroCard(
                 color = Slate,
             )
             FiveSecondSummaryRow(state.fiveSecondSummary)
-            SignalTrace(accent = statusColor)
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -713,105 +774,54 @@ private fun ConfidenceBeacon(value: Int, label: String, color: Color) {
         },
         label = "evidence-score",
     )
-    Box(
-        modifier = Modifier
-            .size(66.dp)
-            .semantics {
-                contentDescription = if (value > 0) "$value of 100 $label" else label
-            },
-        contentAlignment = Alignment.Center,
-    ) {
-        Canvas(Modifier.fillMaxSize()) {
-            val stroke = 5.dp.toPx()
-            val inset = stroke / 2
-            drawArc(
-                color = Ice.copy(alpha = 0.08f),
-                startAngle = -90f,
-                sweepAngle = 360f,
-                useCenter = false,
-                topLeft = Offset(inset, inset),
-                size = Size(size.width - stroke, size.height - stroke),
-                style = Stroke(width = stroke, cap = StrokeCap.Round),
-            )
-            if (value > 0) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            modifier = Modifier
+                .size(58.dp)
+                .semantics {
+                    contentDescription = if (value > 0) "$value of 100 $label" else label
+                },
+            contentAlignment = Alignment.Center,
+        ) {
+            Canvas(Modifier.fillMaxSize()) {
+                val stroke = 5.dp.toPx()
+                val inset = stroke / 2
                 drawArc(
-                    brush = Brush.sweepGradient(listOf(color.copy(alpha = 0.32f), color)),
+                    color = Ice.copy(alpha = 0.08f),
                     startAngle = -90f,
-                    sweepAngle = animatedValue * 3.6f,
+                    sweepAngle = 360f,
                     useCenter = false,
                     topLeft = Offset(inset, inset),
                     size = Size(size.width - stroke, size.height - stroke),
                     style = Stroke(width = stroke, cap = StrokeCap.Round),
                 )
+                if (value > 0) {
+                    drawArc(
+                        brush = Brush.sweepGradient(listOf(color.copy(alpha = 0.32f), color)),
+                        startAngle = -90f,
+                        sweepAngle = animatedValue * 3.6f,
+                        useCenter = false,
+                        topLeft = Offset(inset, inset),
+                        size = Size(size.width - stroke, size.height - stroke),
+                        style = Stroke(width = stroke, cap = StrokeCap.Round),
+                    )
+                }
             }
-        }
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = if (value > 0) value.toString() else "—",
                 style = MaterialTheme.typography.titleLarge,
                 color = Ice,
             )
-            Text(
-                text = label.uppercase(),
-                style = MaterialTheme.typography.labelMedium,
-                color = color,
-                fontSize = 12.sp,
-                letterSpacing = 0.5.sp,
-            )
         }
-    }
-}
-
-@Composable
-private fun SignalTrace(accent: Color) {
-    Canvas(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(38.dp)
-            .padding(top = 12.dp),
-    ) {
-        val middle = size.height * 0.58f
-        val path = Path().apply {
-            moveTo(0f, middle)
-            lineTo(size.width * 0.18f, middle)
-            cubicTo(
-                size.width * 0.24f,
-                middle,
-                size.width * 0.24f,
-                size.height * 0.18f,
-                size.width * 0.31f,
-                size.height * 0.18f,
-            )
-            cubicTo(
-                size.width * 0.38f,
-                size.height * 0.18f,
-                size.width * 0.38f,
-                size.height * 0.88f,
-                size.width * 0.46f,
-                size.height * 0.88f,
-            )
-            cubicTo(
-                size.width * 0.54f,
-                size.height * 0.88f,
-                size.width * 0.54f,
-                middle,
-                size.width * 0.63f,
-                middle,
-            )
-            lineTo(size.width, middle)
-        }
-        drawLine(
-            color = Ice.copy(alpha = 0.06f),
-            start = Offset(0f, middle),
-            end = Offset(size.width, middle),
-            strokeWidth = 1.dp.toPx(),
-        )
-        drawPath(
-            path = path,
-            brush = Brush.horizontalGradient(
-                listOf(Color.Transparent, accent.copy(alpha = 0.72f), Color.Transparent),
-            ),
-            style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round),
+        Text(
+            text = label,
+            modifier = Modifier
+                .width(72.dp)
+                .padding(top = 4.dp),
+            style = MaterialTheme.typography.labelMedium,
+            color = color,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
         )
     }
 }
@@ -962,14 +972,14 @@ private fun ForecastCard(
             )
         }
         if (forecast.status == ForecastStatus.LOCKED) {
-            OutlinedButton(
+            Button(
                 onClick = onOpenQuickLog,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .heightIn(min = 52.dp)
                     .padding(top = 14.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Ice),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF35565A)),
+                shape = RoundedCornerShape(18.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Mint, contentColor = Ink),
             ) {
                 Text("Record pre-forecast check-in")
             }
@@ -2130,7 +2140,9 @@ private fun SimulationLab(
 
 @Composable
 private fun DashboardBottomBar(
+    pane: DashboardPane,
     concernActive: Boolean,
+    onSelectPane: (DashboardPane) -> Unit,
     onLog: () -> Unit,
     onReportConcern: () -> Unit,
 ) {
@@ -2142,13 +2154,36 @@ private fun DashboardBottomBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                    start = 18.dp,
-                    end = 18.dp,
-                    top = 10.dp,
-                    bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 10.dp,
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = 8.dp,
+                    bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 8.dp,
                 ),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                PaneTab(
+                    title = "Today",
+                    selected = pane == DashboardPane.TODAY,
+                    onClick = { onSelectPane(DashboardPane.TODAY) },
+                    modifier = Modifier.weight(1f),
+                )
+                PaneTab(
+                    title = "Evidence",
+                    selected = pane == DashboardPane.EVIDENCE,
+                    onClick = { onSelectPane(DashboardPane.EVIDENCE) },
+                    modifier = Modifier.weight(1f),
+                )
+                PaneTab(
+                    title = "Lab",
+                    selected = pane == DashboardPane.LAB,
+                    onClick = { onSelectPane(DashboardPane.LAB) },
+                    modifier = Modifier.weight(1f),
+                )
+            }
             Text(
                 text = if (concernActive) {
                     "Concern hold active · nobody was notified"
@@ -2185,9 +2220,44 @@ private fun DashboardBottomBar(
                     ),
                     contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
                 ) {
-                    Text("Quick log")
+                    Text("Check-in")
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun PaneTab(
+    title: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier
+            .heightIn(min = 44.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .clickable(onClick = onClick)
+            .semantics {
+                contentDescription = title
+                stateDescription = if (selected) "Selected" else "Not selected"
+            },
+        color = if (selected) Mint.copy(alpha = 0.16f) else Color.Transparent,
+        shape = RoundedCornerShape(14.dp),
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            if (selected) Mint.copy(alpha = 0.40f) else Color(0xFF2A484B),
+        ),
+    ) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = title,
+                modifier = Modifier.padding(vertical = 10.dp),
+                style = MaterialTheme.typography.labelLarge,
+                color = if (selected) MintSoft else Slate,
+                textAlign = TextAlign.Center,
+            )
         }
     }
 }
@@ -2433,6 +2503,7 @@ private fun StatusPill(label: String, color: Color) {
             color = color,
             fontWeight = FontWeight.Bold,
             letterSpacing = 0.7.sp,
+            maxLines = 2,
         )
     }
 }
