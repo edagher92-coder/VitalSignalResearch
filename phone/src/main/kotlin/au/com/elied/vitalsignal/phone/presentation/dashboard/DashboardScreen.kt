@@ -313,7 +313,6 @@ private fun LabPane(
 }
 
 @Composable
-@Composable
 private fun PaneIntro(title: String, summary: String) {
     Column(modifier = Modifier.padding(top = 4.dp, bottom = 2.dp)) {
         Text(
