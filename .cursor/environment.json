@@ -1,0 +1,5 @@
+{
+  "name": "Evidessa / VitalSignal research",
+  "install": "bash .cursor/install.sh",
+  "start": "bash .cursor/configure-gradle-sdk.sh"
+}
