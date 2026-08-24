@@ -177,7 +177,7 @@ class GovernanceReceiptAuthenticationTest {
         val validation = authority(GovernanceReceiptPurpose.VALIDATION).issueValidation(
             receiptId = "validation-snapshot",
             capability = PilotCapability.WATCH_PASSIVE_COLLECTION,
-            appVersion = "0.5.0-research",
+            appVersion = "0.6.0-research",
             deviceModel = "SM-L705F",
             firmwareGeneration = "firmware-a",
             dataSchemaVersion = "watch-envelope-v1",
@@ -224,7 +224,7 @@ class GovernanceReceiptAuthenticationTest {
             consentAuthority.issueValidation(
                 receiptId = "forged-validation",
                 capability = PilotCapability.WATCH_PASSIVE_COLLECTION,
-                appVersion = "0.5.0-research",
+                appVersion = "0.6.0-research",
                 deviceModel = "fixture",
                 firmwareGeneration = "fixture-fw",
                 dataSchemaVersion = "fixture-v1",
@@ -248,7 +248,7 @@ class GovernanceReceiptAuthenticationTest {
     private fun validation() = authority(GovernanceReceiptPurpose.VALIDATION).issueValidation(
         receiptId = "validation-1",
         capability = PilotCapability.WATCH_PASSIVE_COLLECTION,
-        appVersion = "0.5.0-research",
+        appVersion = "0.6.0-research",
         deviceModel = "SM-L705F",
         firmwareGeneration = "firmware-a",
         dataSchemaVersion = "watch-envelope-v1",

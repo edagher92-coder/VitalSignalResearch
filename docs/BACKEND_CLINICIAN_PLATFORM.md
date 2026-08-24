@@ -1,6 +1,6 @@
 # Backend and clinician platform
 
-Status: `0.5.0-research` domain logic and API contract only. No service is deployed, no clinician portal is connected, and nobody is continuously watching.
+Status: `0.6.0-research` domain logic and API contract only. No service is deployed, no clinician portal is connected, and nobody is continuously watching.
 
 ## Purpose
 

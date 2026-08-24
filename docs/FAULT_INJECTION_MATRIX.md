@@ -1,4 +1,4 @@
-# VitalSignal v0.5 fault-injection matrix
+# VitalSignal v0.6 fault-injection matrix
 
 Source-review checkpoint: 2026-08-23. This is a private-pilot gate, not evidence of clinical safety or production readiness.
 
@@ -12,7 +12,7 @@ Source-review checkpoint: 2026-08-23. This is a private-pilot gate, not evidence
 | RX-02 | Process dies after phone commit but before ACK is delivered | Committed bytes survive; identical retry returns `DURABLE_DUPLICATE` with the same durable token; no second record | **Covered (JVM):** `commitBeforeAckSurvivesRestartAndLostAckIsIdempotentlyReissued` | **Pending:** phone force-stop/reboot and Data Layer ACK loss |
 | RX-03 | Identical batch delivered repeatedly or after delay | Exactly one durable record; every verified retry may be idempotently ACKed | **Covered (JVM):** receiver duplicate test and encrypted-journal restart test | **Pending:** repeated Data Layer redelivery on paired devices |
 | RX-04 | Existing batch ID reused with different canonical bytes | `ID_CONFLICT` NACK and quarantine; canonical record unchanged | **Covered (JVM):** receiver conflict test and append-only-store duplicate conflict test | **Pending:** real receiver and encrypted phone storage |
-| RX-05 | Higher source ordinal arrives before a delayed, unused lower ordinal | The ordinal policy introduced in v0.3 and retained in v0.5 accepts both if `(device, session, sequence)` ordinals do not overlap | **Covered (JVM):** `delayedNonOverlappingOrdinalIsAcceptedButReusedOrdinalIsRejected` | **Pending:** document and verify intended Data Layer retry ordering |
+| RX-05 | Higher source ordinal arrives before a delayed, unused lower ordinal | The ordinal policy introduced in v0.3 and retained in v0.6 accepts both if `(device, session, sequence)` ordinals do not overlap | **Covered (JVM):** `delayedNonOverlappingOrdinalIsAcceptedButReusedOrdinalIsRejected` | **Pending:** document and verify intended Data Layer retry ordering |
 | RX-06 | Different batch reuses an already committed `(device, session, sequence)` | NACK; no overwrite and no second durable acceptance | **Covered (JVM):** delayed/overlap encrypted-journal test | **Pending:** paired-device concurrency/redelivery |
 | RX-07 | Gap, replay or out-of-sequence local journal record | Do not advance the append-only chain; quarantine or block append | **Covered (JVM):** `gapsReplaysAndOutOfOrderSequencesDoNotAdvanceTheLedger` | **Pending:** app process/reboot recovery on Android filesystem |
 | RX-08 | ACK is NACK, or batch/session/sequence/wire digest differs from queued item | Watch must not authorize outbox deletion | **Covered (JVM):** `nackAndEveryIdentityMismatchDenyDeletion` | **Pending (device):** receipt listener/outbox adapters exist in source; no paired-device result |

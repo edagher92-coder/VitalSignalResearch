@@ -1,6 +1,6 @@
 # Fatigue and adrenal-context research protocol
 
-Status: version `0.5.0-research` design and typed context fields only. No personal collection, adrenal detection, symptom triage or medication advice is active.
+Status: version `0.6.0-research` design and typed context fields only. No personal collection, adrenal detection, symptom triage or medication advice is active.
 
 ## Purpose
 
@@ -55,7 +55,7 @@ It may not say:
 
 The safety route is deterministic, medically reviewed for Australia and independent of every model score. It must not wait for adequate watch contact, a forecast, an Ollama response or clinician-observer availability. When its reviewed criteria are met, it displays the participant's clinician-authored emergency plan and urgent-care instructions; the AI cannot change, suppress or downgrade them.
 
-Healthdirect advises calling triple zero or attending an emergency department for symptoms of an adrenal crisis and notes that urgent help is still needed even after following a clinician-provided emergency-dose plan ([Healthdirect](https://www.healthdirect.gov.au/addisons-disease)). Version 0.5 does not implement or claim that questionnaire.
+Healthdirect advises calling triple zero or attending an emergency department for symptoms of an adrenal crisis and notes that urgent help is still needed even after following a clinician-provided emergency-dose plan ([Healthdirect](https://www.healthdirect.gov.au/addisons-disease)). Version 0.6 does not implement or claim that questionnaire.
 
 ## Promotion gates
 

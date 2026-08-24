@@ -17,6 +17,25 @@ The safe product role is **VitalSignal Health Scientist / Research Copilot**: pe
 
 Numerical signal processing, personal baselines, sensor fusion, forecasts, quality and urgent symptom policy remain deterministic or specialized-model responsibilities. The language provider receives only a constrained semantic-selection task and returns the existing `LocalReasoningCandidate`, which has no prose or intervention field.
 
+### Fixed workflow, not an autonomous agent
+
+The personal runtime is a bounded explanation workflow:
+
+`verified packet → active signed release → one structured template selection → deterministic verification → durable audit receipt → reviewed local copy`
+
+It has no tools, browsing, memory, autonomous loop, treatment action, alert
+authority, background continuation or automatic provider failover. Agentic
+systems may be used only offline with synthetic fixtures for evaluation and
+red-team generation; their output requires human review and cannot enter the
+personal runtime.
+
+Before any provider call is enabled, the gateway must resolve provider, exact
+model, prompt, schema, limits and policy from a backend-owned active release
+manifest. A phone-supplied provider/model/prompt/schema configuration is not
+release authority. Every run receipt and audit event must bind the active
+release-manifest hash. This activation binding remains unimplemented and is a
+NO-GO gate.
+
 ## Two-brain architecture
 
 ```mermaid

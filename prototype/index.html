@@ -102,7 +102,9 @@
       margin: 0 0 18px; padding: 12px 15px; border: 1px solid rgba(244,201,107,.24);
       border-radius: 16px; background: rgba(244,201,107,.075); color: #f4d995;
       font-size: 12px; font-weight: 750; letter-spacing: .04em;
+      display: flex; flex-wrap: wrap; gap: 5px 8px; line-height: 1.45;
     }
+    .sim-banner span + span::before { content: "·"; margin-right: 8px; opacity: .62; }
     .global-concern {
       margin: 0 0 18px; padding: 16px 18px; border: 2px solid rgba(255,146,158,.55);
       border-radius: 18px; background: rgba(255,146,158,.12); color: #ffd7dc;
@@ -270,6 +272,82 @@
     .toast { position: fixed; left: 50%; bottom: 22px; transform: translate(-50%, 20px); opacity: 0; pointer-events: none; background: #eafffb; color: #07110f; padding: 11px 15px; border-radius: 13px; font-size: 12px; font-weight: 700; transition: .25s ease; box-shadow: var(--shadow); }
     .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
+    /* One UI-inspired reachability, layered glass and purposeful motion. */
+    body::before, body::after {
+      content: ""; position: fixed; z-index: -1; width: 44vw; aspect-ratio: 1;
+      border-radius: 50%; filter: blur(32px); pointer-events: none; opacity: .42;
+    }
+    body::before { left: -14vw; top: -18vw; background: radial-gradient(circle, rgba(114,232,200,.24), transparent 67%); }
+    body::after { right: -17vw; top: 26vh; background: radial-gradient(circle, rgba(185,176,255,.18), transparent 67%); }
+    .side, .card {
+      background: linear-gradient(155deg, rgba(18,48,50,.68), rgba(4,17,18,.46));
+      border-color: rgba(222,255,249,.14);
+      box-shadow: 0 20px 70px rgba(0,0,0,.28), inset 0 1px rgba(255,255,255,.045);
+      backdrop-filter: blur(28px) saturate(135%);
+      -webkit-backdrop-filter: blur(28px) saturate(135%);
+    }
+    .card {
+      border-radius: 30px;
+      transform: translateZ(0);
+      transition: transform .55s cubic-bezier(.2,.9,.2,1.2), border-color .35s ease, box-shadow .35s ease;
+    }
+    .card.in-view { animation: card-arrive .72s cubic-bezier(.2,.9,.2,1.08) both; }
+    @keyframes card-arrive { from { opacity: 0; transform: translateY(22px) scale(.975); } }
+    @media (hover:hover) {
+      .card:not(.hero):hover { transform: translateY(-4px) scale(1.005); border-color: rgba(114,232,200,.24); box-shadow: 0 28px 90px rgba(0,0,0,.36), 0 0 38px rgba(114,232,200,.055); }
+    }
+    .topbar h1 { font-size: clamp(31px, 4.4vw, 58px); max-width: 760px; line-height: .98; }
+    .topbar p { font-size: 14px; margin-top: 10px; }
+    .hero { min-height: 430px; border-radius: 38px; }
+    .hero-copy { padding: 36px 12px 34px 34px; }
+    .hero h2 { font-size: clamp(38px, 5.2vw, 68px); max-width: 680px; }
+    .button, .toggle, .nav-button {
+      transition: transform .42s cubic-bezier(.2,.9,.2,1.45), background .25s ease, border-color .25s ease, color .25s ease;
+    }
+    .button:active, .toggle:active, .nav-button:active { transform: scale(.94); transition-duration: .08s; }
+    .button.primary { box-shadow: 0 9px 30px rgba(114,232,200,.18); }
+    .button.primary:hover { transform: translateY(-3px) scale(1.025); box-shadow: 0 14px 38px rgba(114,232,200,.28); }
+    .nav-button.active .nav-icon { animation: icon-pop .6s cubic-bezier(.2,.9,.2,1.5); background: rgba(114,232,200,.13); }
+    @keyframes icon-pop { 45% { transform: translateY(-4px) scale(1.22); } }
+    .bar span { transform-origin: left; animation: bar-grow 1.15s cubic-bezier(.2,.8,.2,1) both; }
+    @keyframes bar-grow { from { transform: scaleX(0); } }
+    .spark path.line { stroke-dasharray: 380; stroke-dashoffset: 380; animation: line-draw 1.8s ease forwards; }
+    @keyframes line-draw { to { stroke-dashoffset: 0; } }
+    .trace-node { transition: .35s cubic-bezier(.2,.9,.2,1.2); }
+    .trace-node:hover { transform: translateY(-4px); background: rgba(114,232,200,.07); border-color: rgba(114,232,200,.23); }
+    .forecast-explain { margin-top: 18px; display: none; overflow: hidden; }
+    .forecast-explain.revealed { display: block; animation: explain-reveal .8s cubic-bezier(.2,.9,.2,1.08) both; }
+    @keyframes explain-reveal { from { opacity: 0; transform: translateY(18px) scale(.98); } }
+    .explain-lead { display: grid; grid-template-columns: minmax(0,1.25fr) minmax(240px,.75fr); gap: 12px; }
+    .explain-panel { padding: 18px; border: 1px solid var(--line); border-radius: 22px; background: rgba(255,255,255,.032); }
+    .explain-panel.accent { background: linear-gradient(145deg, rgba(145,207,255,.10), rgba(185,176,255,.055)); border-color: rgba(145,207,255,.18); }
+    .explain-panel h4 { margin: 7px 0 8px; font-size: 16px; }
+    .explain-panel p { margin: 0; color: var(--muted); line-height: 1.6; font-size: 13px; }
+    .explain-columns { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; margin-top: 12px; }
+    .explain-list { display: grid; gap: 10px; padding: 0; margin: 12px 0 0; list-style: none; counter-reset: reasons; }
+    .explain-list li { display: grid; grid-template-columns: 28px 1fr; gap: 9px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .explain-list li::before { counter-increment: reasons; content: counter(reasons); width: 27px; height: 27px; display: grid; place-items: center; border-radius: 10px; color: var(--cyan); background: rgba(114,232,200,.09); font-weight: 800; }
+    .causality-warning { margin-top: 12px; padding: 14px 16px; border-radius: 18px; color: #ffd7dc; background: rgba(255,146,158,.09); border: 1px solid rgba(255,146,158,.22); font-size: 13px; line-height: 1.55; }
+    .dialog-backdrop { position: fixed; inset: 0; z-index: 20; display: grid; place-items: end center; padding: 18px; background: rgba(0,8,9,.62); backdrop-filter: blur(14px); animation: fade-in .25s ease; }
+    .dialog-backdrop[hidden] { display: none; }
+    .dialog-sheet { width: min(560px,100%); padding: 24px; border-radius: 34px; background: linear-gradient(155deg, rgba(24,55,57,.96), rgba(7,23,24,.96)); border: 1px solid rgba(255,255,255,.14); box-shadow: 0 32px 100px rgba(0,0,0,.5); animation: sheet-up .55s cubic-bezier(.2,.9,.2,1.15); }
+    .dialog-sheet h3 { margin: 8px 0 10px; font-size: 24px; }
+    .dialog-sheet p { color: var(--muted); line-height: 1.6; }
+    .dialog-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 20px; }
+    @keyframes fade-in { from { opacity: 0; } }
+    @keyframes sheet-up { from { transform: translateY(70px) scale(.95); opacity: 0; } }
+    body.concern-mode::before, body.concern-mode::after { opacity: .08; }
+    body.concern-mode .view > *,
+    body.quality-withheld .view > * { display: none !important; }
+    body.concern-mode #global-quality-hold { display: none !important; }
+    .withhold-banner {
+      margin: 0 0 18px; padding: 18px; border-radius: 22px; line-height: 1.55;
+      background: rgba(255,203,114,.11); border: 2px solid rgba(255,203,114,.42);
+      color: #ffe5b6;
+    }
+    .withhold-banner strong { display: block; margin-bottom: 5px; }
+    .withhold-banner .button { margin-top: 14px; }
+
     /* Accessibility floor: no meaningful status, evidence, provenance or control copy below 12 px. */
     .brand small, .eyebrow, .five-second span, .orb-value span, .tag, .sub,
     .trace-node strong, .trace-node small, .trace-label, .observer-banner strong,
@@ -311,10 +389,19 @@
       .five-second div, .five-second div:first-child { padding: 0; border: 0; }
       .observer-row { grid-template-columns: 1fr; }
       .activity-metrics, .activity-detail-grid { grid-template-columns: 1fr; }
+      .explain-lead, .explain-columns { grid-template-columns: 1fr; }
+      .sim-banner { letter-spacing: .015em; padding: 11px 13px; }
+      .sim-banner { display: block; }
+      .sim-banner span { display: inline; white-space: normal; }
+      .sim-banner span + span::before { margin-right: 5px; }
     }
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto; }
-      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
     }
   </style>
 </head>
@@ -329,7 +416,7 @@
             <circle class="brand-weave-proof" cx="23" cy="18" r="2" />
           </svg>
         </div>
-        <div><strong>Evidessa Research</strong><small class="tagline">Your pattern, made clear.</small><small>Simulator · v0.5.0</small></div>
+        <div><strong>Evidessa Research</strong><small class="tagline">Your pattern, made clear.</small><small>Simulator · v0.6.0</small></div>
       </div>
       <nav>
         <button type="button" class="nav-button active" data-view="today" aria-controls="today" aria-current="page"><span class="nav-icon">●</span><span>Today</span></button>
@@ -358,10 +445,16 @@
         </div>
       </header>
 
-      <div class="sim-banner" role="status">SIMULATED DATA · NOT YOUR HEALTH DATA · NO GALAXY WATCH IS CONNECTED · MEMORY-ONLY UI · INDEPENDENT RESEARCH PROTOTYPE · NOT AFFILIATED WITH SAMSUNG OR APPLE</div>
+      <div class="sim-banner" role="status" aria-label="SIMULATED DATA · NOT YOUR HEALTH DATA · NO GALAXY WATCH IS CONNECTED · MEMORY-ONLY UI · INDEPENDENT RESEARCH PROTOTYPE · NOT AFFILIATED WITH SAMSUNG OR APPLE"><span>SIMULATED DATA</span><span>NOT YOUR HEALTH DATA</span><span>NO GALAXY WATCH IS CONNECTED</span><span>MEMORY-ONLY UI</span><span>INDEPENDENT RESEARCH PROTOTYPE</span><span>NOT AFFILIATED WITH SAMSUNG OR APPLE</span></div>
       <div class="global-concern" id="global-concern-hold" role="alert" aria-live="assertive" hidden>
         <strong>Your concern takes priority; sensor and AI interpretations are withheld.</strong>
         No clinician or emergency service was notified. Follow your own care plan or contact appropriate help yourself; seek urgent help if you believe this is an emergency. This prototype cannot provide medical clearance.
+        <button type="button" class="button" id="resolve-concern" hidden>Resolve simulator hold by explicit human action</button>
+      </div>
+      <div class="withhold-banner" id="global-quality-hold" role="status" aria-live="polite" hidden>
+        <strong>LOW-QUALITY FIXTURE · ALL INTERPRETATIONS WITHHELD</strong>
+        Contact, motion and coverage failed the hard quality gate. Missing time is not normality, inactivity or recovery; no score, forecast, evidence explanation or observer interpretation is available.
+        <button type="button" class="button" id="restore-qualified">Return to qualified simulator fixture</button>
       </div>
 
       <section class="view active" id="today">
@@ -379,6 +472,7 @@
               <div><span>Evidence</span><strong id="summary-confidence">72 / 100 internal evidence score</strong></div>
               <div><span>Next step</span><strong id="summary-next">Record context, then remeasure</strong></div>
             </div>
+            <p class="sub" style="margin-top:16px">The internal evidence score summarizes quality-qualified fixture evidence and policy gates. It is not a probability, wellness/readiness score, or “all clear.”</p>
           </div>
           <div class="orb-wrap">
             <div class="orb"><div class="orb-value"><strong id="hero-confidence">72</strong><span id="hero-confidence-label">internal evidence score</span></div></div>
@@ -406,6 +500,64 @@
             </div>
           </article>
         </div>
+
+        <article class="card pad forecast-explain" id="forecast-explain" aria-labelledby="forecast-explain-title">
+          <div class="card-title">
+            <div><span class="eyebrow">Transparent estimate</span><h3 id="forecast-explain-title">What 36% means—and how the fixture got there</h3></div>
+            <span class="tag">BROWSER FIXTURE · NO LEDGER · UNVALIDATED</span>
+          </div>
+          <div class="explain-lead">
+            <div class="explain-panel accent">
+              <span class="eyebrow">Meaning</span>
+              <h4>36 out of 100 probability mass—not “36% less energy”</h4>
+              <p>For this generated fixture, the model assigns 36% probability to a lower-than-personal-usual energy/function check-in during the single hour from +72h to +73h after the forecast cutoff. It is not a diagnosis and does not guarantee that outcome.</p>
+            </div>
+            <div class="explain-panel">
+              <span class="eyebrow">Comparison</span>
+              <h4>13 of 40 (32.5%) → 33.0% weighted → 36.4% posterior</h4>
+              <p>Similarity and quality weighting add 0.5 points with 15.79 effective weighted cases. The Beta(2,2) regularizing prior then pulls toward 50%, adding 3.4 points. The displayed 36% is rounded; neither step proves that a signal caused the outcome.</p>
+            </div>
+          </div>
+          <div class="explain-columns">
+            <div class="explain-panel">
+              <span class="eyebrow">Why it landed here</span>
+              <ol class="explain-list">
+                <li>The cardio-autonomic feature is 7.5 and nearest the generated higher-deviation neighborhood (7.5).</li>
+                <li>The sleep feature is −0.7 relative to its generated matched reference; it changes similarity weights but is not a causal explanation.</li>
+                <li>Forty resolved synthetic cases pass prospective, schema, quality, identity and receipt gates.</li>
+                <li>The completed check-in unlocks reveal; it does not recalculate or alter the sealed probability.</li>
+              </ol>
+            </div>
+            <div class="explain-panel">
+              <span class="eyebrow">How it was calculated</span>
+              <ol class="explain-list">
+                <li>Freeze two feature values, quality, cutoff and provenance before the target window.</li>
+                <li>Weight each eligible fixture by similarity × historical quality × current quality.</li>
+                <li>Combine weighted outcomes with the named Beta(2,2) regularizing prior.</li>
+                <li>Use a nominal 80% normal posterior approximation plus a quality penalty, then round bounds outward to 22–51%. This is an engineering band, not validated empirical coverage.</li>
+              </ol>
+            </div>
+            <div class="explain-panel">
+              <span class="eyebrow">What could change a future estimate</span>
+              <ol class="explain-list">
+                <li>New qualified features captured before a future cutoff.</li>
+                <li>More prospectively resolved outcomes using the same endpoint and schema.</li>
+                <li>Different quality, missingness or similarity to eligible history.</li>
+                <li>A versioned model or policy change that passes offline review.</li>
+              </ol>
+            </div>
+            <div class="explain-panel">
+              <span class="eyebrow">How this must improve</span>
+              <ol class="explain-list">
+                <li>Replace generated cases with consented and independently verified prospective outcomes.</li>
+                <li>Measure held-out calibration, discrimination, subgroup behavior and interval coverage.</li>
+                <li>Add sensitivity and ablation views showing which assumptions move the estimate.</li>
+                <li>Retain abstention, human override, immutable cutoffs and ledger audits as release gates.</li>
+              </ol>
+            </div>
+          </div>
+          <div class="causality-warning"><strong>Similarity is not causality.</strong> These generated features cannot explain why a person feels a certain way, establish illness, or determine what will happen. The engineering band covers only posterior and fixture-quality uncertainty; model design error and real-world uncertainty are unmeasured. How you feel matters more than this score. This app cannot diagnose or rule out a medical condition.</div>
+        </article>
 
         <article class="card pad activity-response" aria-labelledby="activity-title">
           <div class="card-title">
@@ -502,7 +654,7 @@
           <div class="card-title"><div><span class="eyebrow">Clinician / research observer concept</span><h3>Coverage and freshness at a glance</h3></div><span class="tag" style="color:var(--rose)">DESIGN FIXTURE ONLY</span></div>
           <div class="coverage-grid" aria-label="Simulated observer coverage">
             <div class="coverage-cell"><span>Connected participants</span><strong>0</strong><small>No data source is attached</small></div>
-            <div class="coverage-cell"><span>UI states demonstrated</span><strong>9 / 9</strong><small>Live, delayed, stale, no-data and fail-closed fixtures</small></div>
+            <div class="coverage-cell"><span>UI states demonstrated</span><strong>10 / 10</strong><small>Live, delayed, stale, no-data and fail-closed fixtures</small></div>
             <div class="coverage-cell"><span>Qualified fixture windows</span><strong>3 / 4</strong><small>Display test only, not clinical coverage</small></div>
             <div class="coverage-cell"><span>Observer actions</span><strong>None</strong><small>No alert acknowledgement or escalation controls</small></div>
           </div>
@@ -517,6 +669,7 @@
               <div class="observer-row"><div><h4>Fixture VS-031</h4><p>Generated research participant</p></div><span class="freshness stale">STALE · SIMULATED</span><div class="provenance"><strong>46:09 display age · quality 79%</strong><br/>Expired fixture window · interpretation withheld</div></div>
               <div class="observer-row"><div><h4>Fixture VS-044</h4><p>Generated research participant</p></div><span class="freshness none">NO DATA · SIMULATED</span><div class="provenance"><strong>No measurement quality available</strong><br/>Missing-data fixture · never presented as typical</div></div>
               <div class="observer-row"><div><h4>Fixture VS-051</h4><p>Generated research participant</p></div><span class="freshness blocked">QUALITY BLOCKED</span><div class="provenance"><strong>Motion and contact failed the hard gate</strong><br/>Low-quality fixture · withheld rather than shown as typical</div></div>
+              <div class="observer-row"><div><h4>Fixture VS-054</h4><p>Generated research participant</p></div><span class="freshness blocked">VALIDATION BLOCKED</span><div class="provenance"><strong>Simulator source is not eligible for a live observer stream</strong><br/>Validation-policy fixture · no physiology displayed</div></div>
               <div class="observer-row"><div><h4>Fixture VS-058</h4><p>Generated research participant</p></div><span class="freshness blocked">AUTHORIZATION BLOCKED</span><div class="provenance"><strong>Named observer permit absent</strong><br/>No care-team authority · no live observation implied</div></div>
               <div class="observer-row"><div><h4>Fixture VS-063</h4><p>Generated research participant</p></div><span class="freshness session">SESSION INACTIVE</span><div class="provenance"><strong>Scheduled window closed</strong><br/>Not continuously observed · coverage label stays explicit</div></div>
               <div class="observer-row"><div><h4>Fixture VS-071</h4><p>Generated research participant</p></div><span class="freshness clock">CLOCK UNTRUSTED</span><div class="provenance"><strong>Device clock discontinuity</strong><br/>Timestamp rejected · sequence cannot be ordered</div></div>
@@ -582,8 +735,8 @@
           <aside class="card pad">
             <div class="card-title"><div><span class="eyebrow">Audit trail</span><h3>Every answer is versioned</h3></div></div>
             <div class="quality-list">
-              <div class="quality-item"><label>Interpretation engine</label><span class="sub">research-v0.5</span></div>
-              <div class="quality-item"><label>Feature schema</label><span class="sub">0.5.0-research</span></div>
+              <div class="quality-item"><label>Interpretation engine</label><span class="sub">research-simulator-v0.6</span></div>
+              <div class="quality-item"><label>Feature schema</label><span class="sub">sim-recovery-features@1.0.0</span></div>
               <div class="quality-item"><label>Safety copy</label><span class="sub">wellness-v1</span></div>
               <div class="quality-item"><label>Device / firmware</label><span class="sub">tracked</span></div>
               <div class="quality-item"><label>Past predictions</label><span style="color:var(--amber);font-size:12px">fixture only</span></div>
@@ -646,7 +799,7 @@
             <div class="field"><label for="gi">GI symptom burden <output id="gi-out">Not answered</output></label><select id="gi" class="scale-select" aria-describedby="gi-anchor"><option value="" selected>Choose 0–10…</option><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select><small class="sub" id="gi-anchor">0 = no GI symptom burden · 10 = worst imaginable GI burden</small></div>
           </div>
             <div class="field" style="margin-top:14px"><label>Context since the last check-in</label><div class="toggle-row"><button type="button" class="toggle" aria-pressed="false">Exercise</button><button type="button" class="toggle" aria-pressed="false">Poor sleep</button><button type="button" class="toggle" aria-pressed="false">High stress</button><button type="button" class="toggle" aria-pressed="false">Medication timing</button><button type="button" class="toggle" aria-pressed="false">Infusion</button><button type="button" class="toggle" aria-pressed="false">Travel</button><button type="button" class="toggle" aria-pressed="false">Felt unwell</button></div></div>
-          <div class="field" style="margin-top:14px"><label>User-reported concern hold</label><button type="button" class="button" id="concern" aria-pressed="false">Report concern now — withhold wearable score</button><button type="button" class="button" id="resolve-concern" hidden>Resolve simulator hold by explicit human action</button><p class="sub">This immediately withholds wearable reassurance for this simulator session. Reloading the page clears simulator memory. No clinician or emergency service is notified; this prototype is not attended, emergency triage, or medical clearance.</p></div>
+          <div class="field" style="margin-top:14px"><label>User-reported concern hold</label><button type="button" class="button" id="concern" aria-pressed="false">Report concern now — withhold wearable score</button><p class="sub">This immediately withholds wearable reassurance for this simulator session. Reloading the page clears simulator memory. No clinician or emergency service is notified; this prototype is not attended, emergency triage, or medical clearance.</p></div>
           <div class="field" style="margin-top:14px"><label for="notes">Optional note</label><textarea id="notes" placeholder="Anything the sensors cannot know…"></textarea></div>
           <div style="display:flex;justify-content:flex-end;margin-top:16px"><button class="button primary" id="save">Capture context in memory</button></div>
           <div class="notice">This pre-reveal entry is context, not the forecast outcome. The target-window outcome can be recorded only after the 72-hour window. Medication, infusion and symptom entries remain context only; Evidessa cannot diagnose any medical condition or recommend a dose or treatment change.</div>
@@ -655,6 +808,17 @@
     </main>
   </div>
   <div class="toast" role="status" aria-live="polite">Pre-reveal context captured in memory</div>
+  <div class="dialog-backdrop" id="resolve-dialog" role="dialog" aria-modal="true" aria-labelledby="resolve-title" hidden>
+    <div class="dialog-sheet">
+      <span class="eyebrow">Explicit human action</span>
+      <h3 id="resolve-title">Resolve this simulator hold?</h3>
+      <p>This clears the simulator-session hold only. It is not medical clearance, does not mean you are well, and does not replace your care plan or appropriate help.</p>
+      <div class="dialog-actions">
+        <button type="button" class="button" id="keep-concern">Keep hold active</button>
+        <button type="button" class="button" id="confirm-resolve">Resolve simulator hold</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     const meta = {
@@ -668,7 +832,20 @@
       log: ["Record what sensors cannot see", "Memory-only pre-reveal context; not the future outcome"]
     };
     const show = (id) => {
-      document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === id));
+      document.querySelectorAll('.view').forEach(v => {
+        const active = v.id === id;
+        v.classList.toggle('active', active);
+        if (active && !reducedMotion.matches) {
+          v.getAnimations().forEach(animation => animation.cancel());
+          v.animate(
+            [
+              { opacity: 0, transform: 'translateY(14px) scale(.992)' },
+              { opacity: 1, transform: 'translateY(0) scale(1)' },
+            ],
+            { duration: 520, easing: 'cubic-bezier(.2,.9,.2,1.08)' },
+          );
+        }
+      });
       document.querySelectorAll('.nav-button').forEach(b => {
         const active = b.dataset.view === id;
         b.classList.toggle('active', active);
@@ -677,7 +854,7 @@
       });
       document.getElementById('view-title').textContent = meta[id][0];
       document.getElementById('view-subtitle').textContent = meta[id][1];
-      window.scrollTo({top: 0, behavior: 'smooth'});
+      window.scrollTo({top: 0, behavior: reducedMotion.matches ? 'auto' : 'smooth'});
       requestAnimationFrame(() => document.getElementById('view-title').focus());
     };
     document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => show(b.dataset.view)));
@@ -699,6 +876,7 @@
       qualifiedButton.setAttribute('aria-pressed', String(qualified));
       lowQualityButton.setAttribute('aria-pressed', String(!qualified));
       document.body.classList.toggle('quality-withheld', !qualified);
+      document.getElementById('global-quality-hold').hidden = qualified || concernLatched;
       document.getElementById('activity-title').textContent = qualified
         ? 'Matched walk response'
         : 'Activity response unavailable';
@@ -722,17 +900,25 @@
       activityState = 'low-quality';
       renderActivityState();
     });
+    document.getElementById('restore-qualified').addEventListener('click', () => {
+      activityState = 'qualified';
+      renderActivityState();
+      show('today');
+    });
     let concernLatched = false;
+    let forecastRevealed = false;
     document.getElementById('save').addEventListener('click', () => {
       const concernReported = concernLatched || document.getElementById('concern').getAttribute('aria-pressed') === 'true';
       const completeContext = scaleIds.every(id => document.getElementById(id).value !== '');
-      const reveal = !concernReported && completeContext;
+      if (!concernReported && completeContext) forecastRevealed = true;
+      const reveal = !concernReported && forecastRevealed;
       document.getElementById('forecast-title').textContent = concernReported ? 'Human concern takes priority' : reveal ? 'Lower-than-personal-usual energy/function at +72h to +73h' : 'Check-in incomplete';
       document.getElementById('forecast-tag').textContent = concernReported ? 'HUMAN PRIORITY' : reveal ? 'Unvalidated' : 'Locked';
       document.getElementById('forecast-note').textContent = concernReported ? 'Wearable forecast withheld' : reveal ? 'Frozen binary simulator target · not diagnosis or treatment guidance' : 'Unanswered values remain missing';
-      document.getElementById('forecast-value').textContent = concernReported ? 'Withheld' : reveal ? '38% fixture probability' : 'Absent from locked view';
-      document.getElementById('forecast-status').textContent = concernReported ? 'Use care plan or appropriate help' : reveal ? '80% interval · 24–53%' : 'Complete all five anchored responses';
+      document.getElementById('forecast-value').textContent = concernReported ? 'Withheld' : reveal ? '36% fixture probability' : 'Absent from locked view';
+      document.getElementById('forecast-status').textContent = concernReported ? 'Use care plan or appropriate help' : reveal ? 'Engineering band · 22–51% · unvalidated' : 'Complete all five anchored responses';
       document.getElementById('audit-state').textContent = concernReported ? 'Concern recorded · forecast withheld' : reveal ? 'Revealed · outcome pending' : 'Committed hidden · partial context';
+      document.getElementById('forecast-explain').classList.toggle('revealed', reveal);
       if (concernReported) {
         concernLatched = true;
         document.getElementById('resolve-concern').hidden = false;
@@ -743,7 +929,9 @@
       toast.textContent = concernReported
         ? 'Simulator concern hold active. Nobody was notified; wearable forecast withheld.'
         : reveal
-          ? 'Context saved. Unvalidated simulated fixture estimate revealed; this is not a health prediction.'
+          ? completeContext
+            ? 'Context saved. The same unvalidated fixture commitment remains revealed; this is not a health prediction.'
+            : 'Additional partial context saved. The already-revealed fixture did not rewind or change.'
           : 'Partial context saved. Unanswered values stayed missing; forecast remains locked.';
       toast.classList.add('show');
       setTimeout(() => toast.classList.remove('show'), 2200);
@@ -753,6 +941,7 @@
     const applyImmediateConcernHold = () => {
       concernLatched = true;
       document.body.classList.add('concern-mode');
+      document.getElementById('global-quality-hold').hidden = true;
       document.getElementById('global-concern-hold').hidden = false;
       const globalConcernAction = document.getElementById('global-concern-action');
       globalConcernAction.disabled = true;
@@ -776,6 +965,7 @@
       document.getElementById('forecast-value').textContent = 'Withheld';
       document.getElementById('forecast-status').textContent = 'No clinician or emergency service notified';
       document.getElementById('audit-state').textContent = 'Concern recorded · forecast withheld';
+      document.getElementById('forecast-explain').classList.remove('revealed');
       document.getElementById('activity-title').textContent = 'Your concern takes priority';
       document.getElementById('activity-status').textContent = 'HUMAN PRIORITY · ANALYTICS HIDDEN';
       document.getElementById('activity-qualified-state').disabled = true;
@@ -796,15 +986,48 @@
       event.currentTarget.disabled = true;
       applyImmediateConcernHold();
     });
-    document.getElementById('resolve-concern').addEventListener('click', event => {
-      if (!window.confirm('Resolve this simulator-session concern hold? This is not medical clearance.')) return;
+    const resolveDialog = document.getElementById('resolve-dialog');
+    const resolveConcernButton = document.getElementById('resolve-concern');
+    const appShell = document.querySelector('.shell');
+    const closeResolveDialog = () => {
+      resolveDialog.hidden = true;
+      appShell.inert = false;
+      resolveConcernButton.focus();
+    };
+    resolveConcernButton.addEventListener('click', () => {
+      appShell.inert = true;
+      resolveDialog.hidden = false;
+      requestAnimationFrame(() => document.getElementById('keep-concern').focus());
+    });
+    document.getElementById('keep-concern').addEventListener('click', closeResolveDialog);
+    resolveDialog.addEventListener('keydown', event => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeResolveDialog();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const controls = [...resolveDialog.querySelectorAll('button:not([disabled])')];
+      const first = controls[0], last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    });
+    document.getElementById('confirm-resolve').addEventListener('click', () => {
+      resolveDialog.hidden = true;
+      appShell.inert = false;
       concernLatched = false;
+      forecastRevealed = false;
       document.body.classList.remove('concern-mode');
       document.getElementById('global-concern-hold').hidden = true;
       const globalConcernAction = document.getElementById('global-concern-action');
       globalConcernAction.disabled = false;
       globalConcernAction.textContent = 'I feel concerned';
-      event.currentTarget.hidden = true;
+      resolveConcernButton.hidden = true;
       const concern = document.getElementById('concern');
       concern.disabled = false;
       concern.setAttribute('aria-pressed', 'false');
@@ -822,7 +1045,8 @@
       document.getElementById('forecast-note').textContent = 'Record complete pre-reveal context before reveal';
       document.getElementById('forecast-value').textContent = 'Absent from locked view';
       document.getElementById('forecast-status').textContent = 'Unvalidated';
-      document.getElementById('audit-state').textContent = 'Concern resolved by human · forecast relocked';
+      document.getElementById('audit-state').textContent = 'Browser fixture reset · no durable ledger';
+      document.getElementById('forecast-explain').classList.remove('revealed');
       document.getElementById('activity-qualified-state').disabled = false;
       document.getElementById('activity-low-quality-state').disabled = false;
       renderActivityState();
@@ -832,7 +1056,19 @@
       toast.textContent = 'Simulator hold resolved by explicit person action. This is not medical clearance.';
       toast.classList.add('show');
       setTimeout(() => toast.classList.remove('show'), 2200);
+      show('today');
+      requestAnimationFrame(() => document.getElementById('hero-title').focus());
     });
+
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const observedCards = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('in-view');
+        observedCards.unobserve(entry.target);
+      });
+    }, { threshold: .13 });
+    document.querySelectorAll('.card').forEach(card => observedCards.observe(card));
   </script>
 </body>
 </html>

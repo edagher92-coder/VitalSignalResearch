@@ -69,7 +69,7 @@ internal class MonitoringTestFixture {
         expectedSamplePeriodMillis = expectedSamplePeriodMillis,
         minimumDisplayQuality = 0.70,
         protocolVersion = "monitor-v2",
-        appVersion = "0.5.0-research",
+        appVersion = "0.6.0-research",
         deviceModel = "fixture-ultra2",
         firmwareGeneration = "fixture-fw-1",
         dataSchemaVersion = "live-scalar-v1",

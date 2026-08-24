@@ -4,7 +4,7 @@ This repository keeps proprietary Samsung SDK binaries out of source control. Us
 
 ## Current checkpoint
 
-Version `0.5.0-research` keeps every visible health surface in simulator mode. The source now contains tested encrypted storage, authenticated batch/ACK handling, a crash-safe watch outbox, consent-fenced watch/phone bridge and Health Services boundaries, Samsung tracker/history contracts, standardized-response/adaptive-sensing research logic, history reconciliation and governed local-AI orchestration. Proprietary Samsung Sensor/Health Data implementations, physical key provisioning and exact-device validation remain locked.
+Version `0.6.0-research` keeps every visible health surface in simulator mode. The source now contains tested encrypted storage, authenticated batch/ACK handling, a crash-safe watch outbox, consent-fenced watch/phone bridge and Health Services boundaries, Samsung tracker/history contracts, standardized-response/adaptive-sensing research logic, history reconciliation and governed local-AI orchestration. Proprietary Samsung Sensor/Health Data implementations, physical key provisioning and exact-device validation remain locked.
 
 ## Target platform
 

@@ -1,6 +1,6 @@
 # Privacy and security model
 
-## Current `0.5.0-research` status
+## Current `0.6.0-research` status
 
 This checkpoint does not yet ingest real watch, Samsung Health or Health Connect data. Public Health Services and Data Layer Android services are manifest-declared in source, but app-startup composition, signed consent/key provisioning and exact-device execution are absent. The visible phone/watch simulator still holds its fixture interactions only in process memory. No application-operated cloud or clinician service is configured.
 

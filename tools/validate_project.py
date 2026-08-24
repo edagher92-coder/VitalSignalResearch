@@ -8,6 +8,7 @@ unsafe UI phrases and critical architecture regressions fail loudly in any CI.
 from __future__ import annotations
 
 import re
+import subprocess
 import sys
 import tomllib
 import xml.etree.ElementTree as ET
@@ -35,7 +36,7 @@ def read(path: str) -> str:
 
 
 def validate_repository_hygiene() -> None:
-    ignored_roots = {".git", ".gradle", ".idea", "build", "__pycache__"}
+    ignored_roots = {".git", ".gradle", ".idea", ".kotlin", ".preview", "build", "__pycache__"}
     forbidden_names = {
         "local.properties",
         "secrets.properties",
@@ -60,9 +61,18 @@ def validate_repository_hygiene() -> None:
         "private MagicDNS endpoint": re.compile(rb"\b[a-z0-9-]+\.[a-z0-9-]+\.ts\.net\b", re.I),
     }
 
+    try:
+        tracked = subprocess.check_output(
+            ["git", "ls-files", "-z"],
+            cwd=ROOT,
+        ).decode("utf-8").split("\0")
+        candidates = [ROOT / path for path in tracked if path]
+    except (FileNotFoundError, subprocess.CalledProcessError, UnicodeDecodeError):
+        candidates = list(ROOT.rglob("*"))
+
     files: list[Path] = []
     forbidden: list[str] = []
-    for path in ROOT.rglob("*"):
+    for path in candidates:
         relative = path.relative_to(ROOT)
         if any(part in ignored_roots for part in relative.parts):
             continue
@@ -203,14 +213,14 @@ def validate_brand_and_experience() -> None:
             "rebrand preserves package, theme, transport and signed backend identifiers")
 
     phone_build = read("phone/build.gradle.kts")
-    require('versionName = "0.5.0-research"' in phone_build, "phone source version is 0.5.0-research")
+    require('versionName = "0.6.0-research"' in phone_build, "phone source version is 0.6.0-research")
     require("libs.androidx.compose.animation" in phone_build, "phone declares Compose animation dependency")
     require(
         "androidx-compose-animation" in read("gradle/libs.versions.toml"),
         "version catalog declares Compose animation",
     )
     wear_build = read("wear/build.gradle.kts")
-    require('versionName = "0.5.0-research"' in wear_build, "wear source version is 0.5.0-research")
+    require('versionName = "0.6.0-research"' in wear_build, "wear source version is 0.6.0-research")
     require("libs.androidx.fragment" in wear_build, "wear declares Fragment for Activity Result lint")
     require("androidx-fragment" in read("gradle/libs.versions.toml"),
             "version catalog declares AndroidX Fragment")
@@ -867,11 +877,13 @@ def validate_simulator_truthfulness() -> None:
             "Not answered" in dashboard_ui,
             "phone self-reports begin missing and partial context cannot reveal a forecast")
     require("ResearchAssistantStatus" in dashboard_models and
+            "ResearchAssistantTemplateId" in dashboard_models and
             "Governed assistant" in dashboard_ui and
             "no model or cloud call" in repository,
             "phone labels the assistant fixture without claiming that a model ran")
     require("ResearchAssistantStatus.BLOCKED" in repository and
-            "medical clearance" in repository and
+            "ResearchAssistantTemplateId.SAFETY_BLOCKED" in repository and
+            "medical clearance" in dashboard_ui and
             "ResearchAssistantStatus.ABSTAINED" in repository,
             "assistant follows concern and evidence abstention gates")
 
@@ -893,8 +905,10 @@ def validate_simulator_truthfulness() -> None:
         "Absent from locked view",
     ):
         require(phrase in prototype, f'prototype contains truthful state: "{phrase}"')
-    require("forecast-value" in prototype and "38%" in prototype, "prototype check-in reveals a simulated forecast")
+    require("forecast-value" in prototype and "36%" in prototype, "prototype check-in reveals the computed simulated forecast")
+    require("22–51%" in prototype, "prototype interval conservatively rounds simulator bounds outward")
     for operator_surface in ("id=\"conflicts\"", "id=\"inspector\"", "QUALITY BLOCKED",
+                             "VALIDATION BLOCKED",
                              "AUTHORIZATION BLOCKED", "SESSION INACTIVE",
                              "CLOCK UNTRUSTED", "SEQUENCE INVALID",
                              "COMMITTED HIDDEN", "canonicalSha256"):
@@ -981,8 +995,10 @@ def validate_deliverables() -> None:
         "docs/BACKEND_CLINICIAN_PLATFORM.md",
         "backend/README.md",
         "backend/openapi/vitalsignal-research-observer-v1.yaml",
+        "backend/openapi/vitalsignal-assistant-gateway-v1.yaml",
         "research/signal_hypotheses.json",
         "prototype/index.html",
+        "prototype/prototype.browser.test.mjs",
     ):
         require((ROOT / relative).is_file(), f"deliverable exists: {relative}")
     StrictHtmlParser().feed(read("prototype/index.html"))
@@ -1000,8 +1016,47 @@ def validate_deliverables() -> None:
             "caseBindingSha256" in backend_api and
             "canonicalFeatureSnapshotSha256" in backend_api,
             "observer contract documents training-case receipt bindings")
+    assistant_api = read("backend/openapi/vitalsignal-assistant-gateway-v1.yaml")
+    require("openapi: 3.1.0" in assistant_api and
+            "https://assistant.invalid/v1" in assistant_api,
+            "assistant gateway is an OpenAPI 3.1 non-routable contract")
+    require("type: mutualTLS" in assistant_api and "Idempotency-Key" in assistant_api,
+            "assistant gateway requires mutual TLS and idempotency")
+    require("const: false" in assistant_api and
+            "storeResponse:" in assistant_api and
+            "providerBrowsingEnabled:" in assistant_api and
+            "providerToolsEnabled:" in assistant_api and
+            "credentialsIncluded:" in assistant_api,
+            "assistant gateway disables storage, tools, browsing and client credentials")
+    require("version: 1.0.0-contract" in backend_api and
+            "version: 1.0.0-contract" in assistant_api,
+            "OpenAPI contracts use independent v1 technical versions")
+    release_files = (
+        "README.md",
+        "docs/ARCHITECTURE.md",
+        "docs/BACKEND_CLINICIAN_PLATFORM.md",
+        "docs/BRAND_AND_EXPERIENCE_SYSTEM.md",
+        "docs/BUILD_REPORT.md",
+        "docs/INSTALL_AND_PILOT_RUNBOOK.md",
+        "docs/PRIVACY.md",
+        "docs/SAFETY_CASE.md",
+        "docs/SESSION_HANDOFF.md",
+        "docs/STATUS_MATRIX.md",
+        "docs/THREAT_MODEL.md",
+        "docs/VALIDATION_PROTOCOL.md",
+    )
+    for release_file in release_files:
+        release_copy = read(release_file)
+        require("0.5.0-research" not in release_copy and
+                "version 0.5" not in release_copy.lower(),
+                f"current release metadata is not stale: {release_file}")
+    require("vitalsignal-0.6.0-research-simulator-debug" in
+            read(".github/workflows/verify.yml") and
+            "vitalsignal-0.6.0-research-simulator-debug" in
+            read("docs/INSTALL_AND_PILOT_RUNBOOK.md"),
+            "CI and pilot runbook name the same 0.6 simulator artifact")
     report = read("docs/BUILD_REPORT.md")
-    require("0.5.0-research" in report, "build report matches source version")
+    require("0.6.0-research" in report, "build report matches source version")
     require("not run" in report.lower(), "build report records unexecuted verification honestly")
 
 

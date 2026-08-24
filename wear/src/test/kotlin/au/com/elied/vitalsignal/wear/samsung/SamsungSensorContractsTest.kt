@@ -231,7 +231,7 @@ class SamsungSensorContractsTest {
             capability = capability,
             subjectPseudonym = subjectPseudonym,
             consentGeneration = consentGeneration,
-            appVersion = "0.5.0-research",
+            appVersion = "0.6.0-research",
             deviceModel = "Galaxy Watch Ultra2 fixture",
             firmwareGeneration = "fixture-fw-1",
             dataSchemaVersion = "watch-raw-v1",
@@ -263,7 +263,7 @@ class SamsungSensorContractsTest {
                     "validation-watch-passive-1"
                 },
                 capability = capability,
-                appVersion = "0.5.0-research",
+                appVersion = "0.6.0-research",
                 deviceModel = "Galaxy Watch Ultra2 fixture",
                 firmwareGeneration = "fixture-fw-1",
                 dataSchemaVersion = "watch-raw-v1",

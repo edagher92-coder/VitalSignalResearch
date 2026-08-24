@@ -27,7 +27,7 @@ class WearPilotActivationTest {
         val validation = authority(GovernanceReceiptPurpose.VALIDATION).issueValidation(
             receiptId = "validation-watch-passive-1",
             capability = PilotCapability.WATCH_PASSIVE_COLLECTION,
-            appVersion = "0.5.0-research",
+            appVersion = "0.6.0-research",
             deviceModel = "Galaxy Watch Ultra2",
             firmwareGeneration = "ultra2-fw-1",
             dataSchemaVersion = "watch-passive-v1",
@@ -91,7 +91,7 @@ class WearPilotActivationTest {
         capability = PilotCapability.WATCH_PASSIVE_COLLECTION,
         subjectPseudonym = "pilot-1",
         consentGeneration = 9L,
-        appVersion = "0.5.0-research",
+        appVersion = "0.6.0-research",
         deviceModel = "Galaxy Watch Ultra2",
         firmwareGeneration = "ultra2-fw-1",
         dataSchemaVersion = "watch-passive-v1",

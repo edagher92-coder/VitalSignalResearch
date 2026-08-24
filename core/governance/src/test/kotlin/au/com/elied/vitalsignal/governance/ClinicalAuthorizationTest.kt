@@ -283,7 +283,7 @@ class ClinicalAuthorizationTest {
         destinationId = "clinician-portal-1",
         sessionStartsAtEpochMillis = 1_000L,
         sessionEndsAtEpochMillis = 100_000L,
-        appVersion = "0.5.0-research",
+            appVersion = "0.6.0-research",
         deviceModel = "fixture-ultra2",
         firmwareGeneration = "fixture-fw-1",
         dataSchemaVersion = "live-scalar-v1",
@@ -306,7 +306,7 @@ class ClinicalAuthorizationTest {
     private fun validation() = ValidationReceipt(
         receiptId = "validation-clinician-1",
         capability = PilotCapability.CLINICIAN_LIVE_SHARE,
-        appVersion = "0.5.0-research",
+                appVersion = "0.6.0-research",
         deviceModel = "fixture-ultra2",
         firmwareGeneration = "fixture-fw-1",
         dataSchemaVersion = "live-scalar-v1",

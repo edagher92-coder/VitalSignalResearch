@@ -20,6 +20,7 @@ class DemoDashboardRepositoryTest {
         assertEquals(ForecastStatus.LOCKED, repository.state.value.forecast.status)
         assertNull(repository.state.value.forecast.probability)
         assertNull(repository.state.value.forecast.personalBaseRate)
+        assertNull(repository.state.value.forecast.explanation)
 
         repository.setQuickLogOpen(true)
         repository.saveQuickLog(
@@ -43,6 +44,18 @@ class DemoDashboardRepositoryTest {
         assertTrue(state.timeline.first().detail.contains("Sleep 5/10"))
         assertEquals(ForecastStatus.AVAILABLE, state.forecast.status)
         assertNotNull(state.forecast.probability)
+        val explanation = requireNotNull(state.forecast.explanation)
+        assertEquals(36, state.forecast.probability)
+        assertEquals(
+            "Engineering uncertainty band · 22–51% (nominal 80% model range)",
+            state.forecast.intervalLabel,
+        )
+        assertTrue(explanation.meaning.contains("36.4% probability mass"))
+        assertTrue(explanation.comparison.contains("13 of 40"))
+        assertTrue(explanation.comparison.contains("33.0%"))
+        assertTrue(explanation.why.any { it.contains("40 resolved synthetic cases") })
+        assertTrue(explanation.method.any { it.contains("similarity") })
+        assertTrue(explanation.improvementPlan.any { it.contains("held-out") })
         assertEquals("UNVALIDATED", state.forecast.calibrationLabel)
         assertEquals(
             "Pre-reveal context captured in memory for this simulator session",
@@ -57,6 +70,71 @@ class DemoDashboardRepositoryTest {
         repository.setExplanationExpanded(true)
 
         assertTrue(repository.state.value.explanationExpanded)
+    }
+
+    @Test
+    fun revealedForecastIsTotallyWithheldWhenConcernIsReported() {
+        val repository = DemoDashboardRepository()
+        val complete = QuickLogDraft(
+            energy = 4,
+            fatigue = 7,
+            stress = 5,
+            gastrointestinalSymptoms = 6,
+            sleepQuality = 5,
+        )
+        repository.saveQuickLog(complete)
+        assertNotNull(repository.state.value.forecast.explanation)
+
+        repository.reportHumanConcern()
+
+        val held = repository.state.value.forecast
+        assertEquals(ForecastStatus.ABSTAINED, held.status)
+        assertNull(held.probability)
+        assertNull(held.personalBaseRate)
+        assertNull(held.explanation)
+        assertFalse(held.intervalLabel.contains("%"))
+    }
+
+    @Test
+    fun repeatedCompleteCheckInKeepsTheSameRevealedLedgerProjection() {
+        val repository = DemoDashboardRepository()
+        val complete = QuickLogDraft(
+            energy = 4,
+            fatigue = 7,
+            stress = 5,
+            gastrointestinalSymptoms = 6,
+            sleepQuality = 5,
+        )
+        repository.saveQuickLog(complete)
+        val first = repository.state.value.forecast
+
+        repository.saveQuickLog(complete.copy(note = "Repeated fixture check-in"))
+
+        val repeated = repository.state.value
+        assertEquals(ForecastStatus.AVAILABLE, repeated.forecast.status)
+        assertEquals(first.probability, repeated.forecast.probability)
+        assertEquals(first.intervalLabel, repeated.forecast.intervalLabel)
+        assertNotNull(repeated.forecast.explanation)
+        assertTrue(repeated.forecastAudit.isNotEmpty())
+    }
+
+    @Test
+    fun steadyExplanationNamesTheSteadyNeighborhood() {
+        val repository = DemoDashboardRepository()
+        repository.setSimulationScenario(SimulationScenario.STEADY)
+        repository.saveQuickLog(
+            QuickLogDraft(
+                energy = 8,
+                fatigue = 1,
+                stress = 1,
+                gastrointestinalSymptoms = 0,
+                sleepQuality = 8,
+            ),
+        )
+
+        val explanation = requireNotNull(repository.state.value.forecast.explanation)
+        assertTrue(explanation.why.first().contains("steady fixture neighborhood"))
+        assertFalse(explanation.why.first().contains("higher-deviation"))
     }
 
     @Test
@@ -79,13 +157,17 @@ class DemoDashboardRepositoryTest {
         assertEquals(ForecastStatus.ABSTAINED, state.forecast.status)
         assertNull(state.forecast.probability)
         assertNull(state.forecast.personalBaseRate)
+        assertNull(state.forecast.explanation)
         assertEquals("CONCERN HOLD", state.forecast.calibrationLabel)
         assertTrue(state.conflictDesk.isEmpty())
         assertTrue(state.featureInspector.isEmpty())
         assertTrue(state.forecastAudit.isEmpty())
         assertEquals("Human concern takes priority", state.fiveSecondSummary.whatChanged)
         assertEquals(ResearchAssistantStatus.BLOCKED, state.researchAssistant.status)
-        assertTrue(state.researchAssistant.narrative.contains("medical clearance"))
+        assertEquals(
+            ResearchAssistantTemplateId.SAFETY_BLOCKED,
+            state.researchAssistant.templateId,
+        )
         assertTrue(state.savedMessage.orEmpty().contains("concern hold is active", ignoreCase = true))
         assertTrue(state.savedMessage.orEmpty().contains("No clinician or emergency service was notified"))
         assertTrue(state.timeline.first().detail.contains("USER-REPORTED CONCERN HOLD"))
@@ -234,15 +316,14 @@ class DemoDashboardRepositoryTest {
     }
 
     @Test
-    fun assistantNarrativeTracksTheSafetyDisposition() {
+    fun assistantTemplateTracksTheSafetyDisposition() {
         val repository = DemoDashboardRepository()
 
         repository.setSimulationScenario(SimulationScenario.STEADY)
 
         val assistant = repository.state.value.researchAssistant
         assertEquals(ResearchAssistantStatus.REVIEWED_SIMULATOR_EXPLANATION, assistant.status)
-        assertTrue(assistant.narrative.contains("cannot rule out"))
-        assertFalse(assistant.narrative.contains("differs from its matched fixture"))
+        assertEquals(ResearchAssistantTemplateId.WITHIN_PATTERN, assistant.templateId)
     }
 
     @Test

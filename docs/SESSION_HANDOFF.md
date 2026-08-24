@@ -1,4 +1,4 @@
-# VitalSignal session handoff
+# Evidessa Research session handoff
 
 Use this file when the project is opened in another ChatGPT account, workspace or development environment. It preserves the product decisions without depending on access to the original chat.
 
@@ -29,8 +29,8 @@ Keep exact personal medical details outside source control and out of demo data.
 
 ## Current source status
 
-- Source version `0.5.0-research`; visible phone/watch and browser experiences remain explicitly simulated and personal-data locked.
-- Release decision is GO only for simulator engineering evaluation. Personal collection, visible forecasts, hardware-performance claims, Ollama output, clinician monitoring and public/clinical use remain NO-GO.
+- Source version `0.6.0-research`; visible phone/watch and browser experiences remain explicitly simulated and personal-data locked.
+- Release decision is GO only for simulator engineering evaluation, including the unvalidated fixture forecast after the prospective check-in/reveal sequence. Personal collection, personal-data forecasts, hardware-performance claims, model output, clinician monitoring and public/clinical use remain NO-GO.
 - Strict quality, 28-day matched personal baseline, correlation-aware interpretation, deterministic safety policy and prospective binary forecast controls.
 - Standardized-response engine matched by protocol/device/firmware/physical-configuration digest, requiring 12 qualified episodes across 28 days and change in two independent families; human concern holds before sensor scoring. A separate function-capture gate requires externally reviewed protocol/session receipts.
 - Battery-aware adaptive-sensing planner that can request, but never silently start, a short validated foreground remeasurement.
@@ -45,10 +45,10 @@ Keep exact personal medical details outside source control and out of demo data.
 - Authority-verified human-concern ledger and encrypted journal: a concern hold survives restart and can be cleared only by an authorised explicit resolution. The visible demo is not attended and notifies nobody.
 - Crash-safe phone receipt-delivery outbox: accepted receipts can be retried across a process-shaped gap; Android scheduling/startup composition is still absent.
 - Android Keystore provider boundary that never silently regenerates a missing expected key.
-- The exact final merged platform-neutral suite result is recorded in `docs/BUILD_REPORT.md`. This is not an Android/physical-device result.
+- The exact clean JDK 17 Gradle/source result is recorded in `docs/BUILD_REPORT.md`. It includes Android compilation, lint and debug APK assembly, but it is not a physical-device result.
 - Non-deployed backend OpenAPI and clinician-platform contract; no server, database, IAM, portal or attended service exists.
 
-Missing or externally gated: proprietary Samsung Sensor/Data SDK adapters and AARs; real Samsung Health/Health Connect reads; secure physical key provisioning/rotation; app-startup composition of manifest-declared Health Services/Data Layer adapters; Android scheduling for receipt redelivery; completed export/deletion executors; concrete authenticated Ollama HTTPS transport/decoders and real benchmark; backend implementation/IAM/portal; Android APK build in the current workspace; battery/clock/reboot/radio/device tests; ECG–PPG timestamp/reference verification; function-protocol external approval; reference-device agreement and prospective calibration.
+Missing or externally gated: proprietary Samsung Sensor/Data SDK adapters and AARs; real Samsung Health/Health Connect reads; secure physical key provisioning/rotation; app-startup composition of manifest-declared Health Services/Data Layer adapters; Android scheduling for receipt redelivery; completed export/deletion executors; concrete authenticated Ollama HTTPS transport/decoders and real benchmark; backend implementation/IAM/portal; physical APK installation; battery/clock/reboot/radio/device tests; ECG–PPG timestamp/reference verification; function-protocol external approval; reference-device agreement and prospective calibration.
 
 ## Next build checkpoint
 
@@ -62,8 +62,13 @@ Missing or externally gated: proprietary Samsung Sensor/Data SDK adapters and AA
 8. Implement the authenticated Ollama gateway transport/decoders and adversarially benchmark the pinned model only behind the signed packet, verifier, audit and promotion gates.
 9. Run hidden prospective forecasts and promote nothing until calibration, lead-time and false-alert evidence passes.
 
-## Continuation prompt
+## Canonical continuation prompt
 
-After attaching the project bundle in another session, use:
-
-> Continue building VitalSignal Research from `docs/SESSION_HANDOFF.md`. Inspect the existing source first, preserve the locked safety and validation decisions, report the next smallest testable checkpoint, then implement and verify it. Do not make diagnostic claims or add cloud health-data transfer without explicit approval.
+`docs/CURSOR_HANDOFF.md` owns the canonical continuation prompt. Use that prompt
+in every agent environment rather than maintaining competing copies here.
+Before changing behavior, the next agent must read this handoff,
+`docs/STATUS_MATRIX.md`, `docs/SAFETY_CASE.md`, `docs/BUILD_REPORT.md` and
+`docs/VERSION_0_6_0_PLAN.md`; inspect the actual dirty/committed tree; derive
+all displayed model facts from typed estimator/ledger fields; preserve stable
+VitalSignal technical identities; and report executed checks separately from
+unverified device, Samsung, backend, AI and clinical evidence.

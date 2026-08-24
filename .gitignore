@@ -22,6 +22,7 @@ secrets.properties
 phone/libs/*.aar
 wear/libs/*.aar
 tools/windows/VitalSignal-Ollama-Endpoint.txt
+tools/windows/Evidessa-Simulator-URL.txt
 phone/src/debug/assets/private-health-data/
 wear/src/debug/assets/private-health-data/
 private-health-data/

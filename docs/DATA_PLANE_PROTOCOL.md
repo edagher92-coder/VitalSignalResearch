@@ -1,4 +1,4 @@
-# VitalSignal v0.5 data-plane protocol
+# VitalSignal v0.6 data-plane protocol
 
 Status: implementation contract for the simulator-first research checkpoint. This document describes the source that exists in `core/transport`, `core/storage`, `core/audit`, the Android Keystore provider, and the phone/watch Data Layer adapters. It is not deployment evidence, a security proof, or a medical-readiness claim.
 

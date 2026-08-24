@@ -128,21 +128,6 @@ class SimulatorHealthPipeline(
         val insight = interpretationAssessment.insight
         val baselineMaturity = baselines.minOfOrNull { it.maturity } ?: 0.0
         val baselineSamples = baselines.minOfOrNull { it.sampleCount } ?: 0
-        val safetyDecision = safetyPolicy.evaluate(
-            SafetyGateInput(
-                dataQuality = quality.score,
-                baselineMaturity = baselineMaturity,
-                baselineSampleCount = baselineSamples,
-                independentCoherentFamilies = interpretationAssessment.independentCoherentFamilyCount,
-                independentCoherentAcquisitionGroups =
-                    interpretationAssessment.independentCoherentAcquisitionGroupCount,
-                expectedQualifiedFamilies = EXPECTED_SIMULATOR_FAMILIES,
-                availableQualifiedFamilies = interpretationAssessment.availableQualifiedFamilies,
-                conflictingFamilies = interpretationAssessment.conflictingFamilies,
-                intervalWidth = null,
-                userConcernReported = userConcernReported,
-            ),
-        )
         val targetFeatures = ForecastFeatureSnapshot(
             id = "sim-features-${scenario.name.lowercase()}",
             cutoffEpochMillis = now,
@@ -188,6 +173,21 @@ class SimulatorHealthPipeline(
                 endpoint = PersonalForecastEngine.SIMULATOR_72_HOUR_POINT_ENDPOINT,
             )
         }
+        val safetyDecision = safetyPolicy.evaluate(
+            SafetyGateInput(
+                dataQuality = quality.score,
+                baselineMaturity = baselineMaturity,
+                baselineSampleCount = baselineSamples,
+                independentCoherentFamilies = interpretationAssessment.independentCoherentFamilyCount,
+                independentCoherentAcquisitionGroups =
+                    interpretationAssessment.independentCoherentAcquisitionGroupCount,
+                expectedQualifiedFamilies = EXPECTED_SIMULATOR_FAMILIES,
+                availableQualifiedFamilies = interpretationAssessment.availableQualifiedFamilies,
+                conflictingFamilies = interpretationAssessment.conflictingFamilies,
+                intervalWidth = rawEstimate.forecast?.let { it.upperBound - it.lowerBound },
+                userConcernReported = userConcernReported,
+            ),
+        )
         val sealed = sealThroughLedger(rawEstimate, targetFeatures, now)
 
         return SimulatorPipelineResult(
@@ -294,17 +294,17 @@ class SimulatorHealthPipeline(
             is ForecastLedgerMutationResult.Idempotent,
             -> {
                 val view = mutation.view
-                if (view !is LockedForecastView) {
+                if (view !is LockedForecastView && view !is RevealedForecastView) {
                     SealedForecast(
                         estimate = estimate.copy(
                             state = au.com.elied.vitalsignal.analytics.ForecastModelState.ABSTAINED,
                             forecast = null,
                             validCaseCount = 0,
                             effectiveCaseWeight = 0.0,
-                            reason = "Committed forecast must remain locked until check-in and reveal",
+                            reason = "Committed forecast has an unsupported prospective projection",
                         ),
                         view = view,
-                        reason = "Committed forecast must remain locked until check-in and reveal",
+                        reason = "Committed forecast has an unsupported prospective projection",
                     )
                 } else {
                     SealedForecast(estimate = estimate, view = view, reason = null)

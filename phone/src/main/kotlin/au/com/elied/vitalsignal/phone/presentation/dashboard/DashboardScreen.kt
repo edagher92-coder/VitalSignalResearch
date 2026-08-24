@@ -1,7 +1,11 @@
 package au.com.elied.vitalsignal.phone.presentation.dashboard
 
+import android.provider.Settings
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -63,6 +67,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -132,7 +137,7 @@ fun DashboardScreen(
                     ),
                 ),
         ) {
-            DashboardAtmosphere()
+            DashboardAtmosphere(active = !state.activeHumanConcern)
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -151,24 +156,24 @@ fun DashboardScreen(
                     onToggleExplanation,
                     onResolveHumanConcern = { resolveConcernConfirmationOpen = true },
                 )
-                ForecastCard(state.forecast, onOpenQuickLog)
-                ResearchAssistantCard(state.researchAssistant)
-                PersonalTrendCard(state.trend, state.baselineDays, state.baselineTargetDays)
-                ActivityWorkloadResponseCard(state.activityResponse)
-                SignalQualityCard(state)
-                InterpretationTraceCard(state)
-                DataPlaneCard(state.dataPlane)
-                TimelineCard(state.timeline)
                 if (!state.activeHumanConcern) {
+                    ForecastCard(state.forecast, onOpenQuickLog)
+                    ResearchAssistantCard(state.researchAssistant)
+                    PersonalTrendCard(state.trend, state.baselineDays, state.baselineTargetDays)
+                    ActivityWorkloadResponseCard(state.activityResponse)
+                    SignalQualityCard(state)
+                    InterpretationTraceCard(state)
+                    DataPlaneCard(state.dataPlane)
+                    TimelineCard(state.timeline)
                     if (state.conflictDesk.isNotEmpty()) ConflictDeskCard(state.conflictDesk)
                     if (state.featureInspector.isNotEmpty()) FeatureInspectorCard(state.featureInspector)
                     if (state.forecastAudit.isNotEmpty()) ForecastAuditTimeline(state.forecastAudit)
-                }
-                if (state.isSimulated) {
-                    SimulationLab(
-                        selected = state.activeSimulationScenario,
-                        onSelect = onSelectSimulationScenario,
-                    )
+                    if (state.isSimulated) {
+                        SimulationLab(
+                            selected = state.activeSimulationScenario,
+                            onSelect = onSelectSimulationScenario,
+                        )
+                    }
                 }
                 SafetyNote()
             }
@@ -213,6 +218,7 @@ fun DashboardScreen(
 
 @Composable
 private fun ResearchAssistantCard(assistant: ResearchAssistantUiModel) {
+    val template = assistantTemplate(assistant.templateId)
     val accent = when (assistant.status) {
         ResearchAssistantStatus.REVIEWED_SIMULATOR_EXPLANATION -> Blue
         ResearchAssistantStatus.ABSTAINED -> Amber
@@ -256,7 +262,7 @@ private fun ResearchAssistantCard(assistant: ResearchAssistantUiModel) {
             border = androidx.compose.foundation.BorderStroke(1.dp, accent.copy(alpha = 0.16f)),
         ) {
             Text(
-                text = assistant.narrative,
+                text = template.narrative,
                 modifier = Modifier.padding(15.dp),
                 style = MaterialTheme.typography.bodyMedium,
                 color = Ice,
@@ -269,7 +275,7 @@ private fun ResearchAssistantCard(assistant: ResearchAssistantUiModel) {
                 .padding(top = 13.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            assistant.evidenceLabels.forEach { label ->
+            template.evidenceLabels.forEach { label ->
                 Surface(
                     color = SurfaceLifted,
                     shape = RoundedCornerShape(999.dp),
@@ -285,7 +291,7 @@ private fun ResearchAssistantCard(assistant: ResearchAssistantUiModel) {
             }
         }
         Text(
-            text = assistant.policyLabel,
+            text = "STATIC REVIEWED TEMPLATE · NO AI RUN · ${assistant.policyLabel}",
             modifier = Modifier.padding(top = 13.dp),
             style = MaterialTheme.typography.bodyMedium,
             color = Slate,
@@ -299,12 +305,54 @@ private fun ResearchAssistantCard(assistant: ResearchAssistantUiModel) {
     }
 }
 
+private data class AssistantTemplate(
+    val narrative: String,
+    val evidenceLabels: List<String>,
+)
+
+private fun assistantTemplate(id: ResearchAssistantTemplateId): AssistantTemplate = when (id) {
+    ResearchAssistantTemplateId.DEVELOPING_REMEASURE -> AssistantTemplate(
+        narrative = "One simulated cardio-autonomic family differs from its matched fixture. A second independent domain and persistence are not present, so the reviewed interpretation remains: record context and remeasure.",
+        evidenceLabels = listOf(
+            "Cardio-autonomic family",
+            "Independent-domain gate",
+            "Measurement quality",
+        ),
+    )
+    ResearchAssistantTemplateId.WITHIN_PATTERN -> AssistantTemplate(
+        narrative = "Qualified simulated domains are close to their matched fixture ranges. This describes the available fixture only and cannot rule out a health condition or override how a person feels.",
+        evidenceLabels = listOf("Matched fixture", "Qualified evidence", "No medical clearance"),
+    )
+    ResearchAssistantTemplateId.PATTERN_REVIEW -> AssistantTemplate(
+        narrative = "More than one independent simulated family meets the research pattern gate. The evidence supports review and remeasurement, not a diagnosis, cause, or treatment decision.",
+        evidenceLabels = listOf("Independent families", "Review gate", "Remeasure"),
+    )
+    ResearchAssistantTemplateId.EVIDENCE_ABSTAINED -> AssistantTemplate(
+        narrative = "The available fixture does not support a health interpretation. Missing, immature, or low-quality evidence remains unavailable rather than being filled in as normal.",
+        evidenceLabels = emptyList(),
+    )
+    ResearchAssistantTemplateId.SAFETY_BLOCKED -> AssistantTemplate(
+        narrative = "A person-reported concern or reviewed symptom route takes priority. Wearable interpretation is withheld; no assistant response can provide reassurance or medical clearance.",
+        evidenceLabels = emptyList(),
+    )
+}
+
 @Composable
-private fun DashboardAtmosphere() {
+private fun DashboardAtmosphere(active: Boolean) {
+    if (!active) {
+        Canvas(Modifier.fillMaxSize()) {
+            drawCircle(
+                color = Rose.copy(alpha = 0.045f),
+                radius = size.width * 0.8f,
+                center = Offset(size.width * 0.5f, size.height * 0.08f),
+            )
+        }
+        return
+    }
     Canvas(Modifier.fillMaxSize()) {
         drawCircle(
             brush = Brush.radialGradient(
-                colors = listOf(Mint.copy(alpha = 0.09f), Color.Transparent),
+                colors = listOf(Mint.copy(alpha = 0.085f), Color.Transparent),
                 center = Offset(size.width * 0.12f, size.height * 0.08f),
                 radius = size.width * 0.85f,
             ),
@@ -312,7 +360,7 @@ private fun DashboardAtmosphere() {
             center = Offset(size.width * 0.12f, size.height * 0.08f),
         )
         drawCircle(
-            color = Blue.copy(alpha = 0.025f),
+            color = Blue.copy(alpha = 0.028f),
             radius = size.width * 0.72f,
             center = Offset(size.width * 1.04f, size.height * 0.34f),
         )
@@ -567,6 +615,14 @@ private fun PatternHeroCard(
                 style = MaterialTheme.typography.bodyMedium,
                 color = Slate,
             )
+            if (state.confidence > 0 && !state.activeHumanConcern) {
+                Text(
+                    text = "The internal evidence score summarizes quality-qualified simulator evidence and policy support. It is not a probability, wellness/readiness score, or “all clear.”",
+                    modifier = Modifier.padding(top = 8.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Quiet,
+                )
+            }
             if (state.activeHumanConcern) {
                 Surface(
                     modifier = Modifier
@@ -647,6 +703,16 @@ private fun PatternHeroCard(
 
 @Composable
 private fun ConfidenceBeacon(value: Int, label: String, color: Color) {
+    val motionEnabled = rememberVitalMotionEnabled()
+    val animatedValue by animateFloatAsState(
+        targetValue = value.toFloat(),
+        animationSpec = if (motionEnabled) {
+            spring(dampingRatio = 1f, stiffness = 240f)
+        } else {
+            snap()
+        },
+        label = "evidence-score",
+    )
     Box(
         modifier = Modifier
             .size(66.dp)
@@ -671,7 +737,7 @@ private fun ConfidenceBeacon(value: Int, label: String, color: Color) {
                 drawArc(
                     brush = Brush.sweepGradient(listOf(color.copy(alpha = 0.32f), color)),
                     startAngle = -90f,
-                    sweepAngle = value * 3.6f,
+                    sweepAngle = animatedValue * 3.6f,
                     useCenter = false,
                     topLeft = Offset(inset, inset),
                     size = Size(size.width - stroke, size.height - stroke),
@@ -854,6 +920,7 @@ private fun ForecastCard(
     forecast: ForecastUiModel,
     onOpenQuickLog: () -> Unit,
 ) {
+    var explanationExpanded by remember(forecast.status) { mutableStateOf(false) }
     DashboardCard {
         SectionLabel(forecast.horizonLabel)
         Spacer(Modifier.height(12.dp))
@@ -919,15 +986,109 @@ private fun ForecastCard(
                 color = Slate,
             )
         }
+        if (
+            forecast.status == ForecastStatus.AVAILABLE &&
+            forecast.probability != null &&
+            forecast.explanation != null
+        ) {
+            val explanation = forecast.explanation
+            OutlinedButton(
+                onClick = { explanationExpanded = !explanationExpanded },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp)
+                    .padding(top = 14.dp),
+                shape = RoundedCornerShape(18.dp),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Ice),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Blue.copy(alpha = 0.32f)),
+            ) {
+                Text(if (explanationExpanded) "Hide how this was calculated" else "Explain this estimate")
+            }
+            AnimatedVisibility(visible = explanationExpanded) {
+                ForecastExplanation(explanation)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ForecastExplanation(explanation: ForecastExplanationUiModel) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 14.dp)
+            .animateContentSize(animationSpec = spring(dampingRatio = 0.82f, stiffness = 240f)),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        ExplanationBlock("WHAT THIS PERCENTAGE MEANS", explanation.meaning, Blue)
+        ExplanationBlock("ESTIMATE VS FIXTURE BASE RATE", explanation.comparison, Violet)
+        ExplanationList("WHY IT LANDED HERE", explanation.why, Amber)
+        ExplanationList("HOW IT WAS CALCULATED", explanation.method, Mint)
+        ExplanationList("WHAT COULD CHANGE A FUTURE ESTIMATE", explanation.couldChange, Blue)
+        ExplanationList("HOW THIS MUST IMPROVE", explanation.improvementPlan, Violet)
+        Text(
+            text = "Similarity is not causality. These generated values cannot tell you why you feel a certain way or what will happen.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Rose,
+        )
+    }
+}
+
+@Composable
+private fun ExplanationBlock(label: String, body: String, accent: Color) {
+    Surface(
+        color = accent.copy(alpha = 0.075f),
+        shape = RoundedCornerShape(18.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, accent.copy(alpha = 0.2f)),
+    ) {
+        Column(Modifier.padding(15.dp)) {
+            Text(label, style = MaterialTheme.typography.labelMedium, color = accent)
+            Text(
+                text = body,
+                modifier = Modifier.padding(top = 7.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = Ice,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ExplanationList(label: String, items: List<String>, accent: Color) {
+    Surface(
+        color = Color.White.copy(alpha = 0.035f),
+        shape = RoundedCornerShape(18.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Ice.copy(alpha = 0.09f)),
+    ) {
+        Column(Modifier.padding(15.dp)) {
+            Text(label, style = MaterialTheme.typography.labelMedium, color = accent)
+            items.forEachIndexed { index, item ->
+                Row(Modifier.padding(top = 9.dp)) {
+                    Text("${index + 1}", style = MaterialTheme.typography.labelMedium, color = accent)
+                    Spacer(Modifier.width(10.dp))
+                    Text(item, style = MaterialTheme.typography.bodyMedium, color = Slate)
+                }
+            }
+        }
     }
 }
 
 @Composable
 private fun ProbabilityRing(probability: Int, outcomeLabel: String) {
+    val motionEnabled = rememberVitalMotionEnabled()
+    val animatedProbability by animateFloatAsState(
+        targetValue = probability.toFloat(),
+        animationSpec = if (motionEnabled) {
+            spring(dampingRatio = 1f, stiffness = 220f)
+        } else {
+            snap()
+        },
+        label = "forecast-probability",
+    )
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
-            .size(82.dp)
+            .size(72.dp)
             .semantics {
                 contentDescription = "$probability percent simulator probability for $outcomeLabel"
             },
@@ -938,14 +1099,14 @@ private fun ProbabilityRing(probability: Int, outcomeLabel: String) {
                 startAngle = -90f,
                 sweepAngle = 360f,
                 useCenter = false,
-                style = Stroke(width = 8.dp.toPx(), cap = StrokeCap.Round),
+                style = Stroke(width = 6.dp.toPx(), cap = StrokeCap.Round),
             )
             drawArc(
                 color = Amber,
                 startAngle = -90f,
-                sweepAngle = probability * 3.6f,
+                sweepAngle = animatedProbability * 3.6f,
                 useCenter = false,
-                style = Stroke(width = 8.dp.toPx(), cap = StrokeCap.Round),
+                style = Stroke(width = 6.dp.toPx(), cap = StrokeCap.Round),
             )
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -955,7 +1116,7 @@ private fun ProbabilityRing(probability: Int, outcomeLabel: String) {
                 color = Ice,
             )
             Text(
-                text = "chance",
+                text = "fixture",
                 style = MaterialTheme.typography.labelMedium,
                 color = Quiet,
             )
@@ -2324,6 +2485,20 @@ private fun ProgressTrack(
                 .height(7.dp)
                 .background(color, CircleShape),
         )
+    }
+}
+
+@Composable
+private fun rememberVitalMotionEnabled(): Boolean {
+    val context = LocalContext.current
+    return remember(context) {
+        runCatching {
+            Settings.Global.getFloat(
+                context.contentResolver,
+                Settings.Global.ANIMATOR_DURATION_SCALE,
+                1f,
+            ) > 0f
+        }.getOrDefault(true)
     }
 }
 

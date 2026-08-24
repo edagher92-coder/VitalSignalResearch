@@ -65,7 +65,7 @@ test('shows a governed replaceable assistant without pretending a model ran', ()
 test('keeps navigation and forecast reveal accessible', () => {
   assert.match(html, /aria-controls="today" aria-current="page"/);
   assert.match(html, /id="forecast-title" tabindex="-1"/);
-  assert.match(html, /Unvalidated simulated fixture estimate revealed; this is not a health prediction/);
+  assert.match(html, /same unvalidated fixture commitment remains revealed; this is not a health prediction/);
   assert.match(html, /Lower-than-personal-usual energy\/function at \+72h to \+73h/);
   assert.match(html, /requestAnimationFrame\(\(\) => document\.getElementById\('forecast-title'\)\.focus\(\)\)/);
   assert.doesNotMatch(html, /\.evidence-item[^}]+cursor:\s*pointer/);
@@ -75,7 +75,7 @@ test('human concern visibly overrides the simulated forecast', () => {
   assert.match(html, /id="concern" aria-pressed="false"/);
   assert.match(html, /id="global-concern-action">I feel concerned/);
   assert.match(html, /id="global-concern-hold" role="alert" aria-live="assertive" hidden/);
-  assert.match(html, /concernReported \? 'Withheld' : reveal \? '38% fixture probability' : 'Absent from locked view'/);
+  assert.match(html, /concernReported \? 'Withheld' : reveal \? '36% fixture probability' : 'Absent from locked view'/);
   assert.match(html, /Simulator concern hold active\. Nobody was notified; wearable forecast withheld/);
   assert.match(html, /Do not rely on the wearable score for reassurance/);
   assert.match(html, /let concernLatched = false/);
@@ -173,6 +173,36 @@ test('forecast audit lane shows committed-hidden through outcome-due', () => {
 });
 
 test('observer coverage count matches the fail-closed freshness matrix', () => {
-  assert.match(html, /9 \/ 9/);
+  assert.match(html, /10 \/ 10/);
+  assert.match(html, /VALIDATION BLOCKED/);
   assert.match(html, /Live, delayed, stale, no-data and fail-closed fixtures/);
+});
+
+test('explains the revealed fixture probability without implying cause', () => {
+  assert.match(html, /What 36% means—and how the fixture got there/);
+  assert.match(html, /36 out of 100 probability mass—not “36% less energy”/);
+  assert.match(html, /13 of 40 \(32\.5%\) → 33\.0% weighted → 36\.4% posterior/);
+  assert.match(html, /15\.79 effective weighted cases/);
+  assert.match(html, /Beta\(2,2\) regularizing prior/);
+  assert.match(html, /nominal 80% normal posterior approximation/);
+  assert.match(html, /round bounds outward to 22–51%/);
+  assert.match(html, /Forty resolved synthetic cases pass prospective, schema, quality, identity and receipt gates/);
+  assert.match(html, /similarity × historical quality × current quality/);
+  assert.match(html, /Similarity is not causality/);
+  assert.match(html, /completed check-in unlocks reveal; it does not recalculate or alter the sealed probability/);
+  assert.match(html, /forecast-explain'\)\.classList\.toggle\('revealed', reveal\)/);
+});
+
+test('adds purposeful motion with reduced-motion and explicit-dialog safeguards', () => {
+  assert.match(html, /@keyframes card-arrive/);
+  assert.match(html, /prefers-reduced-motion: reduce/);
+  assert.match(html, /animation-iteration-count: 1 !important/);
+  assert.doesNotMatch(html, /animation:[^;]*infinite/);
+  assert.doesNotMatch(html, /id="motion-tour"/);
+  assert.match(html, /id="resolve-dialog" role="dialog" aria-modal="true"/);
+  assert.match(html, /id="global-quality-hold" role="status"/);
+  assert.match(html, /body\.quality-withheld \.view > \*/);
+  assert.match(html, /appShell\.inert = true/);
+  assert.match(html, /event\.key === 'Escape'/);
+  assert.doesNotMatch(html, /window\.confirm/);
 });

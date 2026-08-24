@@ -1,6 +1,6 @@
 # Clinical priority roadmap
 
-Status: version `0.5.0-research`. This is a ranked validation roadmap, not a list of active medical features. No lane is a diagnosis, clinical alarm or treatment recommendation.
+Status: version `0.6.0-research`. This is a ranked validation roadmap, not a list of active medical features. No lane is a diagnosis, clinical alarm or treatment recommendation.
 
 ## The product shape
 
@@ -27,7 +27,7 @@ The useful result is not a universal score. It is an evidence bundle that states
 | 9 | Cuff-led blood-pressure context | Validated upper-arm cuff readings aligned with posture, rest and symptoms | A suitable validated cuff | The Watch does not estimate BP or authorize treatment changes |
 | 10 | Heat/workload response | Change in skin–ambient gradient, cardiac cost and recovery under comparable conditions | Measured environment and, in research, pre/post body mass or clinical temperature | Not core temperature, dehydration, electrolyte loss, heat illness or a fluid dose |
 
-The externally review-gated function/recovery contract is specified in [`FUNCTION_RECOVERY_PROTOCOL.md`](FUNCTION_RECOVERY_PROTOCOL.md). The fatigue/adrenal-context boundary is specified separately in [`FATIGUE_ADRENAL_CONTEXT_PROTOCOL.md`](FATIGUE_ADRENAL_CONTEXT_PROTOCOL.md); neither lane is active personal collection in version 0.5.
+The externally review-gated function/recovery contract is specified in [`FUNCTION_RECOVERY_PROTOCOL.md`](FUNCTION_RECOVERY_PROTOCOL.md). The fatigue/adrenal-context boundary is specified separately in [`FATIGUE_ADRENAL_CONTEXT_PROTOCOL.md`](FATIGUE_ADRENAL_CONTEXT_PROTOCOL.md); neither lane is active personal collection in version 0.6.
 
 If clinician-supported CGM is already present, glucose remains a CGM-led external lane. Watch sleep, meals, activity and medication context may help interpretation, but VitalSignal must not estimate glucose or direct food, insulin or medication.
 

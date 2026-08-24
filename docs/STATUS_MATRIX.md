@@ -1,8 +1,8 @@
 # Implementation status matrix
 
-Checkpoint: `0.5.0-research` · simulator UI + tested research/data-plane controls · real personal data locked
+Checkpoint: `0.6.0-research` · simulator UI explainability + tested research/data-plane controls · real personal data locked
 
-Release decision: **GO only for simulator engineering evaluation.** Personal collection, visible forecasts, physical-hardware performance, Ollama output, clinician monitoring, clinical claims and public release are **NO-GO** until their separate evidence gates pass.
+Release decision: **GO only for simulator engineering evaluation.** The generated fixture forecast may be revealed only after the tested prospective check-in/ledger sequence and must remain explicitly unvalidated. Personal collection, personal-data forecasts, physical-hardware performance, model-generated output, clinician monitoring, clinical claims and public release are **NO-GO** until their separate evidence gates pass.
 
 | Capability | Status | Evidence / boundary |
 |---|---|---|
@@ -19,7 +19,7 @@ Release decision: **GO only for simulator engineering evaluation.** Personal col
 | Deterministic safety policy | Implemented + platform-neutral tested | Learning, unavailable, abstained, typical, remeasure and eligible states; `TYPICAL` requires complete expected-family coverage |
 | Verified persistence gate | Implemented + platform-neutral tested | No caller count; only authenticated, provenance-bound, strictly prior, chronological, bounded-gap, quality-qualified and direction-consistent episodes can boost persistence |
 | Urgent symptom pathway | Policy boundary only | Model cannot issue urgent status; no reviewed questionnaire/emergency UI |
-| N-of-1 binary forecast control | Implemented + platform-neutral tested | Frozen content-addressed +72h-to-+73h point-assessment endpoint; prior-only exact-schema cases, 30-case/effective-weight gate, authenticated outcomes, uncertainty and abstention. No user-visible calibrated forecast is authorised |
+| N-of-1 binary forecast control | Implemented + platform-neutral tested; simulator reveal only | Frozen content-addressed +72h-to-+73h point-assessment endpoint; prior-only exact-schema cases, 30-case/effective-weight gate, authenticated outcomes, typed estimator diagnostics, engineering uncertainty and abstention. The simulator may show an unvalidated ledger projection; no personal or calibrated forecast is authorised |
 | Prospective forecast chronology | Implemented + platform-neutral tested | Hidden commit, separate pre-reveal context, reveal, future outcome and indeterminate missing state |
 | Encrypted forecast audit journal | Implemented + pure-JVM fault-tested | Complete event/state recovery; tag/schema/trailing corruption forces unavailable |
 | Human-concern hold and journal | Implemented + platform-neutral tested | Authority-verified report/resolve events are append-only and restart-safe; unavailable state fails safe. Simulator-session only: no clinician or emergency service is notified |
@@ -43,7 +43,7 @@ Release decision: **GO only for simulator engineering evaluation.** Personal col
 | Phone/watch simulator | Implemented in source | Explicitly simulated and personal-data locked; forecast/demo state is memory-only, while injected test journals exercise restart behavior outside the visible demo |
 | Fatigue/adrenal-context lane | Typed outcomes/context + protocol documented and platform-neutral tested | Fatigue/function are prospective outcomes; no cortisol/adrenal diagnosis, symptom triage or medication advice is active |
 | Backend/clinician network | OpenAPI contract only | No HTTP service, database, IAM, portal, cloud deployment or attended clinical service exists |
-| Android/Compose Gradle build | Not verified here | AGP/Android dependencies unavailable in this workspace; Android Studio/CI is the next compilation gate |
+| Android/Compose Gradle build | Verified locally for 0.6 source | Clean JDK 17 Gradle tests, lint and phone/wear debug assemblies passed; physical installation, instrumentation/accessibility and exact-device behavior remain unverified |
 | Physical Galaxy Watch/phone tests | Not run | Pairing, signer, permission, Keystore, process-kill, battery, clock, radio and firmware tests required |
 | Reference and prospective validation | Not started | No reference-device agreement, calibration, false-alert, human-factors or clinical performance evidence |
 | Regulated clinical monitoring | Locked | Needs intended-use review, clinical service design, QMS, cybersecurity, performance/human-factors evidence and authorisation |

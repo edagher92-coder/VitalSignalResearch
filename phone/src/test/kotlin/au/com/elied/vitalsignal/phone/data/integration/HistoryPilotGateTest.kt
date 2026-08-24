@@ -206,7 +206,7 @@ class HistoryPilotGateTest {
             capability = capability,
             subjectPseudonym = subjectPseudonym,
             consentGeneration = consentGeneration,
-            appVersion = "0.5.0-research",
+            appVersion = "0.6.0-research",
             deviceModel = "Galaxy S25 Ultra fixture",
             firmwareGeneration = "fixture-fw-1",
             dataSchemaVersion = "history-v1",
@@ -237,7 +237,7 @@ class HistoryPilotGateTest {
                     "validation-health-connect-1"
                 },
                 capability = capability,
-                appVersion = "0.5.0-research",
+                appVersion = "0.6.0-research",
                 deviceModel = "Galaxy S25 Ultra fixture",
                 firmwareGeneration = "fixture-fw-1",
                 dataSchemaVersion = "history-v1",

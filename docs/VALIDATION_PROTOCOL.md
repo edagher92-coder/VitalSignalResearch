@@ -1,6 +1,6 @@
 # Prospective N-of-1 validation protocol
 
-Protocol status: engineering draft for clinical/statistical review before visible alerts. Version `0.5.0-research` adds consent/environment/promotion gates, crash-safe outbox and bridge controls, adaptive sensing, empirical context, history reconciliation and audit-before-delivery local reasoning to the tested platform-neutral core. It does not begin Phase A or ingest personal data.
+Protocol status: engineering draft for clinical/statistical review before visible alerts. Version `0.6.0-research` adds simulator explainability and contract alignment to the consent/environment/promotion gates, crash-safe outbox and bridge controls, adaptive sensing, empirical context, history reconciliation and audit-before-delivery local reasoning in the tested platform-neutral core. It does not begin Phase A or ingest personal data.
 
 Release decision: GO only for simulator engineering evaluation. Phase A, personal-data ingestion, physical-device claims, visible forecasts, Ollama results and clinician/clinical use remain NO-GO.
 
@@ -12,7 +12,7 @@ The pilot does not validate a diagnosis. Person 1 tests feasibility and personal
 
 ## Preregistered outcomes
 
-The protocol uses two distinct records: blind context captured after hidden commitment but before reveal, and a point assessment captured inside the later target window then recorded after that window closes. The pre-reveal check-in cannot be an input feature or label for the forecast that was already committed before it was captured. The chronology control introduced in version 0.3 remains enforced in the current `0.5.0-research` restart-safe encrypted fixture journal; the visible simulator interaction remains memory-only.
+The protocol uses two distinct records: blind context captured after hidden commitment but before reveal, and a point assessment captured inside the later target window then recorded after that window closes. The pre-reveal check-in cannot be an input feature or label for the forecast that was already committed before it was captured. The chronology control introduced in version 0.3 remains enforced in the current `0.6.0-research` restart-safe encrypted fixture journal; the visible browser simulator interaction remains memory-only.
 
 - morning energy and fatigue, 0–10;
 - evening fatigue, 0–10;

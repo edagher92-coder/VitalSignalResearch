@@ -2,7 +2,7 @@
 
 **Your pattern, made clear.**
 
-Evidessa Research is the working user-facing brand for version `0.5.0-research`, a fail-closed private N-of-1 health-intelligence foundation for a Galaxy Watch Ultra2 and Android phone. It combines a truthful simulator with platform-neutral collection, transport, history, analysis, validation and governance components. Real personal-data surfaces remain locked until the exact phone, watch, firmware and reference-device tests produce matching evidence receipts.
+Evidessa Research is the working user-facing brand for version `0.6.0-research`, a fail-closed private N-of-1 health-intelligence foundation for a Galaxy Watch Ultra2 and Android phone. Version 0.6 adds an explainable forecast surface, a motion/accessibility system and a whole-system verification pass; it does not unlock personal data or clinical claims. The project combines a truthful simulator with platform-neutral collection, transport, history, analysis, validation and governance components. Real personal-data surfaces remain locked until the exact phone, watch, firmware and reference-device tests produce matching evidence receipts.
 
 The repository, Android package/namespace, cryptographic aliases, protocol routes, signed schemas and versioned audit identifiers intentionally retain their existing `VitalSignal` internal names. That separation makes the brand reversible without an unsafe protocol migration or a break in validation traceability.
 
@@ -59,7 +59,7 @@ The strongest research output is a **physiological response and recovery signatu
 | Governed local explanation | Signed short-lived packet, reviewed template IDs, deterministic verifier and durable audit | Ollama cannot author free clinical prose, calculate physiology, alert, diagnose or change treatment |
 | Governed cloud research copilot | Credential-free phone/watch contract, minimized typed packet, signed purpose/consent/retention receipt, strict schema, deterministic verifier and human promotion/rollback | No API call is enabled; not a nurse/doctor, direct provider browsing, diagnosis, treatment, emergency clearance or live self-modification |
 
-The person's own concern is a first-class context signal. Normal or missing wearable data can never suppress “I feel unwell,” a clinician-authored plan or reviewed urgent-care instructions. Version 0.5 implements the audited simulator-session hold and explicit human resolution; it does not notify a clinician or emergency service and is not an attended channel.
+The person's own concern is a first-class context signal. Normal or missing wearable data can never suppress “I feel unwell,” a clinician-authored plan or reviewed urgent-care instructions. Version 0.6 retains the audited simulator-session hold and explicit human resolution; it does not notify a clinician or emergency service and is not an attended channel.
 
 ## Current installation truth
 
@@ -82,9 +82,12 @@ Samsung documents that Sensor SDK and Samsung Health Data SDK developer modes ca
 
 The exact final merged platform-neutral result and its exclusions are recorded in `docs/BUILD_REPORT.md`. The suite covers the core analytics/data plane, signed reasoning authority, governance/monitoring, phone bridge, history reconciliation, watch outbox, Samsung contracts and simulator domain logic. A passing result supports only the simulator engineering checkpoint.
 
-This is not an Android build result. Android Gradle Plugin `9.3.1`, the Android SDK, proprietary Samsung AARs, Ollama and physical devices were unavailable here. No APK or real health-data ingestion is claimed. The dependency-free structural/safety validator is included, and CI/Android Studio remains the next Android compilation gate.
+Version 0.6 has a clean JDK 17 Gradle test/lint/debug-assembly result for both
+Android modules, recorded in `docs/BUILD_REPORT.md`. This is source/build
+evidence only: proprietary Samsung AARs, Ollama, physical devices and personal
+health-data ingestion remain unavailable and unverified.
 
-On every push, GitHub Actions runs the structural/safety checks, prototype tests, Gradle tests, lint and both debug assemblies. A successful Android job publishes a 14-day `vitalsignal-0.5.0-research-simulator-debug` artifact containing the phone and watch simulator APKs. That artifact is for hardware/UI smoke testing only; it does not unlock personal collection or establish Samsung SDK behavior.
+On every push, GitHub Actions runs the structural/safety checks, prototype tests, Gradle tests, lint and both debug assemblies. A successful Android job publishes a 14-day `vitalsignal-0.6.0-research-simulator-debug` artifact containing the phone and watch simulator APKs. That artifact is for hardware/UI smoke testing only; it does not unlock personal collection or establish Samsung SDK behavior.
 
 ```bash
 python3 tools/validate_project.py

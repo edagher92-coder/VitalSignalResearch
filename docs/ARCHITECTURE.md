@@ -1,6 +1,6 @@
 # System architecture
 
-Current status: version `0.5.0-research` implements a deterministic local simulator plus tested platform-neutral encrypted storage, authenticated transport/receipt, crash-safe watch outbox, history reconciliation, prospective forecast audit, standardized-response, adaptive-sensing, empirical-context, governance, provider-neutral reasoning and clinician-observer controls. Public Health Services and Wear Data Layer Android services are source-wired and API-shape tested, but proprietary Samsung adapters, authenticated physical key provisioning, live Samsung Health reads, real Ollama/OpenAI/Anthropic inference and exact-device validation remain locked.
+Current status: version `0.6.0-research` implements a deterministic local simulator plus tested platform-neutral encrypted storage, authenticated transport/receipt, crash-safe watch outbox, history reconciliation, prospective forecast audit, typed estimator diagnostics, standardized-response, adaptive-sensing, empirical-context, governance, provider-neutral reasoning and clinician-observer controls. Public Health Services and Wear Data Layer Android services are source-wired and API-shape tested, but proprietary Samsung adapters, authenticated physical key provisioning, live Samsung Health reads, real Ollama/OpenAI/Anthropic inference and exact-device validation remain locked.
 
 ## Design principle
 
