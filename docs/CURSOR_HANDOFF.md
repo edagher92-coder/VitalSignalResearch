@@ -29,6 +29,8 @@ Confirm the terminal is using JDK 17 before Gradle runs:
 java -version
 ```
 
+The Gradle wrapper downloads Gradle 9.5.1 from the official `gradle/gradle-distributions` GitHub release asset rather than `services.gradle.org`. The wrapper SHA-256 pin is unchanged.
+
 ## 3. Verify the clean baseline
 
 Run these from the repository root before changing code:
