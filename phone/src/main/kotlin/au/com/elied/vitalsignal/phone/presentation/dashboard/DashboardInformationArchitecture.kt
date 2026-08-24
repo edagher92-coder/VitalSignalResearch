@@ -50,5 +50,13 @@ fun paneFor(surface: DashboardSurface): DashboardPane = when (surface) {
 fun isWithheldDuringConcernHold(surface: DashboardSurface): Boolean =
     surface != DashboardSurface.HERO
 
+fun paneAfterConcernHold(): DashboardPane = DashboardPane.TODAY
+
+enum class TodaySummaryLayout {
+    STACKED,
+}
+
+fun todaySummaryLayout(): TodaySummaryLayout = TodaySummaryLayout.STACKED
+
 fun surfacesFor(pane: DashboardPane): Set<DashboardSurface> =
     DashboardSurface.entries.filter { paneFor(it) == pane }.toSet()

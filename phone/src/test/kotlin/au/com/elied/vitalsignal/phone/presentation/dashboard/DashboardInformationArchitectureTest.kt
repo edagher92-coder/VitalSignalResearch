@@ -52,6 +52,16 @@ class DashboardInformationArchitectureTest {
     }
 
     @Test
+    fun concernHoldReturnsThePersonToToday() {
+        assertEquals(DashboardPane.TODAY, paneAfterConcernHold())
+    }
+
+    @Test
+    fun phoneTodayStacksTheFiveSecondSummaryToAvoidColumnOverflow() {
+        assertEquals(TodaySummaryLayout.STACKED, todaySummaryLayout())
+    }
+
+    @Test
     fun everySurfaceHasExactlyOnePane() {
         DashboardSurface.entries.forEach { surface ->
             val pane = paneFor(surface)
