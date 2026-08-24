@@ -2,7 +2,7 @@
 
 ## Current deployable surface
 
-Version `0.5.0-research` can host only the simulated browser interface in
+Version `0.6.0-research` can host only the simulated browser interface in
 `prototype/index.html`. The phone and watch applications are installed as APKs;
 they are not hosted as websites. `backend/` contains OpenAPI contracts, not a
 runnable server, database, identity service, clinician portal or attended
