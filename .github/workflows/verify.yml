@@ -47,7 +47,7 @@ jobs:
 
       - uses: gradle/actions/wrapper-validation@ed408507eac070d1f99cc633dbcf757c94c7933a
 
-      - uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a
+      - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb
 
       - name: Unit tests, lint and debug APKs
         run: ./gradlew test lint :phone:assembleDebug :wear:assembleDebug --stacktrace
